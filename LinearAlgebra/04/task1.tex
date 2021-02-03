@@ -1,0 +1,81 @@
+%!TEX root = kotov.tex
+\section{Task 1}
+\begin{task}
+    Для различных начальных $v_0$ рассмотрим последовательность векторов $$v_{n+1}=Av_n, \text{ где } A =\begin{pmatrix}-10&-12\\9&11\end{pmatrix}$$ Найдите собственные числа и собственные векторы $A$. При каких $v_0$ в получающейся последовательности с некоторого момента первая координата положительна?
+\end{task}
+
+\begin{solution}
+    \begin{gather}
+        \det(A-\lambda I) = 
+        \begin{Vmatrix}
+            -10-\lambda & -12 \\ 9 & 11-\lambda
+        \end{Vmatrix} = \lambda^2-\lambda-2=0 \\
+        \downarrow \\
+        \lambda_{1,2} = 
+        \begin{cases}
+            2 \\ -1
+        \end{cases} \Longrightarrow A = 
+        \begin{pmatrix}
+            2 & 0 \\
+            0 & -1
+        \end{pmatrix}
+    \end{gather}
+    Таким образом, собственные значения матрицы $A$: $\lambda_1 = 2$ и $\lambda_2 = -1$.
+    
+    Теперь найдем собственные вектора:
+    \begin{itemize}
+        \item $\lambda = \lambda_1 = 2$:
+        \begin{gather}
+            (A-2 I)\vec{v}_1 = 0 \Longrightarrow 
+            \begin{cases}
+                -12x_1 - 12x_2 = 0 \\
+                9x_1 + 9x_2 = 0
+            \end{cases} \Longrightarrow x_1 = -x_2 \Longrightarrow \vec{v}_1 = 
+            \begin{pmatrix}
+                1 \\ -1
+            \end{pmatrix}
+        \end{gather}
+        \item $\lambda = \lambda_2 = -1$:
+        \begin{gather}
+            (A + I)\vec{v}_2 = 0 \Longrightarrow 
+            \begin{cases}
+                -9x_1-12x_2 = 0\\
+                9x_1+12x_2 = 0
+            \end{cases} \Longrightarrow x_1 = -\frac43 x_2 \Longrightarrow \vec{v}_2 = 
+            \begin{pmatrix}
+                4 \\ -3
+            \end{pmatrix}
+        \end{gather}
+    \end{itemize}
+    Таким образом, окончательно имеем 
+    \begin{gather}
+        \lambda_1 = 2 \Longrightarrow \vec{v}_1 = 
+        \begin{pmatrix}
+            1 \\ -1
+        \end{pmatrix} \\
+        \lambda_2 = -1 \Longrightarrow \vec{v}_2 = 
+        \begin{pmatrix}
+            4 \\ -3
+        \end{pmatrix}        
+    \end{gather}
+
+    Теперь рассмотрим действие какой-то степени оператора $A$ на некоторый вектор $\vec{v}_0$, разложенном в базисе собственных векторов оператора $A$ ($\alpha = \text{const},\,\beta=\text{const}$):
+    \begin{gather}
+        A^n \vec{v}_0 = A^n(\alpha \vec{v}_1 + \beta \vec{v}_2) = \alpha 2^n 
+        \begin{pmatrix}
+            1 \\ -1
+        \end{pmatrix} + \beta (-1)^n
+        \begin{pmatrix}
+            4 \\ -3
+        \end{pmatrix}
+    \end{gather}
+    Нас интересует только первая компонента, которая равна $x_1 = \alpha 2^n + 4\beta(-1)^n$. На нее наложено условие, что, начиная с какого-то $n$, $x_1 > 0$. Не умаляя общности, засунем $4$ в $\beta$, тогда $x_1 = \alpha 2^n + \beta (-1)^n > 0$ или, что то же самое $\alpha 2^n > \beta (-1)^{n+1} \Longrightarrow \alpha > \beta \dfrac{(-1)^{n+1}}{2^n}$. Теперь обработаем разные случаи:
+    \begin{enumerate}
+        \item $\forall \alpha > 0 \,\, \forall \beta $ это условие будет выполнено, так как $\beta \dfrac{(-1)^{n+1}}{2^n} \xrightarrow[n\to\infty]{}0$.
+        \item Если $\alpha \leq 0$, то никакое $\beta$ не удовлетвори данному условию, так как правая часть неравенства на ряду с отрицательными значениями принимает так же и положительные значения, которые явно больше, чем какое-то отрицательное число.
+        \item Если мы живем в поле с характеристикой $2$, то таких векторов не существует в принципе, так как матрица $A$ в таком поле имеет следующий диагональный вид: $\begin{pmatrix}
+            0 & 0 \\
+            0 & 1 
+        \end{pmatrix}$, то есть первая компонента всегда зануляется.
+    \end{enumerate}
+\end{solution}

@@ -1,0 +1,65 @@
+%!TEX root = kotov.tex
+\section{Task 2}
+\begin{task}
+    Матрица оператора имеет вид $$A =\begin{pmatrix}-3&-4&4\\-2&-5&4\\-4&-8&7 \end{pmatrix}.$$ Является ли оператор диагонализуемым?  В случае положительного ответа найдите базис, в котором матрица оператора диагональна и матрицу оператора в этом базисе.
+\end{task}
+
+\begin{solution}
+    \begin{gather}
+        \det(A-\lambda I) = 
+        \begin{Vmatrix}
+            -3-\lambda & -4 & 4 \\
+            -2 & -5-\lambda & 4 \\
+            -4 & -8 & 7-\lambda
+        \end{Vmatrix} = -\lambda^3-\lambda^2+\lambda+1 = (\lambda-1)(\lambda+1)^2 = 0
+    \end{gather}
+    Таким образом, получили $\lambda_1 = 1$ --- не вырожденный корень и $\lambda_2 = -1$ --- двукратно вырожденный корень.
+    
+    Посмотрим собственные вектора:
+    \begin{itemize}
+        \item
+        \begin{gather}
+            \lambda = 1:\quad
+            \begin{pmatrix}
+                -4 & -4 & 4 \\
+                -2 & -6 & 4 \\
+                -4 & -8 & 6
+            \end{pmatrix} \Longrightarrow \vec{v}_1 = 
+            \begin{pmatrix}
+                0.5 \\ 0.5 \\ 1
+            \end{pmatrix}
+        \end{gather}
+        \item
+        \begin{gather}
+            \lambda = -1: \quad 
+            \begin{pmatrix}
+                -2 & -4 & 4 \\
+                -2 & -4 & 4 \\
+                -4 & -8 & 8
+            \end{pmatrix} \Longrightarrow \text{ ФСР } = \left\{
+                a
+                \begin{pmatrix}
+                    -2 \\ 1 \\ 0
+                \end{pmatrix} + b
+                \begin{pmatrix}
+                    2 \\ 0 \\ 1
+                \end{pmatrix}
+            \right\} \Longrightarrow \vec{v}_2 =
+            \begin{pmatrix}
+                -2 \\ 1 \\ 0
+            \end{pmatrix}, \quad \vec{v}_3 = 
+            \begin{pmatrix}
+                2 \\ 0 \\ 1
+            \end{pmatrix}
+        \end{gather}
+    \end{itemize}
+    Таким образом, в базисе $\{\vec{v}_1,\vec{v}_2,\vec{v}_3\}$
+    \begin{eqnarray}
+        A = 
+        \begin{pmatrix}
+            1 &  0 &  0 \\
+            0 & -1 &  0 \\
+            0 &  0 & -1
+        \end{pmatrix}
+    \end{eqnarray}
+\end{solution}

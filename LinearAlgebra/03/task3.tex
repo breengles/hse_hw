@@ -1,0 +1,65 @@
+%!TEX root = kotov.tex
+\section{Task 3}
+\begin{task}
+    Вычислите определитель матрицы
+    \begin{eqnarray}
+        \begin{Vmatrix}
+             1 &  2 &  3 & \ldots & n \\
+            -1 &  0 &  3 & \ldots & n \\
+            -1 & -2 &  0 & \ldots & n \\
+               &    & \vdots & &   \\
+            -1 & -2 & -3 & \ldots & 0
+        \end{Vmatrix}
+    \end{eqnarray}
+\end{task}
+
+\begin{solution}
+    Прибавим к первой строке последнюю:
+    \begin{eqnarray}
+        \begin{Vmatrix}
+             1 &  2 &  3 & \ldots & n \\
+            -1 &  0 &  3 & \ldots & n \\
+            -1 & -2 &  0 & \ldots & n \\
+               &    & \vdots &    &   \\
+            -1 & -2 & -3 & \ldots & 0
+        \end{Vmatrix} = 
+        \begin{Vmatrix}
+            0 &  0 &  0 & \ldots & n \\
+            -1 &  0 &  3 & \ldots & n \\
+            -1 & -2 &  0 & \ldots & n \\
+               &    & \vdots & &   \\
+            -1 & -2 & -3 & \ldots & 0
+        \end{Vmatrix} = 
+    \end{eqnarray}
+    Разложим по первой строке:
+    \begin{eqnarray}
+        = (-1)^{n-1}n
+        \begin{Vmatrix}
+            -1 &  0 &  3 & \ldots & n-1 \\
+            -1 & -2 &  0 & \ldots & n   \\
+               &    & \vdots & &       \\
+            -1 & -2 & -3 & \ldots & 0 \\
+            -1 & -2 & -3 & \ldots & -(n-1)
+        \end{Vmatrix} =
+    \end{eqnarray}
+    Переставим последнюю строку на самый верх и умножим ее на $(-1)$:
+    \begin{eqnarray}
+        = \underbrace{(-1)^{n-1}(-1)^{n-2}(-1)}_{=1}n
+        \begin{Vmatrix}
+            1 &  2 &  3 & \ldots & n-1 \\
+            -1 &  0 &  3 & \ldots & n-1 \\
+            -1 & -2 &  0 & \ldots & n-1 \\
+               &    & \vdots &    &   \\
+            -1 & -2 & -3 & \ldots & 0
+        \end{Vmatrix}
+    \end{eqnarray}
+    Замети, что мы получили такую же матрицу, что и исходная, но размером на $1$ меньше: составим рекуррент $\mathcal{D}_n = n \mathcal{D}_{n-1}$.
+    Это рекуррент с непостоянным коэффицентом, попробуем решить его
+    \begin{gather}
+        \mathcal{D}_n - n\mathcal{D}_{n-1} = 0 \quad / \cdot\frac{1}{n!}\\
+        \frac{\mathcal{D}_n}{n!} - \frac{n\mathcal{D}_{n-1}}{n!} = \frac{\mathcal{D}_n}{n!} - \frac{\mathcal{D}_{n-1}}{(n-1)!} = 0 \quad \\
+        \text{Пусть } \mathcal{A}_n = \frac{\mathcal{D}_n}{n!}
+        \mathcal{A}_n - \mathcal{A}_{n-1} = 0 \Longrightarrow \mathcal{A}_n = \mathcal{A}_{n-1} \Longrightarrow \mathcal{A}_n = \text{Const} \\
+        \text{Так как } \mathcal{A}_2 = \frac{\mathcal{D}_2}{2} = \frac{2}{2} = 2 \Longrightarrow \mathcal{A}_n = 1 \Longrightarrow \frac{\mathcal{D}_n}{n!} = 1 \Longrightarrow \mathcal{D}_n = n!
+    \end{gather}
+\end{solution}

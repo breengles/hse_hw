@@ -1,0 +1,89 @@
+%!TEX root = kotov.tex
+\section{Task 4 (индивидуальное 2.6)}
+Будем рассматривать матрицу нашего оператора в стандартном базисе. Тогда можно будет рассмотреть переход от этого базиса, к интересующему нас базису $f$.
+
+Найдем матрицу $A_e$ такую, что
+\begin{gather}
+    A_e
+    \begin{pmatrix}
+        1 & 1 & 2 \\
+        2 & 1 & 0 \\
+        1 & 1 & 1
+    \end{pmatrix} = 
+    \begin{pmatrix}
+        -7 & -4 &  1 \\
+        -5 & -3 &  1 \\
+         5 &  3 & -1
+    \end{pmatrix}
+\end{gather}
+Транспонируем левую и правую части:
+\begin{gather}
+    \begin{pmatrix}
+        1 & 2 & 1 \\
+        1 & 1 & 1 \\
+        2 & 0 & 1
+    \end{pmatrix} A_e^T = 
+    \begin{pmatrix}
+        -7 & -5 &  5 \\
+        -4 & -3 &  3 \\
+         1 &  1 & -1
+    \end{pmatrix} \Longrightarrow A_e = 
+    \begin{pmatrix}
+         2 & -3 & -3 \\
+         2 & -2 & -3 \\
+        -2 &  2 &  3
+    \end{pmatrix}
+\end{gather}
+Теперь найдем матрицы перехода:
+\begin{gather}
+    [f] = [e]C \Longrightarrow
+    \begin{pmatrix}
+        1 & 1 & 2 \\
+        1 & 0 & 1 \\
+        0 & 1 & 0
+    \end{pmatrix} = 
+    \begin{pmatrix}
+        1 & 0 & 0 \\
+        0 & 1 & 0 \\
+        0 & 0 & 1    
+    \end{pmatrix} C \Longrightarrow
+    C = 
+    \begin{pmatrix}
+        1 & 1 & 2 \\
+        1 & 0 & 1 \\
+        0 & 1 & 0
+    \end{pmatrix}
+\end{gather}
+Найдем еще обратную к $C$:
+\begin{equation}
+    C^{-1} = 
+    \begin{pmatrix}
+        -1 &  2 &  1 \\
+         0 &  0 &  1 \\ 
+         1 & -1 & -1
+    \end{pmatrix}.
+\end{equation}
+Тогда
+\begin{gather}
+    A_f = C^{-1}A_eC = 
+    \begin{pmatrix}
+        -1 &  2 &  1 \\
+        0 &  0 &  1 \\ 
+        1 & -1 & -1
+    \end{pmatrix}
+    \begin{pmatrix}
+        2 & -3 & -3 \\
+        2 & -2 & -3 \\
+       -2 &  2 &  3
+    \end{pmatrix}
+    \begin{pmatrix}
+        1 & 1 & 2 \\
+        1 & 0 & 1 \\ 
+        0 & 1 & 0
+    \end{pmatrix} = 
+    \begin{pmatrix}
+         1 &  0 &  1 \\
+         0 &  1 & -2 \\
+        -1 & -1 &  1
+    \end{pmatrix}
+\end{gather}

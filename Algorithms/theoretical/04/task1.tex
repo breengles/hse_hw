@@ -1,0 +1,45 @@
+%!TEX root = kotov.tex
+\section{Task 1}
+\begin{task}
+    Дана строка $s$ длины $n$. Для каждой пары $(i, j)$ найти длину максимального общего префикса $i$-го и $j$-го суффиксов строки $s$. $\O(n^2)$.
+\end{task}
+
+\begin{solution}
+    Введем $d_{ij}$ --- длина максимальной общей префиксной подстроки $i$-ого и $j$-ого суффиксов.
+    Естественно ограничить значения для этого массива как $d_{in} = \begin{cases}
+        0, \text{if } s_i \neq s_n \\
+        1, \text{otherwise}
+    \end{cases}$, аналогично $d_{nj}$, также $d_{nn} = 1$.
+
+    Построим динамику (с учетом, что нельзя пробить потолок, то есть $i+1,j+1 \leq n$):
+    \begin{gather}
+        d_{ij} = 
+        \begin{cases}
+            0, \text{if } s_i \neq s_j \\
+            1 + d_{i+1,j+1}
+        \end{cases}
+    \end{gather}
+    Нам надо будет так пробежаться по всем $i$ и $j$ от $n-1$ до $1$ и проделать какие-то константные операции, то есть будет $\O(n^2)$.
+    Массив $d$ и будет в данном случае ответом.
+
+    \begin{upd}
+        Из условного псевдокодика, как мне кажется, будет нагляднее пробежка по всему $d_{ij}$
+        \begin{lstlisting}
+# init
+d[n,n] = 1
+for i in range(1,n):
+    if s[i] != s[n]:
+        d[i,n] = d[n,i] = 0
+    else:
+        d[i,n] = d[n,i] = 1
+
+# dynamic
+for i in range(n-1, 1, -1):
+    for j in range(n-1, 1, -1):
+        if s[i] != s[j]:
+            d[i,j] = 0
+        else:
+            d[i,j] = 1 + d[i+1, j+1]
+        \end{lstlisting}
+    \end{upd}
+\end{solution}

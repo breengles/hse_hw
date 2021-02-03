@@ -1,0 +1,28 @@
+%!TEX root = kotov.tex
+\section{Task 3.6.1}
+\begin{task}
+    Найдите расстояние и угол между вектором $\vec{x}$ и подпространством $U = \braket{h,u}$, пространства $\mathbb{R}^4$, если: $x = (6, −1, 4, 1)$, $u = (2, 4, 1, 1)$, $v = (1, 1, 0, 0)$
+\end{task}
+
+\begin{solution}
+    \begin{gather}
+        \vec{x} = \vec{h} + \vec{x}_0,\,\,\vec{x}_0 = \alpha \vec{u} + \beta\vec{v} \in U,\,\,\vec{h}\perp U \\
+        \begin{cases}
+            \vec{h} \cdot \vec{u} = 0\\
+            \vec{h} \cdot \vec{v} = 0
+        \end{cases} \Longrightarrow
+        \begin{cases}
+            \vec{x}\cdot\vec{u} - \vec{x}_0 \cdot \vec{u} = 0\\
+            \vec{x}\cdot\vec{v} - \vec{x}_0 \cdot \vec{v} = 0\\
+        \end{cases}\Longrightarrow
+        \begin{cases}
+            13 - 22\alpha - 6\beta = 0 \\
+            5 - 6 \alpha - 2\beta = 0
+        \end{cases}\Longrightarrow\alpha=-\frac12,\,\,\beta=4 \\
+        \vec{x}_0 = \left(3,\,2,\,-\frac12,\,-\frac12\right) \Longrightarrow \cos(\vec{x}, \vec{x}_0) = \frac12 \Longrightarrow \angle(\vec{x},\vec{x}_0) = \frac{\pi}{3}
+    \end{gather}
+    Теперь расстояние $h = |\vec{h}|$:
+    \begin{gather}
+        \vec{h} = \vec{x} - \vec{x}_0 = \left(3,\,-3,\,\frac92,\,\frac32\right) \Longrightarrow h = \frac{9}{\sqrt{2}}
+    \end{gather}
+\end{solution}

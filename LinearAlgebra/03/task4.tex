@@ -1,0 +1,29 @@
+%!TEX root = kotov.tex
+\section{Task 4}
+\begin{task}
+    Покажите, что определитель трехдиагональной матрицы с $1$ по главной диагонали и непосредственно над ней и $-1$ непосредственно под ней является числом Фибоначчи.
+\end{task}
+
+\begin{solution}
+    \begin{equation}
+        \mathcal{D}_n
+        \begin{Vmatrix}
+             1 &  1 & 0 & \ldots & \ldots & \ldots & 0 \\
+            -1 &  1 & 1 & 0 & \ldots & \ldots & 0 \\
+             0 & -1 & 1 & 1 & 0 & \ldots & 0 \\
+             & & &\vdots \\
+            0 & \ldots & \ldots & \ldots & 0 &  1 & 1 \\
+            0 & \ldots & \ldots & \ldots & 0 & -1 & 1
+        \end{Vmatrix} = 1\cdot\mathcal{D}_{n-1} - (-1)
+        \begin{Vmatrix}
+            1 &  0 & \ldots & \ldots & \ldots & \ldots & 0 \\
+            -1 &  1 & 1      & 0      & \ldots & \ldots & 0 \\
+            0 & -1 & 1      & 1      & 0      & \ldots & 0 \\
+            \vdots
+        \end{Vmatrix} =
+    \end{equation}
+    % разложим по первой строке
+
+    разложим по первой строке, получим исходную матрицу, но уже размера на 2 меньше. Окончательно получим $\mathcal{D}_n = \mathcal{D}_{n-1} + \mathcal{D}_{n-2}$, что есть по определению числа Фибоначчи.
+    
+\end{solution}

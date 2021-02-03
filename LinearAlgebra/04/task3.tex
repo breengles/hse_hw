@@ -1,0 +1,65 @@
+%!TEX root = kotov.tex
+\section{Task 3}
+\begin{task}
+    $a:V\longrightarrow V$ оператор. Найдите базис циклического подпространства, порожденного вектором $v$ и матрицу сужения $a$ на это подпространство в найденном базисе. $$V=M_2(\mathbb{R}),\, a(x)=x+x^T,\, v=\begin{pmatrix}1&1\\-1&1\end{pmatrix}$$
+\end{task}
+
+\begin{solution}
+    Пусть $\vec{v}_1 = v = 
+    \begin{pmatrix}
+        1 & 1 \\
+        -1 & 1
+    \end{pmatrix}$, тогда будем строить циклическую группу:
+    \begin{gather}
+        \vec{v}_1 = 
+        \begin{pmatrix}
+             1 & 1 \\
+            -1 & 1
+        \end{pmatrix} \\
+        \vec{v}_2 = a\vec{v}_1 = 
+        \begin{pmatrix}
+            2 & 0 \\ 0 & 2
+        \end{pmatrix} \\
+        \vec{v}_3 = a\vec{v}_2 = 
+        \begin{pmatrix}
+            4 & 0 \\ 0 & 4
+        \end{pmatrix} = 2\vec{v}_2
+    \end{gather}
+    То есть на третьем элементе мы уже получили линейно-зависимый набор, тогда
+    \begin{eqnarray}
+        \left<
+            \begin{pmatrix}
+                1 & 1 \\ -1 & 1
+            \end{pmatrix},
+            \begin{pmatrix}
+                2 & 0 \\
+                0 & 2
+            \end{pmatrix}
+        \right> \text{--- циклическое подпространство, порожденное } \vec{v}_1.
+    \end{eqnarray}
+
+    Теперь рассмотрим матрицу $a$ в базисе этого подпространства:
+    \begin{gather}
+        \begin{rcases}
+            a\vec{v}_1 = \vec{v}_2 \\
+            a\vec{v}_2 = 2\vec{v}_2 
+        \end{rcases} \Longrightarrow a =
+        \begin{pmatrix}
+            0 & 1 \\
+            0 & 2
+        \end{pmatrix}
+    \end{gather}
+
+    Проверка:
+    \begin{eqnarray}
+        \begin{pmatrix}
+            0 & 1 \\ 0 & 2
+        \end{pmatrix}
+        \begin{pmatrix}
+            \vec{v}_1 \\ \vec{v}_2
+        \end{pmatrix} = 
+        \begin{pmatrix}
+            \vec{v}_2 \\ 2\vec{v}_2
+        \end{pmatrix}
+    \end{eqnarray}
+\end{solution}

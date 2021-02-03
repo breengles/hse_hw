@@ -1,0 +1,35 @@
+%!TEX program = lualatex
+\documentclass[a4paper,12pt]{article}
+\usepackage{settings}
+\hypersetup{
+    unicode=true,  % non-Latin characters in Acrobat’s bookmarks
+    pdffitwindow=true,  % window fit to page when opened
+    pdfstartview={FitH},  % fits the width of the page to the window
+    pdftitle={Выпускная квалификационная работа},  % title
+    pdfauthor={Котов А. А.},  % author
+    pdfsubject={Энергии переходов в двухатомных квазимолекул},  % subject of the document
+    pdfkeywords={КЭД, Квазимолекулы, Двухцентровое уравнение Дирака},  % list of keywords
+    pdfnewwindow=true,  % links in new PDF window
+    colorlinks=true,  % false: boxed links; true: colored links
+    linkcolor=linkcolor,  % color of internal links (change box color with linkbordercolor)
+    citecolor=citecolor,  % color of links to bibliography
+    filecolor=magenta,  % color of file links
+    urlcolor=urlcolor  % color of external links
+}    
+
+\author{Котов Артем}
+\title{Домашняя работа к 09.09.20}
+\date{\today}
+
+\begin{document}
+    \maketitle
+    % \input{titul.tex}
+    \tableofcontents
+    \newpage
+
+    \input{task1}
+    \input{task2}
+    \input{task3}
+    \input{task4}
+    \input{task5}
+\end{document}

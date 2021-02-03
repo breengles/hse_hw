@@ -1,0 +1,27 @@
+%!TEX root = kotov.tex
+\section{Task 1}
+\begin{task}
+    Найдите ортогональную проекцию вектора $c = (0,\, 2,\, 1)$ на плоскость, определяемую векторами $a = (1,\, 1,\, 1)$ и $b = (2,\, −1,\, 2)$, и вычислите угол между вектором c и его проекцией.
+\end{task}
+
+\begin{solution}
+    \begin{gather}
+        \vec{c} = \vec{h} + \vec{c}_0 \Longrightarrow \vec{h} = \vec{c} - \vec{c}_0 = \vec{c} - \alpha \vec{a} - \beta\vec{b}        
+    \end{gather}
+    При этом $\vec{h}\cdot \vec{c}_0 = 0$.
+    От сюда получаем, что
+    \begin{gather}
+        \begin{cases}
+            (\vec{c} - \vec{c}_0) \cdot \vec{a} = 0 \\
+            (\vec{c} - \vec{c}_0) \cdot \vec{b} = 0
+        \end{cases} \Longrightarrow 
+        \begin{cases}
+            -3\alpha - 5\beta + 3 = 0\\
+            -3\alpha - 7\beta = 0
+        \end{cases} \Longrightarrow \alpha = \frac{21}{6},\,\beta=-\frac{3}{2} \Longrightarrow \vec{c}_0 = \left(\frac12,\, 2,\, \frac12\right)
+    \end{gather}
+    Угол между вектором $\vec{c}$ и плоскостью $\braket{\vec{a},\vec{b}}$:
+    \begin{gather}
+        \cos(\vec{c},\vec{c}_0) = \frac{\vec{c}\cdot\vec{c}_0}{cc_0} = \sqrt{0.9}
+    \end{gather}
+\end{solution}

@@ -1,0 +1,64 @@
+%!TEX root = kotov.tex
+\section{Task 1}
+Рассмотрим, удовлетворяют ли вектора
+\begin{equation}
+    \vec{v} \in V = 
+    \left\{\begin{pmatrix}
+    x^1 \\
+    x^2 \\
+    x^3 \\
+    x^4 \\
+    x^5 \\
+    x^6
+    \end{pmatrix} :  
+    \begin{cases}
+        \sum x^i = 0 \\
+        2(x^2 + x^3) = x^5
+    \end{cases}\right\}
+\end{equation}
+аксиомам линейного пространства:
+\begin{itemize}
+    \item $\vec{x} + \vec{y} \in V$: \\
+    $\sum (x^i + y^i) = \sum x^i + \sum y^i = 0 + 0 = 0$ \\
+    $2(x^2 + y^2 + x^3 + y^3) = 2(x^2 + x^3) + 2(y^2 + y^3) = x^5 + y^5$
+    \item $c\cdot\vec{x} \in V:$ \\
+    $c \cdot \sum x^i = c \cdot 0$ \\
+    $2(cx^2 + cx^3) = cx^5 \Longrightarrow 2(x^2 + x^3) = x^5$
+    % \item $\vec{x} + \vec{y} = \vec{y} + \vec{x}:$ \\
+    % $\sum x^i + \sum y^i = \sum y^i + \sum x^i = 0$ \\
+    % $2(x^2 + x^3) + 2(y^2 + y^3) = 2(y^2 + y^3) + 2(x^2 + x^3)$
+\end{itemize}
+Также $\vec{0} \in V$. Таким образом, $V$ является пространством в $K^6$.
+
+Найдем базис:
+\begin{gather}
+    \text{СЛАУ:}
+    \begin{pmatrix}
+        1 & 1 & 1 & 1 &  1 & 1 \\
+        0 & 2 & 2 & 0 & -1 & 0
+    \end{pmatrix} \\
+    \Downarrow \\
+    x^1 = - x^2 - x^3 - x^4 - x^5 - x^6 \\
+    x^5 = 2 x^2 + 2 x^3 \\
+    \Downarrow \\
+    \begin{cases}
+        x^1 = -3x^2 - 3x^3 - x^4 - x^6 \\
+        x^5 = 2x^2 + 2x^3
+    \end{cases}
+\end{gather}
+Т. о. свободные переменные: $x^2, x^3, x^4, x^6 \Longrightarrow \text{dim}(V) = 4$
+В качестве базиса можно взять следующие вектора:
+\begin{gather}
+    \begin{pmatrix}
+        -1\\0\\0\\0\\0\\1
+    \end{pmatrix},
+    \begin{pmatrix}
+        -1\\0\\0\\1\\0\\0
+    \end{pmatrix},
+    \begin{pmatrix}
+        -3\\0\\1\\0\\2\\0
+    \end{pmatrix},
+    \begin{pmatrix}
+        -3\\1\\0\\0\\2\\0
+    \end{pmatrix}
+\end{gather} 

@@ -1,0 +1,62 @@
+%!TEX root = kotov.tex
+\section{Task 1}
+\subsection{Случай $p\ne 5,\,7$}
+В таком случае, у матрицы, составленной из исходных векторов в строчках, существует обратная матрица:
+\begin{equation}
+    \begin{pmatrix}
+        2 & 1 & 3 \\
+        -1 & 2 & 1 \\
+        3 & 3 & -1
+    \end{pmatrix}^{-1} = 
+    \begin{pmatrix}
+        \frac17 & -\frac{2}{7} & \frac17 \\
+        -\frac{2}{7\cdot 5} & \frac{11}{7\cdot 5} & \frac{1}{7} \\
+        \frac{9}{7\cdot 5} & \frac{3}{7\cdot 5} & -\frac{1}{7}
+    \end{pmatrix}
+\end{equation}
+следовательно, существует единственное такое отображение $a$.
+
+\subsection{Случай $p = 5$}
+В таком случае, можно заметить, что 
+\begin{gather}
+    \begin{pmatrix}
+        3 \\ 1 \\ -1
+    \end{pmatrix} = 3 \cdot
+    \begin{pmatrix}
+        1 \\ 2 \\ 3
+    \end{pmatrix}
+\end{gather}
+а при этом
+\begin{gather}
+    a\begin{pmatrix}
+        3 \\ 1 \\ -1
+    \end{pmatrix} = 
+    \begin{pmatrix}
+        2 \\ 1 \\0
+    \end{pmatrix}\text{, но }
+    a\begin{pmatrix}
+        1 \\ 2 \\ 3
+    \end{pmatrix} = 
+    \begin{pmatrix}
+        1 \\ 0 \\ 1
+    \end{pmatrix} \neq 3\cdot
+    \begin{pmatrix}
+        1 \\ 0 \\ 1
+    \end{pmatrix},
+\end{gather}
+следовательно, для $p = 5$ таких операторов $a$ не существует.
+
+\subsection{Случай $p = 7$}
+Рассмотрим вектора
+\begin{gather}
+    \begin{pmatrix}
+        3 \\ 1 \\ -1
+    \end{pmatrix} = 
+    \begin{pmatrix}
+        2 \\ -1 \\ 3
+    \end{pmatrix} + 
+    \begin{pmatrix}
+        1 \\ 2 \\ 3
+    \end{pmatrix}
+\end{gather}
+при этом они корректно переводятся оператором $a$. То есть, мы знаем, как оператор $a$ переводит два линейно-независимых вектора в два линейно-независимых вектора (перевели одно двумерное пространство в двумерное пространство). У нас осталась свобода в том, куда переводится оставшееся одномерное пространство. Его можно перевести во что угодно, в любой вектор из исходного множества, мощность которого $p^n = 7^3 = 343$, то есть существует $343$ таких операторов $a$.

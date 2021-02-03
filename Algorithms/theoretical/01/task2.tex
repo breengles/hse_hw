@@ -1,0 +1,8 @@
+%!TEX root = kotov.tex
+\section{Task 2}
+\begin{gather}
+    f(n) = o(g(n)) \Longleftrightarrow \lim\frac{f(n)}{g(n)} = 0 \\
+    \frac{2^{f(n)}}{2^{g(n)}} \to 0?\quad 
+    2^{f(n) - g(n)} = 2^{g(n)\left(\frac{f(n)}{g(n)} - 1\right)} \to 2^{-g(n)}
+\end{gather}
+Почему это работает? Так как $g(n) > 1$, то мы всегда можем так вынести $g(n)$ в показателе степени. Так как $f(n) > 1$, то $\frac{f(n)}{g(n)} \to 0 \Longrightarrow g(n) \to \infty \Longrightarrow 2^{-g(n)} \to 0$.

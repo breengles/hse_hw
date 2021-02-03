@@ -1,0 +1,45 @@
+%!TEX root = kotov.tex
+\section{Task 3.6.2}
+\begin{task}
+    В пространстве $\mathbb{R}^3$ со стандартным скалярным произведением примените ортогонализацию Грамма-Шмидта к базису $\vec{f}_1$, $\vec{f}_2$, $\vec{f}_3$ (в ответ запишите полученный базис): $\vec{f}_1 = (1, 0, 4)$, $\vec{f}_2 = (2, 1, −1)$, $\vec{f}_3 = (−1, 1, 2)$.
+
+\end{task}
+
+\begin{solution}
+    \begin{gather}
+        \vec{e}_1 = \vec{f}_1 \\
+        \vec{e}_2 = \vec{f}_2 - \frac{\vec{f}_2\cdot\vec{e_1}}{e_1^2}\vec{e_1} \\
+        \vec{e}_3 = \vec{f}_3 - \frac{\vec{f}_3\cdot\vec{e}_1}{e_1^2}\vec{e}_1 - \frac{\vec{f}_3\cdot\vec{e}_2}{e_2^2}\vec{e}_2
+    \end{gather}
+    Насчитаем последовательно необходимые скалярные произведения:
+    \begin{gather}
+        \begin{rcases}
+            \vec{f}_2\cdot\vec{e}_1 = -2 \\
+            \vec{e}_1\cdot\vec{e}_1 = 17
+        \end{rcases} \Longrightarrow \vec{e}_2 = \left(\frac{36}{17}, 1, -\frac{9}{17}\right) \\
+        \begin{rcases}
+            \vec{f}_3\cdot\vec{e}_1 = 7 \\
+            \vec{f}_3\cdot\vec{e}_2 = -\frac{37}{17} \\
+            \vec{e}_2\cdot\vec{e}_2 = \frac{98}{17}
+        \end{rcases} \Longrightarrow \vec{e}_3 = \left(-\frac{30}{49}, \frac{135}{98},\frac{15}{98}\right)
+    \end{gather}
+    Получили набор:
+    \begin{gather}
+        \vec{e}_1 = (1,0,4),\,\,\vec{e}_2=\left(\frac{36}{17}, 1, -\frac{9}{17}\right), \,\, \vec{e}_3 = \left(-\frac{30}{49}, \frac{135}{98},\frac{15}{98}\right)
+    \end{gather}
+    Проверим, что он ортогональный:
+    \begin{gather}
+        \vec{e}_1\cdot\vec{e}_2 = \frac{36}{17} - \frac{36}{17} = 0 \\
+        \vec{e}_2\cdot\vec{e}_3 = -\frac{36}{17}\frac{30}{49}+\frac{135}{98}-\frac{9*15}{17*98} = 0 \\
+        \vec{e}_1\cdot\vec{e}_3 = -\frac{30}{49} + \frac{4*15}{98} = 0
+    \end{gather}
+    Нормируем эти вектора:
+    \begin{gather}
+        e_1 = \sqrt{17},\,\,
+        e_2 = \frac{7\sqrt{2}}{\sqrt{17}},\,\,
+        e_3 = \frac{15}{7\sqrt{2}} \\
+        \Downarrow \\
+        \vec{e}_1 = \frac{1}{\sqrt{17}}(1,0,4),\,\,\vec{e}_2 = \frac{\sqrt{17}}{7\sqrt{2}}\left(\frac{36}{17},1,-\frac{9}{17}\right),\,\,\vec{e}_3 = \frac{7\sqrt{2}}{15}\left(-\frac{30}{49},\frac{135}{98},\frac{15}{98}\right)
+    \end{gather}
+
+\end{solution}

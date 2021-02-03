@@ -1,0 +1,45 @@
+%!TEX root = kotov.tex
+\section{Task 3}
+$x^2 + 4x + 3$ в базисе:
+\begin{enumerate}
+    \item
+    \begin{equation}
+        1, x, x^2 :
+        \begin{pmatrix}
+            3 \\ 4 \\ 1
+        \end{pmatrix}
+    \end{equation}
+    \item
+    \begin{equation}
+        2x+1, x, x^2+x+1 :
+        \begin{pmatrix}
+            2 \\ -1 \\ 1
+        \end{pmatrix}
+    \end{equation}
+    \item
+    \begin{gather}
+        (x-5)(x-6), (x-5)(x-7), (x-6)(x-7) : \\
+        x^2 + 4x + 3 = \alpha(x-5)(x-6) + \beta(x-5)(x-7) + \gamma(x-6)(x-7) = \\
+        (\alpha + \beta + \gamma) x^2 - (11\alpha + 12\beta + 13\gamma)x + (30\alpha + 35\beta + 42\gamma) \\
+        \Downarrow \\
+        \begin{cases}
+            \alpha + \beta + \gamma = 1 \\
+            11\alpha + 12\beta + 13\gamma = -4 \\
+            30\alpha + 35\beta + 42\gamma = 3
+        \end{cases} \Longrightarrow
+        \left(
+        \begin{array}{ccc|c}
+             1 &  1 &  1 &  1 \\
+            11 & 12 & 13 & -4 \\
+            30 & 35 & 42 &  3 
+        \end{array}\right) \\
+        \Downarrow \\
+        \gamma = 24, \beta = -63, \alpha = 40 \Longrightarrow
+        \begin{pmatrix}
+            40 \\
+            -63 \\
+            24
+        \end{pmatrix}
+    \end{gather}
+
+\end{enumerate}

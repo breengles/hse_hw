@@ -1,0 +1,243 @@
+%!TEX root = kotov.tex
+\section{Task 3}
+\begin{gather}
+    U_1 = \{a| [a,
+    \begin{pmatrix}
+        1 & 2 \\
+        2 & 1    
+    \end{pmatrix}] = 0\}\quad 
+    U_2 = \{b| [b,
+    \begin{pmatrix}
+        1 & 1 \\
+        0 & 1    
+    \end{pmatrix}] = 0\}
+\end{gather}
+
+Для начала найдем базисы для $U_1$ и $U_2$:
+\begin{itemize}
+    \item $U_1$:
+    \begin{gather}
+        \begin{pmatrix}
+            a_{11} & a_{12} \\
+            a_{21} & a_{22} 
+        \end{pmatrix}
+        \begin{pmatrix}
+            1 & 2 \\
+            2 & 1
+        \end{pmatrix} =
+        \begin{pmatrix}
+            a_{11} + 2a_{12} & 2a_{11} + a_{12} \\
+            a_{21} + 2a_{22} & 2a_{21} + a_{22}
+        \end{pmatrix} = \\
+        \begin{pmatrix}
+            1 & 2 \\
+            2 & 1
+        \end{pmatrix}
+        \begin{pmatrix}
+            a_{11} & a_{12} \\
+            a_{21} & a_{22} 
+        \end{pmatrix} = 
+        \begin{pmatrix}
+            a_{11} + 2a_{21} & a_{12} + 2a_{22} \\
+            2a_{11} + a_{21} & 2a_{12} + a_{22}
+        \end{pmatrix}
+    \end{gather}
+    Рассмотрим компоненту $(1,1):a_{11}+2a_{12} = a_{11} + 2a_{21} \Longrightarrow a_{12} = a_{21} = y$
+    
+    и компоненту $(2,1):a_{21}+2a_{22} = 2a_{11} + a_{21} \Longrightarrow a_{11} = a_{22} = x$, что дает
+    \begin{eqnarray}
+        a = 
+        \begin{pmatrix}
+            x & y \\
+            y & x    
+        \end{pmatrix}
+    \end{eqnarray}
+    
+    Таким образом 
+    \begin{gather}
+        U_1 =
+        \left<
+            \begin{pmatrix}
+                1 & 0 \\
+                0 & 1
+            \end{pmatrix},
+            \begin{pmatrix}
+                0 & 1 \\
+                1 & 0
+            \end{pmatrix}
+        \right>
+    \end{gather}
+    \begin{remark}
+        Вообще говоря, не удивительно, что мы имеем единичную матрицу в качестве одно из базисных векторов, так как единичная матрица коммутирует с любыми матрицами.
+    \end{remark}
+    \item $U_2$:
+    \begin{gather}
+        \begin{pmatrix}
+            b_{11} & b_{12} \\
+            b_{21} & b_{22}
+        \end{pmatrix}
+        \begin{pmatrix}
+            1 & 1 \\
+            0 & 1
+        \end{pmatrix} =
+        \begin{pmatrix}
+            b_{11} & b_{11} + b_{12} \\
+            b_{21} & b_{21} + b_{22}
+        \end{pmatrix} =
+        \begin{pmatrix}
+            1 & 1 \\
+            0 & 1
+        \end{pmatrix}
+        \begin{pmatrix}
+            b_{11} & b_{12} \\
+            b_{21} & b_{22} 
+        \end{pmatrix} =
+        \begin{pmatrix}
+            b_{11} + b_{21} & b_{12} + b_{22} \\
+            b_{21} & b_{22}
+        \end{pmatrix}
+    \end{gather}
+    Рассмотрим компоненты $(1, 1):b_{11} = b_{11} + b_{21} \Longrightarrow b_{21} = 0$, и компоненты $(1,2): b_{11} + b_{12} = b_{12} + b_{22} \Longrightarrow b_{11}=b_{22}=x$, свободной осталась компоненты $b_{12}$
+    Таким образом
+    \begin{gather}
+        U_2 =
+        \left<
+            \begin{pmatrix}
+                1 & 0 \\
+                0 & 1
+            \end{pmatrix},
+            \begin{pmatrix}
+                0 & 1 \\
+                0 & 0
+            \end{pmatrix}
+        \right>
+    \end{gather}
+\end{itemize}
+
+\subsection{$U_1 + U_2$)}
+\begin{gather}
+    U_1 + U_2 =
+    \left<
+        \begin{pmatrix}
+            1 & 0 \\
+            0 & 1
+        \end{pmatrix},
+        \begin{pmatrix}
+            0 & 1 \\
+            1 & 0
+        \end{pmatrix}
+    \right> + 
+    \left<
+        \begin{pmatrix}
+            1 & 0 \\
+            0 & 1
+        \end{pmatrix},
+        \begin{pmatrix}
+            0 & 1 \\
+            0 & 0
+        \end{pmatrix}
+    \right> = 
+    \left<
+        \begin{pmatrix}
+            1 & 0 \\
+            0 & 1
+        \end{pmatrix},
+        \begin{pmatrix}
+            0 & 1 \\
+            1 & 0
+        \end{pmatrix},
+        \begin{pmatrix}
+            0 & 1 \\
+            0 & 0
+        \end{pmatrix}
+    \right>
+\end{gather}
+\begin{remark}
+    Так как вторая матрица из линейной оболочки порождает нам матрицы только с одинаковыми элементами на побочной диагонали, а в $U_2$ содержатся матрицы с различными элементами на побочной диагонали, то
+    \begin{gather}
+        \begin{pmatrix}
+            0 & 1 \\
+            1 & 0
+        \end{pmatrix},
+        \begin{pmatrix}
+            0 & 1 \\
+            0 & 0
+        \end{pmatrix}
+    \end{gather}
+    линейно независимы.
+\end{remark}
+
+\subsection{$U_1 \cap U_2$)}
+\begin{gather}
+    U_1 \cap U_2 = 
+    \left<
+        \begin{pmatrix}
+            1 & 0 \\
+            0 & 1
+        \end{pmatrix},
+        \begin{pmatrix}
+            0 & 1 \\
+            1 & 0
+        \end{pmatrix}
+    \right>\cap
+    \left<
+        \begin{pmatrix}
+            1 & 0 \\
+            0 & 1
+        \end{pmatrix},
+        \begin{pmatrix}
+            0 & 1 \\
+            0 & 0
+        \end{pmatrix}
+    \right> = 
+    \left<
+        \begin{pmatrix}
+            1 & 0 \\
+            0 & 1
+        \end{pmatrix}
+    \right> = 
+    \left<
+        \begin{pmatrix}
+            1 & 0 \\
+            0 & 1
+        \end{pmatrix}
+    \right>
+\end{gather}
+\begin{remark}
+    Так как вторая линейная оболочка из пересечения порождает матрицы только с нулевой $(2,1)$-компонентой, то для того, чтобы матрица из первой оболочки также была в данном подпространстве, то необходимо, чтобы коэффициент в линейной комбинации 2-ой матрицы из 
+    $ \begin{pmatrix}
+            1 & 0 \\
+            0 & 1
+        \end{pmatrix},
+        \begin{pmatrix}
+            0 & 1 \\
+            1 & 0
+        \end{pmatrix}$ всегда был равен нулю.
+\end{remark}
+\begin{remark}
+    Да, можно было бы это все проделать с помощью процедуры Гаусса, взяв за стандартный базис 
+    \begin{gather}
+        \begin{pmatrix}
+            1 & 0 \\ 0 & 0
+        \end{pmatrix},
+        \begin{pmatrix}
+            0 & 1 \\ 0 & 0
+        \end{pmatrix},
+        \begin{pmatrix}
+            0 & 0 \\ 1 & 0
+        \end{pmatrix},
+        \begin{pmatrix}
+            0 & 0 \\ 0 & 1
+        \end{pmatrix}
+    \end{gather}
+    и рассматривать матрицы как вектора в этом базисе, то есть
+    \begin{gather}
+        \begin{pmatrix}
+            1 & 0 \\
+            0 & 1
+        \end{pmatrix} \Leftrightarrow 
+        \begin{pmatrix}
+            1 \\ 0 \\ 0 \\ 1
+        \end{pmatrix}
+    \end{gather}.
+\end{remark}

@@ -1,0 +1,42 @@
+%!TEX root = kotov.tex
+\section{Task 2}
+Рассмотрим СЛАУ на коэффициенты для системы уравнений, задающую $V$ (сразу переставим строчки более удобным образом):
+\begin{equation}
+    \begin{pmatrix}
+        1 & 0 & 0 & 0 & 1 & 1 \\
+        1 & 1 & 0 & 0 & 0 & 1 \\
+        1 & 1 & 1 & 0 & 0 & 0 \\
+        0 & 0 & 0 & 1 & 1 & 1
+    \end{pmatrix}
+\end{equation}
+После преобразования матрицы методом Гаусса получим:
+\begin{equation}
+    \begin{pmatrix}
+        1 & 0 & 0 & 0 &  1 & 1 \\
+        0 & 1 & 0 & 0 & -1 & 0 \\
+        0 & 0 & 1 & 0 &  0 & -1 \\
+        0 & 0 & 0 & 1 &  1 & 1
+    \end{pmatrix}
+\end{equation}
+Что приводит к
+\begin{gather}
+    \begin{cases}
+        a_4 = -a_5 - a_6 \\
+        a_3 = a_6 \\
+        a_2 = a_5 \\
+        a_1 = -a_5 - a_6
+    \end{cases} \Longrightarrow
+    \begin{cases}
+        a_1 = -a_5 - a_6 \\
+        a_2 = a_5 \\
+        a_3 = a_6 \\
+        a_4 = -a_5 - a_6
+    \end{cases} \Longrightarrow a_5, a_6 \text{ --- свободные параметры}
+\end{gather}
+Выберем сначала $a_5 = 1, a_6 = 0$, а затем $a_5 = 0, a_6 = 1$, тогда получим два уравнения из системы:
+\begin{equation}
+    \begin{cases}
+        -x_1 + x_2 - x_4 + x_5 = 0 \\
+        -x_1 + x_3 - x_4 + x_6 = 0
+    \end{cases}
+\end{equation}

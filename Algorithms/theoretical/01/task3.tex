@@ -1,0 +1,149 @@
+%!TEX root = kotov.tex
+\section{Task 3}
+\begin{tabularx}{\textwidth}{X|X|XXXXX}
+    \toprule
+    A & B & O & o & $\Theta$ & $\omega$ & $\Omega$ \\
+    \midrule
+    % $n$ & $n^2$ & $+$ & $+$ & $-$ & $-$ & $-$ \\
+    $\log^kn$ & $n^{\epsilon}$ & $+$ & $+$ & $-$ & $-$ & $-$ \\
+    $n^k$ & $C^n$ & $+$ & $+$ & $-$ & $-$ & $-$ \\
+    $\sqrt{n}$ & $n^{\sin n}$ & $-$ & $-$ & $-$ & $-$ & $-$ \\
+    $2^n$ & $2^{n/2}$ & $-$ & $-$ & $-$ & $+$ & $+$ \\
+    $n^{\log m}$ & $m^{\log n}$ & $+$ & $-$ & $+$ & $-$ & $+$ \\
+    $\log n!$ & $\log(n^n)$ & $+$ & $-$ & $+$ & $-$ & $+$ \\
+    \bottomrule
+\end{tabularx}
+
+\begin{enumerate}
+    \item Приведем $\log^kn$ к натуральному логарифму: $\log^kn=\left(\frac{\ln n}{\ln 2}\right)^k$, а функцию $B$ приведем к экспоненциальной форме: $e^{\epsilon\ln n}$. Произведем замену переменных: $\ln n = x$, тогда наша задача сведена к сравнению следующих функций (опушена несущественная константа $\ln 2$): $A=x^k$ и $B=e^{\epsilon x}$
+    \begin{remark}
+        Вообще, этот случай сведен ко второму случаю с точностью до обозначения констант, разбор второго случая ниже.
+    \end{remark}
+    \item 
+    \begin{itemize}
+        \item O, o) Рассмотрим сначала o-малое: $n^k=o(C^n)$
+        \begin{proof}
+            \begin{equation}
+            \label{eq:1}
+                \frac{n^k}{C^n} = \frac{e^{k\ln n}}{e^{n\ln C}} = e^{k\ln n - n\ln C}
+            \end{equation}
+            Рассмотрим разные $C$:
+
+            Если $C<1$, то $\ln C < 0 \Longrightarrow$ \eqref{eq:1} $ = e^{k\ln n + n |\ln C|} \xrightarrow[n\to\infty]{} \infty \quad \forall k$.
+            
+            Если $C=1$, то $\ln C = 0 \Longrightarrow$ \eqref{eq:1} $= e^{k\ln n} \xrightarrow[n\to\infty]{} \infty \quad \forall k > 0$.
+            В случае же, если $k<0$, то \eqref{eq:1} $\xrightarrow[n\to\infty]{} 0$
+            
+            Если $C>1$, то $\ln C > 0 \Longrightarrow$ \eqref{eq:1} $= e^{k\ln n - n|\ln C|} \xrightarrow[n\to\infty]{} 0 \quad \forall k$.
+            
+            Для разумных значений параметров ($C>1,k>0$) $n^k=o(C^n)$
+        \end{proof}
+
+        Теперь займемся O: $n^k = O(C^n)$
+        \begin{proof}
+            \label{proof:O}
+            Так как в определение o-малого $\forall C\,\exists N:\forall n>N \,\, f(n)<Cg(n)$, то, очевидно, что какое-то конкретное $C$ существует, следовательно, если $f(n)=o(g(n))$, то $f(n)=O(g(n))$.
+
+            В нашем случае, $n^k=o(C^n) \Longrightarrow n^k=O(C^n)$
+        \end{proof}
+        \item $n^k\neq\omega(C^n)$
+        \begin{proof}
+            $n^k=\omega(C^n)\Leftrightarrow C^n = o(n^k)$, покажем, что это равенство неверно (для разумных значений параметров):
+            \begin{equation}
+                \label{eq:2}
+                \frac{C^n}{n^k} = e^{n\ln C - k\ln n}
+            \end{equation}
+            
+            Если $C>1$, то \eqref{eq:2} $\xrightarrow[n\to\infty]\infty$.
+
+            Таким образом, $C^n\neq o(n^k) \Rightarrow n^k\neq\omega(C^n)$
+        \end{proof}
+        \begin{remark}
+            $C^n = o(n^k)$ возможно в случае, когда $C\leq 1$, тогда $n^k=\omega(C^n)$
+        \end{remark}
+        \item $n^k \neq \Omega(C^n)$
+        \begin{proof}
+            $n^k = \Omega(C^n) \Leftrightarrow C^n = O(n^k)$. Аналогично предыдущему док-ву можно показать, что последнее неверно, следовательно, $n^k\neq\Omega(C^n)$.
+        \end{proof}
+        \item $n^k \neq \Theta(C^n)$
+        \begin{proof}
+            $n^k = \Theta(C^n) \Leftrightarrow n^k = O(C^n)$ и $C^n=O(n^k)$. Нарушение последнего уже показано в предыдущем случае, следовательно $n^k \neq \Theta(C^n)$
+        \end{proof}
+    \end{itemize}
+    \item В этом случае вообще все плохо с ``хвостом'' у $n^{\sin n}$: он болтыхается между $0$ и $n$, следовательно у нас никогда не будет универсальных констант $C$, так, чтобы эти условия выполнялись для всего хвоста ($\sqrt{n}$ --- монотонно возрастающая функция).
+    \begin{proof}
+        Рассмотрим поведение функции $n^{\sin n}$, она ограничена сверху $n$, а снизу $0$, то есть $0 \leq n^{\sin n} \leq n \, \forall n$.
+        \begin{remark}
+            вообще, $n^{\sin n }$ ни при каких натуральных $n$ не может быть равной $n$, так как для этого необходимо, чтобы  $\sin n = 1$, а это возможно только для иррационального $n = \pi/2$.
+        \end{remark}
+        Рассмотрим, например, $\sqrt{n}\neq o(n^{\sin n})$ по определению о-малого: 
+        \begin{equation}
+            \forall C>0 \,\, \exists N:\forall n > N \,\, \sqrt{n} < Cn^{\sin n}
+        \end{equation}
+        но $n^{\sin n}$ при больших $n$ всегда имеет значения (так как $\sin$ --- периодическая функция от $-1$ до $1$), сколько угодно близких к $0$, следовательно, таких $C$ нет.
+        \begin{remark}
+            Так как $-1 \leq \sin n \leq 1$, то можно ограничить $n^{\sin n} \geq n^{-1} = \frac{1}{n} \xrightarrow[n\to\infty]{} 0$
+        \end{remark}
+        Аналогично показывается и $\sqrt{n}\neq O(n^{\sin n})$, а, следовательно, и $\sqrt{n}\neq \Theta(n^{\sin n})$.
+
+        Рассмотрим еще $\sqrt{n} \neq \omega(n^{\sin n})$: по определению
+        \begin{equation}
+            \forall C>0\,\,\exists N:\forall n > N \,\, Cn^{\sin n} < \sqrt{n}
+        \end{equation}
+        Как ранее уже говорилось, $n^{\sin n}$ ограничена сверху $n$, а, точнее, всегда имеются значения, сколько угодно близкие к $n$, при этом $ \frac{n}{\sqrt{n}} \xrightarrow[n\to\infty]{} \infty $, следовательно, нет таких $C$, чтобы выполнялось $Cn^{\sin n} < \sqrt{n} \quad \forall n>N$, таким образом, $\sqrt{n} \neq \omega(n^{\sin n})$. Аналогично, $\sqrt{n} \neq \Omega(n^{\sin n})$
+    \end{proof}
+    \item 
+    \begin{itemize}
+        \item $2^{n} \neq o(2^{n/2})$ и $2^{n} \neq O(2^{n/2})$ 
+        \begin{proof}
+            $2^{n - n/2} = 2^{n/2} \xrightarrow[n\to\infty]{} \infty \Longrightarrow 2^n\neq o(2^{n/2})$ и $2^n\neq O(2^{n/2})$
+        \end{proof}
+        \item $2^n \neq \Theta(2^{n/2})$
+        \begin{proof}
+            так как $2^n\neq O(2^{n/2})$, то из $2^n\neq\Theta(2^{n/2})$
+        \end{proof}
+        \item $2^n=\omega(2^{n/2})$
+        \begin{proof}
+            $2^n=\omega(2^{n/2}) \Leftrightarrow 2^{n/2}=o(2^n)$.
+            
+            Рассмотрим $\frac{2^{n/2}}{2^n} = 2^{-n/2}\xrightarrow[n\to\infty]{}0 \Longrightarrow 2^{n/2}=o(2^n) \Longrightarrow 2^n=\omega(2^{n/2})$ 
+        \end{proof}
+        \item $2^n=\Omega(2^{n/2})$
+        \begin{proof}
+            Так как $2^n=\omega(2^{n/2})$, то $2^n=\Omega(2^{n/2})$
+        \end{proof}
+    \end{itemize}
+    \item Преобразуем к натуральному логарифму и приведем к единой экспоненциальной форме: $e^{\frac{\ln n \ln m}{\ln 2}}$ что для $A$, что для $B$ (т. е. $A\equiv B$), следовательно, это одинаковые функции, для них нарушаются условия, в которых $\forall C>0$.
+    \item 
+    \begin{itemize}
+        \item $\log n! \neq o(\log n^n)$, но $\log n! = O(\log n^n)$
+        \begin{proof}
+            Воспользуемся ф-лой Стирлинга (ох и не хотелось так доказывать, но в предыдщем варианте я что-то совсем бред написал): $n! \simeq \frac{n^{n+1/2}}{e^n}$ (выкинули незначащие константные коэффициенты)
+            \begin{gather}
+                \log n! \simeq \ln n! \simeq \ln \frac{n^{n+1/2}}{e^n} = (n+1/2)\ln n - n
+            \end{gather}
+            Для $B$ функция $n\ln n$.
+            Рассмотрим отношение $\frac{n\ln n + 1/2\ln n - n}{n\ln n} = 1 + \frac{1}{2n} - \frac{1}{\ln n} \xrightarrow[n\to\infty]{} 1$, следовательно, $\log n!\neq o(\log n^n)$, но $\log n! = O(\log n^n)$
+        \end{proof}
+        \item $\log n! = \Theta(\log n^n)$
+        \begin{proof}
+            Уже показали, что $\log n! = O(\log n^n)$, осталось показать, что $\log n^n = O(\log n!)$:
+            \begin{gather}
+                \frac{n\ln n}{n\ln n + 1/2\ln n -n} = \frac{1}{1 + 1/2\frac{1}{n} - \frac{1}{\ln n}} \xrightarrow[n\to\infty]{} 1
+            \end{gather}
+            \begin{remark}
+                Это заодно показывает, что $\log n^n \neq o(\log n!)$
+            \end{remark}
+            Следовательно, $\log n^n = O(\log n!)$ и окончательно имеем $\log n! = \Theta(\log n^n)$
+        \end{proof}
+        \item $\log n! \neq \omega(\log n^n)$
+        \begin{proof}
+            На предыдущем шаге было показано, что $\log n^n \neq o(\log n!)$, следовательно, $\log n! \neq \omega(\log n^n)$, так как они эквивалентны.
+        \end{proof}
+        \item $\log n! = \Omega(\log n^n)$
+        \begin{proof}
+            Так как $\log n! = \Omega(\log n^n) \Leftrightarrow \log n^n = O(\log n!)$, а последнее мы показали на пред-предыдущем шаге, то $\log n! = \Omega(\log n^n)$
+        \end{proof}
+    \end{itemize}
+    
+\end{enumerate}
