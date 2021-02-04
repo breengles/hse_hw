@@ -2,9 +2,9 @@
 
 
 # Archive
-* [Algorithms](Algrithms/)
-* [LinearAlgebra](LinearAlgebra/)
-* [NumericalMethodsOfLinearAlgebra](NumericalMethodsOfLinearAlgebra/)
-* [OptimizationMethods](OptimizationMethods/)
-* [ProbabilityTheoryAndMathStatistic](ProbabilityTheoryAndMathStatistic/)
-* [UnixAndPython](UnixAndPython/)
+* [Algorithms](_archive/Algrithms/)
+* [LinearAlgebra](_archive/LinearAlgebra/)
+* [NumericalMethodsOfLinearAlgebra](_archive/NumericalMethodsOfLinearAlgebra/)
+* [OptimizationMethods](_archive/OptimizationMethods/)
+* [ProbabilityTheoryAndMathStatistic](_archive/ProbabilityTheoryAndMathStatistic/)
+* [UnixAndPython](_archive/UnixAndPython/)
