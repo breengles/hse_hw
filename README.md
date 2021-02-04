@@ -2,7 +2,7 @@
 
 
 # Archive
-* [Algorithms](_archive/Algrithms/)
+* [Algorithms](_archive/Algorithms/)
 * [LinearAlgebra](_archive/LinearAlgebra/)
 * [NumericalMethodsOfLinearAlgebra](_archive/NumericalMethodsOfLinearAlgebra/)
 * [OptimizationMethods](_archive/OptimizationMethods/)
