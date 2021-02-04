@@ -1,0 +1,30 @@
+%!TEX root = kotov.tex
+\section{Task}
+\begin{task}
+    Про выборки, вариационный ряд и и плотности для него.
+\end{task}
+
+\begin{solution}
+    \begin{enumerate}[a)]
+        \item 
+        \begin{gather}
+            P(X_{(1)} < X)  = 1 - P(X_{(1)} > X) = 1 - P(X_{(1)} > X, \ldots, X_{(1)} > X) = [\text{независимость}] = \\ 
+            1 - P(X_1 > X)\ldots P(X_n > X) = 1 - (1 - P(X_1 < X))\ldots(1 - P(X_n < X)) = \\
+             1 - (1 - F(X))^n \Longrightarrow f_{X_{(1)}} = \frac{\partial (1 - (1 - F(X))^n)}{\partial X} = n(1 - F(X))^{n-1}f(X)
+        \end{gather}
+        \item
+        \begin{gather}
+            P(X_{(n)} < X) = P(X_{(1)} < X, \ldots, X_{(n)} < X) = P(X_1 < X)\ldots P(X_n < X) = F^n(X) \Longrightarrow \\
+            f_{X_{(n)}} = nF^{n-1}(X)f(X).
+        \end{gather}
+        \item
+        \begin{gather}
+            P(X_{(k)} < X) = [\text{хотя бы }k\text{ < X}] = \sum\limits_{i=k}^n {n\choose i} F^i(X)(1 - F(X))^{n - i} \underbrace{\Longrightarrow}_{\text{производная}} \\
+            \sum\limits_{i=k}^{n} {n\choose i} f(x) \left(iF^{i-1}(X)(1-F(X))^{n-i} - (n - i)F^i(X)(1-F(X))^{n-i-1}\right)
+        \end{gather}
+        Заметим, что $i{n\choose i} = n {n - 1 \choose i - 1}$ и $(n-i){n\choose i} = n {n-1\choose i}$, следовательно, у нас сократятся все, кроме первого члена этой суммы:
+        \begin{gather}
+            f_{X_{(k)}}(X) = k{n\choose k} f(X)F^{k - 1}(1 - F(X))^{n-k}
+        \end{gather}
+    \end{enumerate}
+\end{solution}

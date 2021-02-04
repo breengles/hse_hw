@@ -1,0 +1,38 @@
+%!TEX root = kotov.tex
+\section{Task 1}
+\begin{gather}
+    \xi, \eta = N(0,1)
+\end{gather}
+\begin{enumerate}[a)]
+    \item $\zeta = \xi^2 + \eta^2$
+    Рассмотрим сначала плотности распределения квадрата с.в.
+    \begin{equation}
+        \rho_{\xi^2}(x) = \rho_{\xi}(\pm\sqrt{x})\left|\left(\sqrt{x}\right)'\right| = \frac{1}{2\pi} e^{-x/2}\frac{1}{2\sqrt{x}} = \frac{1}{2\sqrt{\pi x}}e^{-x/2}
+    \end{equation}
+    Для $\eta$ аналогично.
+    При этом, так как $\xi^2 \geq 0$, то плотность при $x < 0$ равна 0.
+    Теперь свернем эти две плотности, чтобы получить плотность $\zeta$
+    \begin{gather}
+        \rho_{\xi^2+\eta^2}(x) = \int\limits_{-\infty}^{+\infty}\frac{1}{4\pi}\frac{1}{\sqrt{y}\sqrt{x-y}}e^{-(x-y)/2-y/2}dy=\frac{1}{4\pi}e^{-x/2}\int\limits_{0}^{x}\frac{dy}{\sqrt{y}\sqrt{x-y}} = \\
+        = \left[\frac{y}{x} = \cos^2t\right] = \ldots = \frac{e^{-x/2}}{4\pi}\int\limits^{\pi/2}_{0}dt = \frac{e^{-x/2}}{2}
+    \end{gather}
+    \item Рассмотрим $\zeta = \xi/\eta$ как компоненты случайного вектора, пусть вторая компоненты $\zeta' = \eta$. Лучше переименуем, а то запутаемся, изначально $\vec{\xi} = (\xi_1, \xi_2)$
+    \begin{equation}
+        \rho_{\vec{xi}} = \frac{1}{2\pi}e^{-x_1^2/2-x_2^2/2}
+    \end{equation}
+    пусть $\vec{\eta} = (\eta_1, \eta_2)$, где $\eta_1 = \xi_1/\xi_2$, а $\eta_2 = \xi_2$, найдем обратную замену
+    \begin{equation}
+        \xi_1 = \eta_1 \eta_2 \quad \xi_2 = \eta_2
+    \end{equation}
+    \begin{gather}
+        \rho_{\vec{eta}}(x_1, x_2) = \rho_{\vec{\xi}}(x_1x_2,x_2) = \frac{|x_2|}{2\pi}e^{-\frac{(x_1x_2)^2}{2}-\frac{x_2^2}{2}}
+    \end{gather}
+    \begin{remark}
+        $|x_2|$ --- Якобиан перехода.
+    \end{remark}
+    Теперь осталось найти плотность распределения первой компоненты случайного вектора, для этого проинтегрируем по второй компоненте:
+    \begin{gather}
+        \rho_{\eta_1} = \int\limits_{-\infty}^{+\infty} \frac{|x_2|}{2\pi}e^{-\frac{(x_1x_2)^2}{2}-\frac{x_2^2}{2}}dx_2 = \frac{1}{\pi}\int\limits_{0}^{+\infty}x_2e^{-\frac{x_2^2(1+x_1^2)}{2}}dx_2 = \\ 
+        = [\text{загоним экспоненту под дифференциал}] = \frac{1}{\pi}\int\limits_{1}^{0}d\left(e^{-\frac{x_2^2(1+x_1^2)}{2}}\right)\frac{(-1)}{1+x_1^2} = \frac{1}{\pi(1+x_1^2)}
+    \end{gather}
+\end{enumerate}
