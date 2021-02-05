@@ -20,7 +20,7 @@ def transform_state(state):
 
 class QLearning:
     def __init__(self, state_dim, action_dim):
-        self.qlearning_estimate = np.zeros((state_dim, action_dim)) + 2.
+        self.Q = np.zeros((state_dim, action_dim)) + 2.
 
     def update(self, transition):
         state, action, next_state, reward, done = transition
@@ -29,10 +29,8 @@ class QLearning:
     def act(self, state):
         return 0
 
-    def save(self, path):
-        weight = np.array(self.weight)
-        bias = np.array(self.bias)
-        np.savez("agent.npz", weight, bias)
+    def save(self):
+        np.save("agent.npz", self.Q)
 
 
 def evaluate_policy(agent, episodes=5):
