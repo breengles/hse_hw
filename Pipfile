@@ -15,6 +15,7 @@ jupyter = "*"
 notebook = "*"
 tqdm = "*"
 cvxopt = "*"
+gym = "*"
 
 [dev-packages]
 
