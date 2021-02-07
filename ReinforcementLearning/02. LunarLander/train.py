@@ -19,8 +19,10 @@ LEARNING_RATE = 5e-4
 
 class DQN:
     def __init__(self, state_dim, action_dim):
-        self.steps = 0 # Do not change
-        self.model = None # Torch model
+        self.steps = 0  # Do not change
+        self.model = nn.Sequential(
+                ...
+            )
 
     def consume_transition(self, transition):
         # Add transition to a replay buffer.
@@ -30,7 +32,7 @@ class DQN:
     def sample_batch(self):
         # Sample batch from a replay buffer.
         # Hints:
-        # 1. Use random.randint
+        # 1. Use random.randint (np.random.choice ???)
         # 2. Turn your batch into a numpy.array before turning it to a Tensor. It will work faster
         pass
         
