@@ -16,6 +16,7 @@ notebook = "*"
 tqdm = "*"
 cvxopt = "*"
 gym = "*"
+lets-plot = "*"
 
 [dev-packages]
 
