@@ -95,16 +95,28 @@ def evaluate_policy(agent, episodes=5, to_render=False):
 
 if __name__ == "__main__":
     env = make("MountainCar-v0")
-    ql = QLearning(state_dim=GRID_SIZE_X * GRID_SIZE_Y, action_dim=3, alpha=0.1)
-    eps = 0.1
-    transitions = 4000000
+    ql = QLearning(state_dim=GRID_SIZE_X * GRID_SIZE_Y, action_dim=3, alpha=alpha)
+    transitions = 4_000_000
     trajectory = []
     
+    log = {
+        "alpha": alpha,
+        "eps": eps,
+        "episodes": episodes,
+        "step": [],
+        "mean": [],
+        "std": []
+    }
+
     env.seed(SEED)
     env.action_space.seed(SEED)
+    
+    state_ = env.reset()
+    state = transform_state(state_)
+    t = tqdm(range(transitions))
+    for i in t:
+        eps *= (transitions + 1 - i) / transitions
         
-    state = transform_state(env.reset())
-    for i in range(transitions):
         total_reward = 0
         steps = 0
 
@@ -114,10 +126,13 @@ if __name__ == "__main__":
             action = ql.act(state, eps=eps)
 
         next_state, reward, done, _ = env.step(action)
-        reward += abs(next_state[1]) / 0.07  # not ~
+        # reward += abs(next_state[1]) / 0.07  # not ~
+        reward += 300 * (GAMMA * np.abs(next_state[1]) - np.abs(state_[1]))
         done_ = next_state[0] > 0.5
-        next_state = transform_state(next_state)
+        
+        state_ = next_state if not done else env.reset()
 
+        next_state = transform_state(next_state)
         trajectory.append((state, action, next_state, reward, done_))
 
         if done:
@@ -128,6 +143,11 @@ if __name__ == "__main__":
         state = next_state if not done else transform_state(env.reset())
 
         if (i + 1) % (transitions // 100) == 0:
-            rewards = evaluate_policy(ql, 5)
-            print(f"Step: {i + 1}, Reward mean: {np.mean(rewards)}, Reward std: {np.std(rewards)}")
-            ql.save()
+            rewards = evaluate_policy(ql, episodes)
+            
+            log["step"].append(i + 1)
+            log["mean"].append(np.mean(rewards))
+            log["std"].append(np.std(rewards))
+
+            t.set_description(f"step: {i + 1} | Rmean = {np.mean(rewards):0.4f} | Rstd = {np.std(rewards):0.4f}")
+            ql.save(name)
