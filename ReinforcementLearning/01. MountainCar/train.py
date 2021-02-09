@@ -4,6 +4,7 @@ import torch
 import copy
 from collections import deque
 import random
+from tqdm import tqdm
 
 
 GAMMA = 0.98
@@ -19,31 +20,6 @@ def transform_state(state):
     y = min(int(state[1] * GRID_SIZE_Y), GRID_SIZE_Y - 1)
     return x + GRID_SIZE_X * y
 
-
-class Sarsa:
-    def __init__(self, env, state_dim, action_dim, alpha=0.1):
-        self.Q = np.zeros((state_dim, action_dim)) + 2.
-        self.alpha = alpha
-        self.env = env
-
-    def update(self, transition, eps=0.1):
-        state, action, next_state, reward, done = transition
-        if done:
-            self.Q[next_state] = 0
-        a_ = self._act(next_state, eps)
-        self.Q[state, action] += self.alpha * (reward + GAMMA * self.Q[next_state, a_] - self.Q[state, action])
-
-    def _act(self, state, eps=0.1):
-        if random.random() < eps:
-            return self.env.action_space.sample()
-        else:
-            return self.act(state)
-        
-    def act(self, state):
-        return np.argmax(self.Q[state])
-    
-    def save(self, name="agent.npy"):
-        np.save(name, self.Q)
 
 class QLearning:
     def __init__(self, state_dim, action_dim, alpha=0.1):
@@ -95,18 +71,9 @@ def evaluate_policy(agent, episodes=5, to_render=False):
 
 if __name__ == "__main__":
     env = make("MountainCar-v0")
-    ql = QLearning(state_dim=GRID_SIZE_X * GRID_SIZE_Y, action_dim=3, alpha=alpha)
+    ql = QLearning(state_dim=GRID_SIZE_X * GRID_SIZE_Y, action_dim=3, alpha=0.15)
     transitions = 4_000_000
     trajectory = []
-    
-    log = {
-        "alpha": alpha,
-        "eps": eps,
-        "episodes": episodes,
-        "step": [],
-        "mean": [],
-        "std": []
-    }
 
     env.seed(SEED)
     env.action_space.seed(SEED)
@@ -143,11 +110,8 @@ if __name__ == "__main__":
         state = next_state if not done else transform_state(env.reset())
 
         if (i + 1) % (transitions // 100) == 0:
-            rewards = evaluate_policy(ql, episodes)
-            
-            log["step"].append(i + 1)
-            log["mean"].append(np.mean(rewards))
-            log["std"].append(np.std(rewards))
+            rewards = evaluate_policy(ql, 10)
 
             t.set_description(f"step: {i + 1} | Rmean = {np.mean(rewards):0.4f} | Rstd = {np.std(rewards):0.4f}")
-            ql.save(name)
+            ql.save("agent.npy")
+            
