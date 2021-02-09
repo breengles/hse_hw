@@ -1,5 +1,5 @@
 docker run \
-    --rm
+    --rm \
 	--hostname=quickstart.cloudera \
 	--privileged=true \
 	-t -i \
