@@ -17,6 +17,8 @@ tqdm = "*"
 cvxopt = "*"
 gym = "*"
 lets-plot = "*"
+box2d = "*"
+box2d-py = "*"
 
 [dev-packages]
 
