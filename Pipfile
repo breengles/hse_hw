@@ -20,6 +20,7 @@ lets-plot = "*"
 box2d = "*"
 box2d-py = "*"
 catboost = "*"
+pybullet = "*"
 
 [dev-packages]
 
