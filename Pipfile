@@ -19,6 +19,7 @@ gym = "*"
 lets-plot = "*"
 box2d = "*"
 box2d-py = "*"
+catboost = "*"
 
 [dev-packages]
 
