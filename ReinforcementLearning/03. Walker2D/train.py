@@ -8,6 +8,8 @@ from torch.distributions import Normal
 from torch.nn import functional as F
 from torch.optim import Adam
 import random
+from tqdm import tqdm
+
 
 ENV_NAME = "Walker2DBulletEnv-v0"
 
@@ -27,6 +29,8 @@ MIN_EPISODES_PER_UPDATE = 4
 
 ITERATIONS = 1000
 
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
     
 def compute_lambda_returns_and_gae(trajectory):
     lambda_returns = []
@@ -42,7 +46,6 @@ def compute_lambda_returns_and_gae(trajectory):
     
     # Each transition contains state, action, old action probability, value estimation and advantage estimation
     return [(s, a, p, v, adv) for (s, a, _, p, _), v, adv in zip(trajectory, reversed(lambda_returns), reversed(gae))]
-    
 
 
 class Actor(nn.Module):
@@ -58,7 +61,7 @@ class Actor(nn.Module):
         self.sigma = nn.Parameter(torch.zeros(action_dim))
         
     def compute_proba(self, state, action):
-        # Returns probability of action according to current policy and distribution of actions (use it to compute entropy loss) 
+        # Returns probability of action according to current policy and distribution of actions (use it to compute entropy loss)
         mu = self.model(state)
         sigma = torch.exp(self.sigma).unsqueeze(0).expand_as(mu)
         distr = Normal(mu, sigma)
@@ -92,8 +95,8 @@ class Critic(nn.Module):
 
 class PPO:
     def __init__(self, state_dim, action_dim):
-        self.actor = Actor(state_dim, action_dim)
-        self.critic = Critic(state_dim)
+        self.actor = Actor(state_dim, action_dim).to(DEVICE)
+        self.critic = Critic(state_dim).to(DEVICE)
         self.actor_optim = Adam(self.actor.parameters(), ACTOR_LR)
         self.critic_optim = Adam(self.critic.parameters(), CRITIC_LR)
 
@@ -107,28 +110,41 @@ class PPO:
         advantage = np.array(advantage)
         advantage = (advantage - advantage.mean()) / (advantage.std() + 1e-8)
         
+        self.actor_optim.zero_grad()
         
         for _ in range(BATCHES_PER_UPDATE):
-            idx = np.random.randint(0, len(transitions), BATCH_SIZE) # Choose random batch
-            s = torch.tensor(state[idx]).float()
-            a = torch.tensor(action[idx]).float()
-            op = torch.tensor(old_prob[idx]).float() # Probability of the action in state s.t. old policy
-            v = torch.tensor(target_value[idx]).float() # Estimated by lambda-returns 
-            adv = torch.tensor(advantage[idx]).float() # Estimated by generalized advantage estimation 
+            idx = np.random.randint(0, len(transitions), BATCH_SIZE)  # Choose random batch
+            s = torch.tensor(state[idx]).float().to(DEVICE)
+            a = torch.tensor(action[idx]).float().to(DEVICE)
+            op = torch.tensor(old_prob[idx]).float().to(DEVICE)  # Probability of the action in state s.t. old policy
+            v = torch.tensor(target_value[idx]).float().to(DEVICE)  # Estimated by lambda-returns 
+            adv = torch.tensor(advantage[idx]).float().to(DEVICE)  # Estimated by generalized advantage estimation 
             
-            # TODO: Update actor here            
+            # TODO: Update actor here
+            prob_new, distr = self.actor.compute_proba(s, a)
+            ratio = prob_new / op
+            actor_loss = -torch.mean(torch.minimum(ratio * adv, torch.clip(ratio, 1 - CLIP, 1 + CLIP) * adv))
+            actor_loss.backward()
+            
             # TODO: Update critic here
+            val = self.critic.get_value(s).flatten()
+            critic_loss = F.mse_loss(val, v)
+            self.critic_optim.zero_grad()
+            critic_loss.backward()
+            self.critic_optim.step()
+            
+        self.actor_optim.step()
             
             
     def get_value(self, state):
         with torch.no_grad():
-            state = torch.tensor(np.array([state])).float()
+            state = torch.tensor(np.array([state])).float().to(DEVICE)
             value = self.critic.get_value(state)
         return value.cpu().item()
 
     def act(self, state):
         with torch.no_grad():
-            state = torch.tensor(np.array([state])).float()
+            state = torch.tensor(np.array([state])).float().to(DEVICE)
             action, pure_action, distr = self.actor.act(state)
             prob = torch.exp(distr.log_prob(pure_action).sum(-1))
         return action.cpu().numpy()[0], pure_action.cpu().numpy()[0], prob.cpu().item()
@@ -170,7 +186,9 @@ if __name__ == "__main__":
     episodes_sampled = 0
     steps_sampled = 0
     
-    for i in range(ITERATIONS):
+    t = tqdm(range(ITERATIONS))
+    
+    for i in t:
         trajectories = []
         steps_ctn = 0
         
@@ -183,7 +201,7 @@ if __name__ == "__main__":
 
         ppo.update(trajectories)        
         
-        if (i + 1) % (ITERATIONS//100) == 0:
+        if (i + 1) % (ITERATIONS // 100) == 0:
             rewards = evaluate_policy(env, ppo, 5)
-            print(f"Step: {i+1}, Reward mean: {np.mean(rewards)}, Reward std: {np.std(rewards)}, Episodes: {episodes_sampled}, Steps: {steps_sampled}")
+            t.set_description(f"Rmean: {np.mean(rewards):0.4f}, Rstd: {np.std(rewards):0.4f}, Episodes: {episodes_sampled}, Steps: {steps_sampled}")
             ppo.save()
