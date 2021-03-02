@@ -9,6 +9,7 @@ from torch.nn import functional as F
 from torch.optim import Adam
 import random
 from tqdm import tqdm
+import pandas as pd
 
 
 ENV_NAME = "Walker2DBulletEnv-v0"
@@ -20,14 +21,14 @@ ACTOR_LR = 2e-4
 CRITIC_LR = 1e-4
 
 CLIP = 0.2
-ENTROPY_COEF = 1e-2
+ENTROPY_COEF = 1e-1
 BATCHES_PER_UPDATE = 64
 BATCH_SIZE = 64
 
 MIN_TRANSITIONS_PER_UPDATE = 2048
 MIN_EPISODES_PER_UPDATE = 4
 
-ITERATIONS = 1000
+ITERATIONS = 10000
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -110,7 +111,6 @@ class PPO:
         advantage = np.array(advantage)
         advantage = (advantage - advantage.mean()) / (advantage.std() + 1e-8)
         
-        self.actor_optim.zero_grad()
         
         for _ in range(BATCHES_PER_UPDATE):
             idx = np.random.randint(0, len(transitions), BATCH_SIZE)  # Choose random batch
@@ -122,9 +122,13 @@ class PPO:
             
             # TODO: Update actor here
             prob_new, distr = self.actor.compute_proba(s, a)
+            entropy = distr.entropy().mean()
             ratio = prob_new / op
             actor_loss = -torch.mean(torch.minimum(ratio * adv, torch.clip(ratio, 1 - CLIP, 1 + CLIP) * adv))
+            actor_loss -= ENTROPY_COEF * entropy
+            self.actor_optim.zero_grad()            
             actor_loss.backward()
+            self.actor_optim.step()
             
             # TODO: Update critic here
             val = self.critic.get_value(s).flatten()
@@ -133,7 +137,6 @@ class PPO:
             critic_loss.backward()
             self.critic_optim.step()
             
-        self.actor_optim.step()
             
             
     def get_value(self, state):
@@ -149,8 +152,8 @@ class PPO:
             prob = torch.exp(distr.log_prob(pure_action).sum(-1))
         return action.cpu().numpy()[0], pure_action.cpu().numpy()[0], prob.cpu().item()
 
-    def save(self):
-        torch.save(self.actor, "agent.pkl")
+    def save(self, name="agent.pkl"):
+        torch.save(self.actor, name)
 
 
 def evaluate_policy(env, agent, episodes=5):
@@ -188,6 +191,12 @@ if __name__ == "__main__":
     
     t = tqdm(range(ITERATIONS))
     
+    log = {
+        "step": [],
+        "rmean": [],
+        "rstd": []
+    }
+    
     for i in t:
         trajectories = []
         steps_ctn = 0
@@ -199,9 +208,18 @@ if __name__ == "__main__":
         episodes_sampled += len(trajectories)
         steps_sampled += steps_ctn
 
-        ppo.update(trajectories)        
+        ppo.update(trajectories)
         
         if (i + 1) % (ITERATIONS // 100) == 0:
-            rewards = evaluate_policy(env, ppo, 5)
-            t.set_description(f"Rmean: {np.mean(rewards):0.4f}, Rstd: {np.std(rewards):0.4f}, Episodes: {episodes_sampled}, Steps: {steps_sampled}")
-            ppo.save()
+            rewards = evaluate_policy(env, ppo, 50)
+            rmean = np.mean(rewards)
+            rstd = np.std(rewards)
+            t.set_description(f"Rmean: {rmean:0.4f}, Rstd: {rstd:0.4f}, Episodes: {episodes_sampled}, Steps: {steps_sampled}")
+            ppo.save(name=f"{i + 1}_{int(rmean)}_{int(rstd)}.pkl")
+            
+            log["step"].append(i + 1)
+            log["rmean"].append(rmean)
+            log["rstd"].append(rstd)
+            
+    pd.DataFrame(log).to_csv("log.csv")
+            
