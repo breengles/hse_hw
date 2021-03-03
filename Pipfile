@@ -14,12 +14,9 @@ matplotlib = "*"
 jupyter = "*"
 notebook = "*"
 tqdm = "*"
-cvxopt = "*"
 gym = "*"
-lets-plot = "*"
 box2d = "*"
 box2d-py = "*"
-catboost = "*"
 pybullet = "*"
 
 [dev-packages]
