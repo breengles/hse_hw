@@ -18,6 +18,8 @@ gym = "*"
 box2d = "*"
 box2d-py = "*"
 pybullet = "*"
+spacy = "*"
+nltk = "*"
 
 [dev-packages]
 
