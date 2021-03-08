@@ -2,10 +2,7 @@
 
 
 # Notes
-* You will need `swig` installed
-
-`sudo apt install swig`
-
+* Mind the `swig`
 
 # Archive
 * [Algorithms](_archive/Algorithms/)
