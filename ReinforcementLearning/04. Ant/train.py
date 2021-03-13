@@ -71,6 +71,8 @@ class TD3:
         self.replay_buffer = deque(maxlen=200000)
 
     def update(self, transition, sigma=2, c=1, updates_number=1, policy_delay=1, batch_size=128, gamma=0.99, tau=0.002):
+        if policy_delay > updates_number:
+            policy_delay = updates_number
         self.replay_buffer.append(transition)
         if len(self.replay_buffer) > batch_size * 16:
             for j in range(updates_number):
