@@ -10,10 +10,6 @@ import random
 import copy
 
 
-ENV_NAME = "AntBulletEnv-v0"
-TRANSITIONS = 1000000
-
-
 def soft_update(target, source, tau = 0.002):
     for tp, sp in zip(target.parameters(), source.parameters()):
         tp.data.copy_((1 - tau) * tp.data + tau * sp.data)
@@ -103,7 +99,6 @@ class TD3:
                 with torch.no_grad():
                     target_action = self.target_actor(next_state)
                     target_action = torch.clip(target_action + torch.clip(sigma * torch.randn_like(target_action), -c, c), self.a_low, self.a_high)
-                    # target_action = torch.clip(target_action + torch.clip(torch.normal(mean=torch.zeros(1), std=sigma_, size=tuple(target_action.shape)), -c, c), self.a_low, self.a_high)
                     
                     Q_target = reward + gamma * (1 - done) \
                              * torch.minimum(self.target_critic_1(next_state, target_action), 
@@ -155,29 +150,3 @@ def evaluate_policy(env, agent, episodes=5, seed=42):
             total_reward += reward
         returns.append(total_reward)
     return returns
-
-if __name__ == "__main__":
-    env = make(ENV_NAME)
-    test_env = make(ENV_NAME)
-    
-    td3 = TD3(state_dim=env.observation_space.shape[0], action_dim=env.action_space.shape[0])
-    state = env.reset()
-    episodes_sampled = 0
-    steps_sampled = 0
-    eps = 0.2
-    
-    for i in range(TRANSITIONS):
-        action = td3.act(state)
-        action = np.clip(action + eps * np.random.randn(*action.shape), -1, +1)
-
-        next_state, reward, done, _ = env.step(action)
-        td3.update((state, action, next_state, reward, done))
-        
-        state = env.reset() if done else next_state
-        
-        if (i + 1) % (TRANSITIONS // 100) == 0:
-            rewards = evaluate_policy(test_env, td3, 5)
-            rmean = np.mean(rewards)
-            rstd = np.std(rewards)
-            print(f"Step: {i + 1}, Reward mean: {rmean}, Reward std: {rstd}")
-            td3.save(f"{i + 1}_{rmean}_{rstd}.pkl")
