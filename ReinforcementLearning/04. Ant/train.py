@@ -19,6 +19,18 @@ def soft_update(target, source, tau = 0.002):
         tp.data.copy_((1 - tau) * tp.data + tau * sp.data)
 
 
+def set_seed(env, seed=42):
+    import os
+    
+    os.environ["PYTHONHASHSEED"] = str(seed)
+    env.seed(seed)
+    env.action_space.seed(seed)
+    np.random.seed(seed)
+    random.seed(seed)
+    torch.manual_seed(seed)
+    # torch.use_deterministic_algorithms(True)
+
+
 class Actor(nn.Module):
     def __init__(self, state_dim, action_dim):
         super().__init__()
@@ -51,7 +63,7 @@ class Critic(nn.Module):
 
 
 class TD3:
-    def __init__(self, state_dim, action_dim, actor_lr=2e-4, critic_lr=5e-4, a_low=-1, a_high=1):
+    def __init__(self, state_dim, action_dim, actor_lr=2e-4, critic_lr=5e-4, a_low=-1, a_high=1, buffer_size=200000):
         self.a_low = a_low
         self.a_high = a_high
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -68,12 +80,15 @@ class TD3:
         self.target_critic_1 = copy.deepcopy(self.critic_1)
         self.target_critic_2 = copy.deepcopy(self.critic_2)
         
-        self.replay_buffer = deque(maxlen=200000)
+        self.replay_buffer = deque(maxlen=buffer_size)
 
     def update(self, transition, sigma=2, c=1, updates_number=1, policy_delay=1, batch_size=128, gamma=0.99, tau=0.002):
         if policy_delay > updates_number:
             policy_delay = updates_number
         self.replay_buffer.append(transition)
+        
+        sigma_ = torch.tensor(sigma, device=self.device, dtype=torch.float)
+        
         if len(self.replay_buffer) > batch_size * 16:
             for j in range(updates_number):
                 # Sample batch
@@ -88,6 +103,7 @@ class TD3:
                 with torch.no_grad():
                     target_action = self.target_actor(next_state)
                     target_action = torch.clip(target_action + torch.clip(sigma * torch.randn_like(target_action), -c, c), self.a_low, self.a_high)
+                    # target_action = torch.clip(target_action + torch.clip(torch.normal(mean=torch.zeros(1), std=sigma_, size=tuple(target_action.shape)), -c, c), self.a_low, self.a_high)
                     
                     Q_target = reward + gamma * (1 - done) \
                              * torch.minimum(self.target_critic_1(next_state, target_action), 
@@ -100,10 +116,10 @@ class TD3:
                 self.critic_1_optim.zero_grad()
                 Q1_loss.backward()
                 self.critic_1_optim.step()
-                
+                                
                 self.critic_2_optim.zero_grad()
                 Q2_loss.backward()
-                self.critic_2_optim.zero_grad()
+                self.critic_2_optim.step()
                             
                 # Update actor
                 if (j + 1) % policy_delay == 0:
@@ -126,7 +142,8 @@ class TD3:
         torch.save(self.actor, name)
 
 
-def evaluate_policy(env, agent, episodes=5):
+def evaluate_policy(env, agent, episodes=5, seed=42):
+    set_seed(env=env, seed=seed)
     returns = []
     for _ in range(episodes):
         done = False
