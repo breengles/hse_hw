@@ -134,7 +134,7 @@ class TD3:
             return self.actor(state).cpu().numpy()[0]
 
     def save(self, name="agent.pkl"):
-        torch.save(self.actor, name)
+        torch.save(self.actor.model, name)
 
 
 def evaluate_policy(env, agent, episodes=5, seed=42):
