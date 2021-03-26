@@ -14,6 +14,7 @@ class ImgMorph:
         self.gray_scaled = gray_scaled
         self.histogram = None
 
+    @property
     def shape(self):
         return self.img.shape
 
@@ -44,12 +45,8 @@ class ImgMorph:
             out = cv2.merge(channels_)
             return ImgMorph(out, gray_scaled=self.gray_scaled)
             
-    def threshold(self, t=0, upper=255, kind="0"):
-        if kind == "0":
-            c = 0
-        elif kind.upper() == "THRESH_BINARY_INV":
-            c = cv2.THRESH_BINARY_INV
-        return ImgMorph(cv2.threshold(self.img, t, upper, c)[1], gray_scaled=self.gray_scaled)
+    def threshold(self, t=0, upper=255, kind=0):
+        return ImgMorph(cv2.threshold(self.img, t, upper, kind)[1], gray_scaled=self.gray_scaled)
 
     def open(self, kernel, iterations: int = 1):
         return ImgMorph(cv2.morphologyEx(self.img, cv2.MORPH_OPEN, kernel, iterations=iterations), gray_scaled=self.gray_scaled)
@@ -67,15 +64,17 @@ class ImgMorph:
         return ImgMorph((np.logical_or(self.img, other.img) * 255).astype(np.uint8))
 
     def calculate_histogram(self, normalize=True, num_bins=256):
-        color = ("k",) if self.gray_scaled else ('b','g','r')
+        color = ("k",) if self.gray_scaled else ('b', 'g', 'r')
         histogram = []
         for i, col in enumerate(color):
-            histr = cv2.calcHist([self.img], [i], None, [num_bins], [0, 256], )
+            histr = cv2.calcHist([self.img], [i], None, [num_bins], [0, 256])
             if normalize:
+            #    histr = cv2.equalizeHist(histr)
                histr = cv2.normalize(histr, None, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
             histogram.append((histr, col))
 
         self.histogram = histogram
+        return histogram
 
     def compare_histogram(self, other, distance, channel=0):
         """
@@ -107,17 +106,20 @@ class ImgMorph:
         else:
             plt.imshow(cv2.cvtColor(self.img, cv2.COLOR_BGR2RGB))
 
-    def show_histogram(self, size=5, normalize=True):
+    def show_histogram(self, colors="rgbk", bins=256, size=5, normalize=True):
         fig, ax = plt.subplots(1, 2, figsize=(size * 2, size))
 
         ax[0].set_axis_off()
-        ax[0].imshow(cv2.cvtColor(self.img, cv2.COLOR_BGR2RGB))
+        
+        if self.gray_scaled:
+            ax[0].imshow(self.img, cmap="gray")
+        else:
+            ax[0].imshow(self.img)
 
-        if self.histogram is None:
-            self.calculate_histogram(normalize=normalize)
+        self.calculate_histogram(normalize=normalize, num_bins=bins)
 
         for histr, color in self.histogram:
-            ax[1].plot(histr, color=color)
+            if color in colors:
+                ax[1].plot(histr, color=color)
 
-        ax[1].set_xlim([0, 256])
         plt.show()
