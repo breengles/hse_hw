@@ -11,3 +11,4 @@
 * [OptimizationMethods](_archive/OptimizationMethods/)
 * [ProbabilityTheoryAndMathStatistic](_archive/ProbabilityTheoryAndMathStatistic/)
 * [UnixAndPython](_archive/UnixAndPython/)
+* [MachineLearning](_archive/MachineLearning/)
