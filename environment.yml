@@ -1,25 +1,20 @@
 name: ml
 channels:
   - defaults
+  - conda-forge
 dependencies:
   - python=3.8
   - numpy
-  - requests
-  - matplotlib
   - scipy
-  - pandas
-  - tqdm
-  - dlib
-  - opencv
-  - torchvision
-  - pytorch
-  - torchaudio
-  - cudatoolkit=11.1
   - scikit-learn
-  - gym
-  - ipykernel
-  - joblib
+  - pandas
+  - matplotlib
   - seaborn
-  - ipywidgets
+  - jupyterlab
+  - opencv
+  - dlib
+  - gym
   - pybullet
-prefix: /home/breengles/miniconda3/envs/ml
+  - joblib
+  - requests
+  - tqdm
