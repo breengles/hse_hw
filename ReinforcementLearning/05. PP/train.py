@@ -13,8 +13,8 @@ def add_noise(action, sigma, lower=-1, upper=1):
     return torch.clip(action + sigma * torch.randn_like(action), lower, upper)
 
 
-def evaluate_policy(predator_agent, prey_agent, n_evals=10):
-    env = PredatorsAndPreysEnv()
+def evaluate_policy(config, predator_agent, prey_agent, n_evals=10):
+    env = PredatorsAndPreysEnv(config)
     preys_reward, predators_reward = [], []
     for _ in range(n_evals):
         r_prey, r_predator = 0, 0
@@ -49,7 +49,7 @@ def train(device,
           gamma=0.998, tau=0.005, 
           sigma_max=0.2, sigma_min=0, 
           render=False, seed=None, info=False, saverate=-1,
-          return_agents=True):
+          return_agents=True, config=DEFAULT_CONFIG):
     if saverate == -1:
         saverate = transitions // 100
     logger = Logger(locals())
@@ -60,7 +60,7 @@ def train(device,
     if seed is not None:
         set_seed(seed)
         
-    env = PredatorsAndPreysEnv(render=render)
+    env = PredatorsAndPreysEnv(config=config, render=render)
     n_predators, n_preys, n_obstacles = (
         env.predator_action_size,
         env.prey_action_size,
@@ -133,7 +133,7 @@ def train(device,
         state = next_state if not done else env.reset()
 
         if (i + 1) % saverate == 0:
-            rewards = evaluate_policy(predator_agent, prey_agent)
+            rewards = evaluate_policy(config, predator_agent, prey_agent)
 
             predator_mean = np.mean(rewards["predators"])
             predator_std = np.std(rewards["predators"])
