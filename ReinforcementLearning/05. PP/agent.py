@@ -48,36 +48,39 @@ class Agent:
             for param, param_target in zip(model.parameters(), target.parameters()):
                 param_target.data.mul_(1 - self.tau)
                 param_target.data.add_(self.tau * param.data)
-                
-    def update(self, batch_size):
-        state, action, next_state, reward, done = self.buffer.sample(batch_size)
+    
+    def update_critic(self, batch):
+        state, action, next_state, reward, done = batch
         
-        state, action, next_state, reward = map(lambda item: torch.tensor(item).to(self.device).float(),
-                                        (state, action, next_state, reward))
-        done = torch.tensor(done).to(self.device)
-
         q = torch.hstack([self.critic(state, action)] * self.n_agents)
         with torch.no_grad():
             q_target = reward + self.gamma * (1 - done) * self.critic_target(next_state, self.actor_target(next_state))  # pred Q value for each action
         
-        print(q.shape, q_target.shape)
-            
-        critic_loss = F.mse_loss(q, q_target)
-        actor_loss = -torch.mean(self.critic(state, self.actor(state)))
-        
-        # update critic
+        loss = F.mse_loss(q, q_target)
         self.critic_optimizer.zero_grad()
-        critic_loss.backward()
+        loss.backward()
         grad_clamp(self.critic)
         self.critic_optimizer.step()
         self.soft_update(self.critic, self.critic_target)
         
-        # update actor
+    def update_actor(self, state):
+        loss = -torch.mean(self.critic(state, self.actor(state)))
+        
         self.actor_optimizer.zero_grad()
-        actor_loss.backward()
+        loss.backward()
         grad_clamp(self.actor)
         self.actor_optimizer.step()
         self.soft_update(self.actor, self.actor_target)
+        
+    
+    def update(self, batch_size):
+        state, *_ = batch = self.buffer.sample(batch_size)
+        # state, action, next_state = map(lambda item: torch.tensor(item).to(self.device).float(),
+        #                                 (state, action, next_state))
+        # done = torch.tensor(done).to(self.device)
+
+        self.update_critic(batch)
+        self.update_actor(state)
         
     def save(self, path, step):
         torch.save(self.critic.state_dict(), f"{path}critic_{step}.pt")
