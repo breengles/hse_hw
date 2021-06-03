@@ -1,16 +1,12 @@
 #!/usr/bin/env python3
 
-import os
-
+import os, torch, uuid
 from tqdm import tqdm
-import torch
 import numpy as np
 from copy import deepcopy
-from numpy.random import MT19937
-from numpy.random import RandomState, SeedSequence
 from predators_and_preys_env.env import PredatorsAndPreysEnv, DEFAULT_CONFIG
 from agent import Agent
-from utils import ReplayBuffer, set_seed
+from utils import ReplayBuffer, set_seed, Logger
 
 
 def add_noise(action, sigma, lower=-1, upper=1):
@@ -53,8 +49,14 @@ def train(device,
           gamma=0.998, tau=0.005, 
           sigma_max=0.2, sigma_min=0, 
           render=False, seed=None):
+    logger = Logger(locals())
+    saved_agent_dir = "experiments/" + str(uuid.uuid4()) + "/"
+    os.makedirs(saved_agent_dir, exist_ok=True)
+    logger.save_params(saved_agent_dir + "params.json")
+    
     if seed is not None:
         set_seed(seed)
+        
         
     env = PredatorsAndPreysEnv(render=render)
     n_predators, n_preys, n_obstacles = (
@@ -142,9 +144,19 @@ def train(device,
             print(f"Predator: mean = {predator_mean} | std = {predator_std}")
             print(f"Prey:     mean = {prey_mean} | std = {prey_std}")
 
-            predator_agent.save("saved_models/predator_", i + 1)
-            prey_agent.save("saved_models/prey_", i + 1)
+            predator_agent.save(saved_agent_dir + "predator", i + 1)
+            prey_agent.save(saved_agent_dir + "prey", i + 1)
+            
+            # predator_agent.save("saved_models/predator_", i + 1)
+            # prey_agent.save("saved_models/prey_", i + 1)
+            
+            logger.log("step", i + 1)
+            logger.log("predator_mean", predator_mean)
+            logger.log("predator_std", predator_std)
+            logger.log("prey_mean", prey_mean)
+            logger.log("prey_std", prey_std)
+            logger.save(saved_agent_dir + "log.csv")
             
 
 if __name__ == "__main__":
-    train()
+    train("cpu")

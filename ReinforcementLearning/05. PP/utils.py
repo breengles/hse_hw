@@ -1,4 +1,6 @@
-import torch, random, os
+import torch, random, os, json
+import pandas as pd
+from matplotlib import pyplot as plt
 import numpy as np
 from collections import deque
 from random import sample
@@ -93,3 +95,46 @@ def set_seed(seed):
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.use_deterministic_algorithms(True)
+    
+    
+class Logger:
+    def __init__(self, params):
+        self.params = params
+        self.history = {}
+    
+    def log(self, key, value):
+        try:
+            self.history[key].append(value)
+        except KeyError:
+            self.history[key] = [value]
+    
+    def save_params(self, file_path: str, mode: str = "a+"):
+        with open(file_path, mode) as f:
+            json.dump(self.params, f, indent=4)
+    
+    def save(self, file_path: str, mode: str = "w+"):
+        pd.DataFrame(self.history).to_csv(file_path, mode=mode, index=False)
+            
+    def plot(self, x: str, y: str, 
+             std: str = None, 
+             size=(12, 8), 
+             title: str = None, 
+             label: str = None, 
+             x_label: str = None, 
+             y_label: str = None,
+             alpha: float = 0.5):
+        _, ax = plt.subplots(figsize=size)
+        
+        ax.set_title(title)
+        ax.set_xlabel(x_label)
+        ax.set_ylabel(y_label)
+    
+        x_ = np.array(self.history[x])
+        y_ = np.array(self.history[y])
+        std_ = np.array(self.history[std]) if std is not None else 0
+    
+        plt.plot(x_, y_, label=label)
+        plt.fill_between(x_, y_ - std_, y_ + std_, alpha=alpha)
+        
+        plt.legend()
+        plt.show()

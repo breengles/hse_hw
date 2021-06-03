@@ -83,8 +83,8 @@ class Agent:
         self.update_actor(state)
         
     def save(self, path, step):
-        torch.save(self.critic.state_dict(), f"{path}critic_{step}.pt")
-        torch.save(self.actor.state_dict(), f"{path}actor_{step}.pt")
+        torch.save(self.critic.state_dict(), f"{path}_critic_{step}.pt")
+        torch.save(self.actor.state_dict(), f"{path}_actor_{step}.pt")
         
 
     # def rollout(self, to_render: bool = False):
