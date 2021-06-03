@@ -48,7 +48,8 @@ def train(device,
           actor_lr=1e-3, critic_lr=1e-3, 
           gamma=0.998, tau=0.005, 
           sigma_max=0.2, sigma_min=0, 
-          render=False, seed=None, info=False, saverate=-1):
+          render=False, seed=None, info=False, saverate=-1,
+          return_agents=True):
     if saverate == -1:
         saverate = transitions // 100
     logger = Logger(locals())
@@ -158,7 +159,7 @@ def train(device,
             logger.log("prey_std", prey_std)
             logger.save(saved_agent_dir + "log.csv")
             
-    return logger
+    return predator_agent, prey_agent, logger if return_agents else logger
             
 
 if __name__ == "__main__":
