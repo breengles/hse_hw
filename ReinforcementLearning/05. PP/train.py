@@ -21,8 +21,8 @@ def evaluate_policy(predator_agent, prey_agent, n_evals=10):
         done = False
         state = env.reset()
         while not done:
-            a_prey = prey_agent.act(state)
-            a_predator = predator_agent.act(state)
+            a_prey = prey_agent.act(state).cpu()
+            a_predator = predator_agent.act(state).cpu()
 
             next_state, reward, done = env.step(a_predator, a_prey)
 
@@ -48,7 +48,9 @@ def train(device,
           actor_lr=1e-3, critic_lr=1e-3, 
           gamma=0.998, tau=0.005, 
           sigma_max=0.2, sigma_min=0, 
-          render=False, seed=None):
+          render=False, seed=None, info=False, saverate=-1):
+    if saverate == -1:
+        saverate = transitions // 100
     logger = Logger(locals())
     saved_agent_dir = "experiments/" + str(uuid.uuid4()) + "/"
     os.makedirs(saved_agent_dir, exist_ok=True)
@@ -56,7 +58,6 @@ def train(device,
     
     if seed is not None:
         set_seed(seed)
-        
         
     env = PredatorsAndPreysEnv(render=render)
     n_predators, n_preys, n_obstacles = (
@@ -94,7 +95,7 @@ def train(device,
 
     print("Filling up buffer...")
     state = env.reset()
-    for _ in tqdm(range(buffer_size)):
+    for _ in range(buffer_size):
         a_prey = np.random.uniform(-1, 1, n_preys)
         a_predator = np.random.uniform(-1, 1, n_predators)
 
@@ -108,7 +109,6 @@ def train(device,
         state = env.reset() if done else next_state
         
     print("Finished. Now training...")
-    # done = True
     state = env.reset()
     for i in tqdm(range(transitions)):
         sigma = sigma_max - (sigma_max - sigma_min) * i / transitions
@@ -131,7 +131,7 @@ def train(device,
 
         state = next_state if not done else env.reset()
 
-        if (i + 1) % (transitions // 100) == 0:  # evaluate every 1%
+        if (i + 1) % saverate == 0:
             rewards = evaluate_policy(predator_agent, prey_agent)
 
             predator_mean = np.mean(rewards["predators"])
@@ -140,9 +140,10 @@ def train(device,
             prey_mean = np.mean(rewards["preys"])
             prey_std = np.std(rewards["preys"])
 
-            print(f"Step: {i + 1}")
-            print(f"Predator: mean = {predator_mean} | std = {predator_std}")
-            print(f"Prey:     mean = {prey_mean} | std = {prey_std}")
+            if info:
+                print(f"Step: {i + 1}")
+                print(f"Predator: mean = {predator_mean} | std = {predator_std}")
+                print(f"Prey:     mean = {prey_mean} | std = {prey_std}")
 
             predator_agent.save(saved_agent_dir + "predator", i + 1)
             prey_agent.save(saved_agent_dir + "prey", i + 1)
@@ -157,6 +158,8 @@ def train(device,
             logger.log("prey_std", prey_std)
             logger.save(saved_agent_dir + "log.csv")
             
+    return logger
+            
 
 if __name__ == "__main__":
-    train("cpu")
+    train("cpu", transitions=1000, info=True, saverate=200)

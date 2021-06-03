@@ -50,14 +50,11 @@ class ReplayBuffer:
 
     def _encode_transition(self, transition):
         curr_state, action, next_state, reward, done = transition
-        
-        
-        curr_state = state2tensor(curr_state, self.device)
-        next_state = state2tensor(next_state, self.device)
-        action = torch.tensor(action, device=self.device, dtype=torch.float32)
-        reward = torch.tensor(reward, device=self.device, dtype=torch.float32)
-        done = torch.tensor(done, device=self.device, dtype=torch.int32)
-
+        curr_state = state2tensor(curr_state, "cpu")
+        next_state = state2tensor(next_state, "cpu")
+        action = torch.tensor(action, device="cpu", dtype=torch.float)
+        reward = torch.tensor(reward, device="cpu", dtype=torch.float)
+        done = torch.tensor(done, device="cpu", dtype=torch.int)
         return curr_state, action, reward, next_state, done
 
 

@@ -51,10 +51,10 @@ class Agent:
     
     def update_critic(self, batch):
         state, action, next_state, reward, done = batch
-        
         q = torch.hstack([self.critic(state, action)] * self.n_agents)
+        # pred Q value for each action
         with torch.no_grad():
-            q_target = reward + self.gamma * (1 - done) * self.critic_target(next_state, self.actor_target(next_state))  # pred Q value for each action
+            q_target = reward + self.gamma * (1 - done) * self.critic_target(next_state, self.actor_target(next_state))
         
         loss = F.mse_loss(q, q_target)
         self.critic_optimizer.zero_grad()
@@ -74,35 +74,11 @@ class Agent:
         
     
     def update(self, batch_size):
-        state, *_ = batch = self.buffer.sample(batch_size)
-        # state, action, next_state = map(lambda item: torch.tensor(item).to(self.device).float(),
-        #                                 (state, action, next_state))
-        # done = torch.tensor(done).to(self.device)
-
+        batch = tuple(map(lambda x: x.to(self.device), self.buffer.sample(batch_size)))
         self.update_critic(batch)
-        self.update_actor(state)
+        self.update_actor(batch[0])
         
     def save(self, path, step):
         torch.save(self.critic.state_dict(), f"{path}_critic_{step}.pt")
         torch.save(self.actor.state_dict(), f"{path}_actor_{step}.pt")
         
-
-    # def rollout(self, to_render: bool = False):
-    #     done = False
-    #     state = self.reset()
-    #     total_reward = 0
-
-    #     while not done:
-    #         state, reward, done, _ = self.env.step(self.act(state))
-    #         total_reward += reward
-    #         if to_render:
-    #             self.env.render()
-
-    #     self.env.close()
-    #     return total_reward
-
-    # def evaluate_policy(self, episodes: int = 5, to_render: bool = False):
-    #     rewards = []
-    #     for _ in range(episodes):
-    #         rewards.append(self.rollout(to_render=to_render))
-    #     return np.mean(rewards), np.std(rewards)
