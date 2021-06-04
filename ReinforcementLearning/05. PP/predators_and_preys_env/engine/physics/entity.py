@@ -8,8 +8,10 @@ class Entity:
         self.speed = speed
 
     def move(self, angle, timestep):
-        self.position = self.position + np.array([self.speed * np.cos(np.pi * angle) * timestep,
-                                                  self.speed * np.sin(np.pi * angle) * timestep])
+        # pi --> 2 pi
+        # a [-1, 1] --> [0, 1]
+        self.position = self.position + np.array([self.speed * np.cos(2 * np.pi * angle) * timestep,
+                                                  self.speed * np.sin(2 * np.pi * angle) * timestep])
 
     def center_distance(self, other):
         return np.linalg.norm(self.position - other.position)

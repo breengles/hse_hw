@@ -26,8 +26,10 @@ void Entity_delete(entity* Ent){
 
 void move(entity* Ent, double angle, double timestep){
     double PI = 3.1415926535897932;
-    Ent -> position[0] += Ent -> speed * cos(PI * angle) * timestep;
-    Ent -> position[1] += Ent -> speed * sin(PI * angle) * timestep;
+    // pi --> 2pi
+    // a [-1, 1] --> [0, 1]
+    Ent -> position[0] += Ent -> speed * cos(2 * PI * angle) * timestep;
+    Ent -> position[1] += Ent -> speed * sin(2 * PI * angle) * timestep;
 }
 
 double center_distance(entity* Ent, entity* Other){
