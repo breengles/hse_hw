@@ -4,27 +4,8 @@ import torch
 from agent import Agent
 from train import evaluate_policy
 from predators_and_preys_env.env import PredatorsAndPreysEnv, DEFAULT_CONFIG
+from game_configs import *
 
-game_1v1 = {
-    "game": {
-        "num_obsts": 16,
-        "num_preds": 1,
-        "num_preys": 1,
-        "x_limit": 12,
-        "y_limit": 12,
-        "obstacle_radius_bounds": [0.8, 2.0],
-        "prey_radius": 0.8,
-        "predator_radius": 1.0,
-        "predator_speed": 6.0,
-        "prey_speed": 9.0,
-        "world_timestep": 1/100,
-        "frameskip": 5
-    },
-    "environment": {
-        "frameskip": 5,
-        "time_limit": 1000
-    }
-}
 
 if __name__ == "__main__":
     config = game_1v1
