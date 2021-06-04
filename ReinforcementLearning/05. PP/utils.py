@@ -125,3 +125,12 @@ class Logger:
         
         plt.legend()
         plt.show()
+
+
+def action2discrete(self, action):
+    out = np.array(np.floor((action + 1) * self.num_bins / 2), dtype=np.int64)
+    return out
+
+
+def discrete2action(self, bin_idx):
+    return np.random.uniform(low=bin_idx, high=bin_idx + 1) * 2 / self.num_bins - 1
