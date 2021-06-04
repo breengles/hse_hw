@@ -255,55 +255,55 @@ void step(FGame* F, double* action_preys, double* action_predators){
     if (F -> frame_count == 0){ 
         F -> frame_count = G.frameskip;
         
-        // if (F -> al){
-        //     for(int i=0; i<G.num_preds; i++)
-        //         G.preds_reward[i] = G.max_dist;
-        // }
-        // else{
-        //     for(int i=0; i<G.num_preds; i++)
-        //         G.preds_reward[i] *= (-10);
-        // }
+        if (F -> al){
+            for(int i=0; i<G.num_preds; i++)
+                G.preds_reward[i] = G.max_dist;
+        }
+        else{
+            for(int i=0; i<G.num_preds; i++)
+                G.preds_reward[i] *= (-10);
+        }
          
         
-        // for(int i=0; i<G.num_preys; i++){
-        //     if (!G.alive[i]){
-        //         G.preys_reward[i] = 0;
-        //         continue;
-        //     }
+        for(int i=0; i<G.num_preys; i++){
+            if (!G.alive[i]){
+                G.preys_reward[i] = 0;
+                continue;
+            }
             
-        //     G.preys_reward[i] = center_distance(&G.predators[0], &G.preys[i]);
-        //     if (G.preys_reward[i] < G.preds_reward[0])
-        //         G.preds_reward[0] = G.preys_reward[i];
+            G.preys_reward[i] = center_distance(&G.predators[0], &G.preys[i]);
+            if (G.preys_reward[i] < G.preds_reward[0])
+                G.preds_reward[0] = G.preys_reward[i];
              
-        //     for(int j=1; j<G.num_preds; j++){
-        //         double d = center_distance(&G.predators[j], &G.preys[i]);
-        //         if  (d < G.preys_reward[i])
-        //             G.preys_reward[i] =  d;
-        //         if  (d < G.preds_reward[j])
-        //             G.preds_reward[j] =  d;
-        //     }
-        // }
+            for(int j=1; j<G.num_preds; j++){
+                double d = center_distance(&G.predators[j], &G.preys[i]);
+                if  (d < G.preys_reward[i])
+                    G.preys_reward[i] =  d;
+                if  (d < G.preds_reward[j])
+                    G.preds_reward[j] =  d;
+            }
+        }
         
         for(int i=0; i<G.num_preys; i++){
             if (G.prey_mask[i]){
                 G.preys_reward[i] = -10;
                 G.prey_mask[i] = 0;
             }
-            else {
-                G.preys_reward[i] = 0;
-            }
-            // G.preys_reward[i] *= 0.1;
+            // else {
+            //     G.preys_reward[i] = 0;
+            // }
+            G.preys_reward[i] *= 0.1;
         }
             
         for(int j=0; j<G.num_preds; j++){
             if (G.pred_mask[j]){
-                G.preds_reward[j] = 10 * G.pred_mask[j];
+                G.preds_reward[j] = -10 * G.pred_mask[j];
                 G.pred_mask[j] = 0;
             }
-            else {
-                G.preds_reward[j] = 0;
-            }
-            // G.preds_reward[j] *= (-0.1);
+            // else {
+            //     G.preds_reward[j] = 0;
+            // }
+            G.preds_reward[j] *= (-0.1);
         }
     }  
 }
