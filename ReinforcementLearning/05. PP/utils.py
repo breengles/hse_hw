@@ -47,7 +47,8 @@ class ReplayBuffer:
         
     def sample(self, batch_size: int):
         assert self.__len__() >= batch_size
-        ids = np.random.randint(0, self.__len__(), batch_size)
+        # ids = np.random.randint(0, self.__len__(), batch_size)
+        ids = np.random.choice(self.__len__(), batch_size, replace=False)
         return (self.states[ids], 
                 self.actions[ids], 
                 self.next_states[ids], 
