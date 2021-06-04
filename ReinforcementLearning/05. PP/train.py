@@ -13,8 +13,8 @@ def add_noise(action, sigma, lower=-1, upper=1):
     return torch.clip(action + sigma * torch.randn_like(action), lower, upper)
 
 
-def evaluate_policy(config, predator_agent, prey_agent, n_evals=10):
-    env = PredatorsAndPreysEnv(config)
+def evaluate_policy(config, predator_agent, prey_agent, n_evals=10, render=False):
+    env = PredatorsAndPreysEnv(config, render=render)
     preys_reward, predators_reward = [], []
     for _ in range(n_evals):
         r_prey, r_predator = 0, 0
@@ -64,7 +64,7 @@ def train(device,
     n_predators, n_preys, n_obstacles = (
         env.predator_action_size,
         env.prey_action_size,
-        DEFAULT_CONFIG["game"]["num_obsts"],
+        config["game"]["num_obsts"],
     )
     predator_buffer = ReplayBuffer(buffer_size)
     prey_buffer = ReplayBuffer(buffer_size)
@@ -93,6 +93,11 @@ def train(device,
         gamma=gamma,
         device=device
     )
+        
+    with open(saved_agent_dir + "models.txt", "w+") as f:
+        f.write(str(predator_agent.actor))
+        f.write("\n")
+        f.write(str(prey_agent.actor))
 
     print("Filling up buffer...")
     state = env.reset()
