@@ -55,8 +55,8 @@ class PredatorsAndPreysEnv:
             if self.visualizer is not None:
                 to_break = self.visualizer.update()
                 time.sleep(self.world_timestep * 2)
-            if to_break:
-                self.time_left = -1
+                if to_break:
+                    self.time_left = -1
         
         self.time_left -= 1
         state = self.game.get_state_dict()
