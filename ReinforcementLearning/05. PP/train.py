@@ -54,6 +54,7 @@ def train(device,
         saverate = transitions // 100
     logger = Logger(locals())
     saved_agent_dir = "experiments/" + str(uuid.uuid4()) + "/"
+    print("Experiment is saved:", saved_agent_dir)
     os.makedirs(saved_agent_dir, exist_ok=True)
     logger.save_params(saved_agent_dir + "params.json")
     
@@ -66,13 +67,16 @@ def train(device,
         env.prey_action_size,
         config["game"]["num_obsts"],
     )
-    predator_buffer = ReplayBuffer(buffer_size)
-    prey_buffer = ReplayBuffer(buffer_size)
+    
+    state_dim = n_predators * 4 + n_preys * 5 + n_obstacles * 3
+    
+    predator_buffer = ReplayBuffer(state_dim, n_predators, buffer_size=buffer_size, device=device)
+    prey_buffer = ReplayBuffer(state_dim, n_preys, buffer_size=buffer_size, device=device)
 
     predator_agent = Agent(
         n_agents=n_predators,
         buffer=predator_buffer,
-        state_dim=n_predators * 4 + n_preys * 5 + n_obstacles * 3,
+        state_dim=state_dim,
         action_dim=n_predators,
         hidden_size=hidden_size,
         actor_lr=actor_lr,
@@ -84,7 +88,7 @@ def train(device,
     prey_agent = Agent(
         n_agents=n_preys,
         buffer=prey_buffer,
-        state_dim=n_predators * 4 + n_preys * 5 + n_obstacles * 3,
+        state_dim=state_dim,
         action_dim=n_preys,
         hidden_size=hidden_size,
         actor_lr=actor_lr,
@@ -93,7 +97,7 @@ def train(device,
         gamma=gamma,
         device=device
     )
-        
+    
     with open(saved_agent_dir + "models.txt", "w+") as f:
         f.write(str(predator_agent.actor))
         f.write("\n")
@@ -120,10 +124,12 @@ def train(device,
         sigma = sigma_max - (sigma_max - sigma_min) * i / transitions
         
         a_prey = prey_agent.act(state)
-        a_prey = add_noise(a_prey, sigma).cpu()
+        a_prey = add_noise(a_prey, sigma, lower=0).cpu()
         
         a_predator = predator_agent.act(state)
-        a_predator = add_noise(a_predator, sigma).cpu()
+        a_predator = add_noise(a_predator, sigma, lower=0).cpu()
+        
+        # print(a_prey, a_predator)
 
         next_state, reward, done = env.step(a_predator, a_prey)
         r_prey = reward["preys"]
@@ -164,7 +170,10 @@ def train(device,
             logger.log("prey_std", prey_std)
             logger.save(saved_agent_dir + "log.csv")
             
-    return predator_agent, prey_agent, logger if return_agents else logger
+    if return_agents:
+        return predator_agent, prey_agent, logger
+    else:
+        return logger
             
 
 if __name__ == "__main__":
