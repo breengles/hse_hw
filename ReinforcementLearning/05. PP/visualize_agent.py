@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import torch
+import sys
 from agent import Agent
 from train import evaluate_policy
 from predators_and_preys_env.env import PredatorsAndPreysEnv, DEFAULT_CONFIG
@@ -8,10 +9,10 @@ from game_configs import *
 
 
 if __name__ == "__main__":
-    path_to_exp_dir = "experiments/950b504b-39a1-4e0e-a995-f1d20733fe8a"
-    step = 10000
-    pred_actor_dict = torch.load(f"{path_to_exp_dir}/predator_actor_{step}.pt")
-    prey_actor_dict = torch.load(f"{path_to_exp_dir}/prey_actor_{step}.pt")
+    path_to_exp_dir = "experiments/0b6db652-effd-41f2-9f99-6d1fdb37f602/"
+    step = int(sys.argv[-1])
+    pred_actor_dict = torch.load(f"{path_to_exp_dir}predator_actor_{step}.pt")
+    prey_actor_dict = torch.load(f"{path_to_exp_dir}prey_actor_{step}.pt")
     
     config = simple
     device = "cpu"
