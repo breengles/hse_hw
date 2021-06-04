@@ -23,39 +23,45 @@ from random import sample
     
     
 class ReplayBuffer:
-    def __init__(self, buffer_size: int = 10_000, device=torch.device("cpu")):
-        self.buffer = deque(maxlen=buffer_size)
+    def __init__(self, state_dim, action_dim, buffer_size: int = 10_000, device=torch.device("cpu")):
+        self.pos = 0
         self.device = device
+        self.size = buffer_size
+        self.states = torch.empty((buffer_size, state_dim), dtype=torch.float, device=device)
+        self.actions = torch.empty((buffer_size, action_dim), dtype=torch.float, device=device)
+        self.next_states = torch.empty((buffer_size, state_dim), dtype=torch.float, device=device)
+        self.rewards = torch.empty((buffer_size, 1), dtype=torch.float, device=device)
+        self.dones = torch.empty((buffer_size, 1), dtype=torch.float, device=device)
 
     def __len__(self):
-        return len(self.buffer)
+        return self.states.shape[0]
 
     # transition is (state, action, next_state, reward, done)
     def add(self, transition):
-        self.buffer.append(transition)
-
+        (self.states[self.pos], 
+         self.actions[self.pos], 
+         self.next_states[self.pos], 
+         self.rewards[self.pos], 
+         self.dones[self.pos]) = self._encode_transition(transition, self.device)
+        self.pos = (self.pos + 1) % self.size
+        
     def sample(self, batch_size: int):
+        assert self.__len__() >= batch_size
         ids = np.random.randint(0, self.__len__(), batch_size)
+        return (self.states[ids], 
+                self.actions[ids], 
+                self.next_states[ids], 
+                self.rewards[ids], 
+                self.dones[ids])
 
-        curr_state, action, reward, next_state, done = [], [], [], [], []
-        for idx in ids:
-            cs, a, ns, r, d = self._encode_transition(self.buffer[idx])
-            curr_state.append(cs)
-            action.append(a)
-            reward.append(r)
-            next_state.append(ns)
-            done.append(d)
-
-        return list(map(lambda x: torch.vstack(x), (curr_state, action, reward, next_state, done)))
-
-    def _encode_transition(self, transition):
+    def _encode_transition(self, transition, device="cpu"):
         curr_state, action, next_state, reward, done = transition
-        curr_state = state2tensor(curr_state, "cpu")
-        next_state = state2tensor(next_state, "cpu")
-        action = torch.tensor(action, device="cpu", dtype=torch.float)
-        reward = torch.tensor(reward, device="cpu", dtype=torch.float)
-        done = torch.tensor(done, device="cpu", dtype=torch.int)
-        return curr_state, action, reward, next_state, done
+        curr_state = state2tensor(curr_state, device)
+        next_state = state2tensor(next_state, device)
+        action = torch.tensor(action, device=device, dtype=torch.float)
+        reward = torch.tensor(reward, device=device, dtype=torch.float)
+        done = torch.tensor(done, device=device, dtype=torch.int)
+        return curr_state, action, next_state, reward, done
 
 
 def grad_clamp(model):
