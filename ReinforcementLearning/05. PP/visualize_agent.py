@@ -25,28 +25,20 @@ if __name__ == "__main__":
     )
     
     predator_agent = Agent(
-        n_agents=n_predators,
-        buffer=None,
         state_dim=n_predators * 4 + n_preys * 5 + n_obstacles * 3,
         action_dim=n_predators,
+        n_agents=n_predators,
         hidden_size=hidden_size,
-        actor_lr=1,
-        critic_lr=1,
-        tau=1,
-        gamma=1,
-        device=device
+        device=device,
+        buffer=None,  # it does not matter at eval
     )
     prey_agent = Agent(
-        n_agents=n_preys,
-        buffer=None,
         state_dim=n_predators * 4 + n_preys * 5 + n_obstacles * 3,
         action_dim=n_preys,
+        n_agents=n_preys,
         hidden_size=hidden_size,
-        actor_lr=1,
-        critic_lr=1,
-        tau=1,
-        gamma=1,
-        device=device
+        device=device,
+        buffer=None,  # it does not matter at eval
     )
     
     predator_agent.actor.load_state_dict(pred_actor_dict)
