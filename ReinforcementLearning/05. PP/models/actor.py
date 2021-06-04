@@ -10,8 +10,8 @@ class Actor(nn.Module):
             nn.Linear(hidden_size, hidden_size),
             nn.ReLU(),
             nn.Linear(hidden_size, n_agents),
-            # nn.Tanh()
         )
+        self.model[-1].weight.data.uniform_(-3e-3, 3e-3)
 
     def forward(self, state):
         return self.model(state)
