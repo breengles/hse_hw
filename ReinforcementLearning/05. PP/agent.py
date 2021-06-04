@@ -41,7 +41,10 @@ class Agent:
     def act(self, state_dict):
         state_tensor = state2tensor(state_dict, self.device)
         with torch.no_grad():
-            return self.actor(state_tensor)
+            return torch.sigmoid(self.actor(state_tensor) / 5)
+            # return 2 * torch.sigmoid(self.actor(state_tensor) / 5) - 1
+            # return torch.tanh(self.actor(state_tensor) / 1e3)
+            # return self.actor(state_tensor)
 
     def soft_update(self, model, target):
         with torch.no_grad():
@@ -59,7 +62,7 @@ class Agent:
         loss = F.mse_loss(q, q_target)
         self.critic_optimizer.zero_grad()
         loss.backward()
-        grad_clamp(self.critic)
+        # grad_clamp(self.critic)
         self.critic_optimizer.step()
         self.soft_update(self.critic, self.critic_target)
         
@@ -68,17 +71,18 @@ class Agent:
         
         self.actor_optimizer.zero_grad()
         loss.backward()
-        grad_clamp(self.actor)
+        # grad_clamp(self.actor)
         self.actor_optimizer.step()
         self.soft_update(self.actor, self.actor_target)
         
     
     def update(self, batch_size):
-        batch = tuple(map(lambda x: x.to(self.device), self.buffer.sample(batch_size)))
+        batch = self.buffer.sample(batch_size)
+        # batch = tuple(map(lambda x: x.to(self.device), self.buffer.sample(batch_size)))
         self.update_critic(batch)
         self.update_actor(batch[0])
         
     def save(self, path, step):
         torch.save(self.critic.state_dict(), f"{path}_critic_{step}.pt")
         torch.save(self.actor.state_dict(), f"{path}_actor_{step}.pt")
-        
+
