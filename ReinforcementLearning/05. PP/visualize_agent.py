@@ -9,12 +9,12 @@ from game_configs import *
 
 
 if __name__ == "__main__":
-    path_to_exp_dir = "experiments/0b6db652-effd-41f2-9f99-6d1fdb37f602/"
+    path_to_exp_dir = sys.argv[1]
     step = int(sys.argv[-1])
     pred_actor_dict = torch.load(f"{path_to_exp_dir}predator_actor_{step}.pt")
     prey_actor_dict = torch.load(f"{path_to_exp_dir}prey_actor_{step}.pt")
     
-    config = simple
+    config = prey_freeze
     device = "cpu"
     hidden_size = 64
     
