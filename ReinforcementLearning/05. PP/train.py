@@ -49,7 +49,7 @@ def train(device,
           gamma=0.998, tau=0.005, 
           sigma_max=0.2, sigma_min=0, 
           render=False, seed=None, info=False, saverate=-1,
-          return_agents=True, config=DEFAULT_CONFIG):
+          return_agents=True, config=DEFAULT_CONFIG, verbose=False):
     if saverate == -1:
         saverate = transitions // 100
     logger = Logger(locals())
@@ -117,23 +117,28 @@ def train(device,
         predator_buffer.add((state, a_predator, next_state, r_predator, done))
 
         state = env.reset() if done else next_state
-        
+    
+    debug = open(saved_agent_dir + "debug.txt", "a+") if verbose else None
+    
     print("Finished. Now training...")
     state = env.reset()
     for i in tqdm(range(transitions)):
         sigma = sigma_max - (sigma_max - sigma_min) * i / transitions
         
         a_prey = prey_agent.act(state)
-        a_prey = add_noise(a_prey, sigma, lower=0).cpu()
+        a_prey = add_noise(a_prey, sigma, lower=-0.98).cpu()
         
         a_predator = predator_agent.act(state)
-        a_predator = add_noise(a_predator, sigma, lower=0).cpu()
+        a_predator = add_noise(a_predator, sigma, lower=-0.98).cpu()
         
-        # print(a_prey, a_predator)
 
         next_state, reward, done = env.step(a_predator, a_prey)
         r_prey = reward["preys"]
         r_predator = reward["predators"]
+        
+        if debug is not None:
+            debug.write(f"{i + 1}: {a_prey} | {a_predator} | {r_prey} | {r_predator}\n")
+            debug.flush()
 
         prey_agent.buffer.add((state, a_prey, next_state, r_prey, done))
         predator_agent.buffer.add((state, a_predator, next_state, r_predator, done))
