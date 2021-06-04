@@ -6,22 +6,6 @@ from collections import deque
 from random import sample
 
 
-# class ReplayBuffer:
-#     def __init__(self, size: int = 10000):
-#         self.buffer = deque(maxlen=size)
-
-#     def add(self, transition):
-#         self.buffer.append(transition)
-
-#     def sample(self, size):
-#         assert len(self.buffer) >= size
-#         tmp = sample(self.buffer, size)
-#         return list(zip(*tmp))
-
-#     def __len__(self):
-#         return len(self.buffer)
-    
-    
 class ReplayBuffer:
     def __init__(self, state_dim, action_dim, buffer_size: int = 10_000, device=torch.device("cpu")):
         self.pos = 0
@@ -82,7 +66,6 @@ def state2tensor(state, device=torch.device("cpu")):
 def calc_dist(agent1, agent2):
     p1 = np.array([agent1["x_pos"], agent1["y_pos"]])
     p2 = np.array([agent2["x_pos"], agent2["y_pos"]])
-
     return np.linalg.norm(p1 - p2)
 
 
