@@ -7,46 +7,54 @@ from random import sample
 
 
 class ReplayBuffer:
-    def __init__(self, state_dim, action_dim, buffer_size: int = 10_000, device=torch.device("cpu")):
+    def __init__(self, state_dim, n_agents, buffer_size: int = 10_000, device=torch.device("cpu")):
         self.pos = 0
         self.device = device
         self.size = buffer_size
-        self.states = torch.empty((buffer_size, state_dim), dtype=torch.float, device=device)
-        self.actions = torch.empty((buffer_size, action_dim), dtype=torch.float, device=device)
-        self.next_states = torch.empty((buffer_size, state_dim), dtype=torch.float, device=device)
-        self.rewards = torch.empty((buffer_size, 1), dtype=torch.float, device=device)
+        self.gstates = torch.empty((buffer_size, state_dim), dtype=torch.float, device=device)
+        self.rel_states = torch.empty((buffer_size, n_agents, state_dim), dtype=torch.float, device=device)
+        self.actions = torch.empty((buffer_size, n_agents), dtype=torch.float, device=device)
+        self.next_gstates = torch.empty((buffer_size, state_dim), dtype=torch.float, device=device)
+        self.next_rel_states = torch.empty((buffer_size, n_agents, state_dim), dtype=torch.float, device=device)
+        self.rewards = torch.empty((buffer_size, n_agents), dtype=torch.float, device=device)
         self.dones = torch.empty((buffer_size, 1), dtype=torch.float, device=device)
 
     def __len__(self):
-        return self.states.shape[0]
+        return self.gstates.shape[0]
 
     # transition is (state, action, next_state, reward, done)
     def add(self, transition):
-        (self.states[self.pos], 
+        (self.gstates[self.pos], 
+         self.rel_states[self.pos],
          self.actions[self.pos], 
-         self.next_states[self.pos], 
+         self.next_gstates[self.pos], 
+         self.next_rel_states[self.pos], 
          self.rewards[self.pos], 
          self.dones[self.pos]) = self._encode_transition(transition, self.device)
         self.pos = (self.pos + 1) % self.size
         
     def sample(self, batch_size: int):
         assert self.__len__() >= batch_size
-        # ids = np.random.randint(0, self.__len__(), batch_size)
         ids = np.random.choice(self.__len__(), batch_size, replace=False)
-        return (self.states[ids], 
+        return (self.gstates[ids], 
+                self.rel_states[ids],
                 self.actions[ids], 
-                self.next_states[ids], 
+                self.next_gstates[ids], 
+                self.next_rel_states[ids], 
                 self.rewards[ids], 
                 self.dones[ids])
 
-    def _encode_transition(self, transition, device="cpu"):
-        curr_state, action, next_state, reward, done = transition
-        curr_state = state2tensor(curr_state, device)
-        next_state = state2tensor(next_state, device)
-        action = torch.tensor(action, device=device, dtype=torch.float)
-        reward = torch.tensor(reward, device=device, dtype=torch.float)
-        done = torch.tensor(done, device=device, dtype=torch.int)
-        return curr_state, action, next_state, reward, done
+    @staticmethod
+    def _encode_transition(transition, device="cpu"):
+        gstate, rel_state, action, next_gstate, next_rel_state, reward, done = transition
+        gstate = torch.tensor(gstate, device=device)
+        rel_state = torch.tensor(rel_state, device=device)
+        action = torch.tensor(action, device=device)
+        next_gstate = torch.tensor(next_gstate, device=device)
+        next_rel_state = torch.tensor(next_rel_state, device=device)
+        reward = torch.tensor(reward, device=device)
+        done = torch.tensor(done, device=device)
+        return gstate, rel_state, action, next_gstate, next_rel_state, reward, done
 
 
 def grad_clamp(model):
@@ -54,33 +62,21 @@ def grad_clamp(model):
         param.grad.data.clamp_(-1, 1)
 
 
-def state2tensor(state, device=torch.device("cpu")):
-    res = []
-    for _, team_arr in state.items():
-        for agent_data in team_arr:
-            res.extend(agent_data.values())
+# def state2tensor(state, device=torch.device("cpu")):
+#     res = []
+#     for _, team_arr in state.items():
+#         for agent_data in team_arr:
+#             res.extend(agent_data.values())
 
-    return torch.tensor(res, device=device, dtype=torch.float32)
+#     return torch.tensor(res, device=device, dtype=torch.float32)
 
-
-def calc_dist(agent1, agent2):
-    p1 = np.array([agent1["x_pos"], agent1["y_pos"]])
-    p2 = np.array([agent2["x_pos"], agent2["y_pos"]])
-    return np.linalg.norm(p1 - p2)
-
-
-def is_collision(agent1, agent2):
-    dist = calc_dist(agent1, agent2)
-    dist_min = agent1["radius"] + agent2["radius"]
-    return dist < dist_min
-
-
-def set_seed(seed):
+def set_seed(env, seed):
     random.seed(seed)
     random.seed(seed)
     os.environ["PYTHONHASHSEED"] = str(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
+    env.seed(seed)
     # torch.use_deterministic_algorithms(True)
     
     
@@ -125,12 +121,3 @@ class Logger:
         
         plt.legend()
         plt.show()
-
-
-def action2discrete(self, action):
-    out = np.array(np.floor((action + 1) * self.num_bins / 2), dtype=np.int64)
-    return out
-
-
-def discrete2action(self, bin_idx):
-    return np.random.uniform(low=bin_idx, high=bin_idx + 1) * 2 / self.num_bins - 1

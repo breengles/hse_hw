@@ -14,4 +14,4 @@ class Critic(nn.Module):
         )
 
     def forward(self, state, action):
-        return self.model(torch.cat([state, action], dim=1))
+        return self.model(torch.cat([state, action], dim=-1))

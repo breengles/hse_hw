@@ -48,19 +48,15 @@ class VectorizeWrapper:
     
     def step(self, pred_actions, prey_actions):
         next_state_dict, reward, done = self.env.step(pred_actions, prey_actions)
-
         global_state = self._vectorize_state(next_state_dict)
         rel_preds_states, rel_preys_states = self._relative_agents_states(next_state_dict)
-        rewards = self._vectorize_reward(reward)
-
-        return global_state, rel_preds_states, rel_preys_states, rewards, done
+        r_pred, r_prey = self._vectorize_reward(reward)
+        return global_state, rel_preds_states, rel_preys_states, r_pred, r_prey, done
         
     def reset(self):
         state_dict = self.env.reset()
-
         global_state = self._vectorize_state(state_dict)
         rel_preds_states, rel_preys_states = self._relative_agents_states(state_dict)
-        
         return global_state, rel_preds_states, rel_preys_states
         
     def seed(self, seed):
