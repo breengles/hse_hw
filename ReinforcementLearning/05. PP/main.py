@@ -1,15 +1,51 @@
 #!/usr/bin/env python3
 
-import os, torch, uuid
+import os, torch, uuid, pprint, json
 from tqdm import tqdm
 import numpy as np
 from copy import deepcopy
 from predators_and_preys_env.env import PredatorsAndPreysEnv, DEFAULT_CONFIG
 from agent import Agent
 from utils import ReplayBuffer, set_seed, Logger
-from game_configs import *
 from wrapper import VectorizeWrapper
-import pprint
+from argparse import ArgumentParser
+
+
+def render(config, path_to_experiment_dir, step, device="cpu", hidden_size=64):
+    env = PredatorsAndPreysEnv(config=config, render=True)
+    n_predators, n_preys, n_obstacles = (
+        env.predator_action_size,
+        env.prey_action_size,
+        config["game"]["num_obsts"],
+    )
+    
+    predator_agent = Agent(
+        state_dim=n_predators * 4 + n_preys * 5 + n_obstacles * 3,
+        action_dim=n_predators,
+        n_agents=n_predators,
+        hidden_size=hidden_size,
+        device=device,
+        buffer=None,  # it does not matter at eval
+    )
+    prey_agent = Agent(
+        state_dim=n_predators * 4 + n_preys * 5 + n_obstacles * 3,
+        action_dim=n_preys,
+        n_agents=n_preys,
+        hidden_size=hidden_size,
+        device=device,
+        buffer=None,  # it does not matter at eval
+    )
+    
+    for i, actor in enumerate(predator_agent.actors):
+        actor.load_state_dict(torch.load(f"{path_to_experiment_dir}/predator_actor{i}_{step}.pt"))
+        actor.eval()
+
+    for i, actor in enumerate(prey_agent.actors):
+        actor.load_state_dict(torch.load(f"{path_to_experiment_dir}/prey_actor{i}_{step}.pt"))
+        actor.eval()
+
+    evaluate_policy(config, predator_agent, predator_agent, render=True)
+
 
 
 def add_noise(action, sigma, lower=-1, upper=1):
@@ -239,6 +275,50 @@ def train(device,
             
 
 if __name__ == "__main__":
-    log = train("cuda", transitions=1, info=True, saverate=200, buffer_size=100, batch_size=16, config=prey_freeze)
-    print(log[-1].history)
+    parser = ArgumentParser()
+    parser.add_argument("--train", action="store_true")
+    parser.add_argument("--render", type=str, default="")
+    parser.add_argument("--render-step", type=int, default=0)
+    parser.add_argument("--transitions", type=int, default=100000)
+    parser.add_argument("--saverate", type=int, default=-1)
+    parser.add_argument("--buffer", type=int, default=10000)
+    parser.add_argument("--batch", type=int, default=2048)
+    parser.add_argument("--config", type=str, default="")
+    parser.add_argument("--device", type=str, default="cpu")
+    parser.add_argument("--hidden-size", type=int, default=64)
+    parser.add_argument("--actor-lr", type=float, default=1e-3)
+    parser.add_argument("--critic-lr", type=float, default=1e-3)
+    parser.add_argument("--gamma", type=float, default=0.998)
+    parser.add_argument("--tau", type=float, default=0.005)
+    parser.add_argument("--sigma-max", type=float, default=0.2)
+    parser.add_argument("--sigma-min", type=float, default=0.0)
+
+    opts = parser.parse_args()
     
+    if opts.config:
+        with open(opts.config, "r") as f:
+            config = json.load(f)
+    else:
+        config = DEFAULT_CONFIG
+    
+    if opts.train:
+        log = train(device=opts.device,
+                    transitions=opts.transitions,
+                    saverate=opts.saverate,
+                    buffer_size=opts.buffer,
+                    batch_size=opts.batch,
+                    config=config,
+                    actor_lr=opts.actor_lr,
+                    critic_lr=opts.critic_lr,
+                    gamma=opts.gamma,
+                    tau=opts.tau,
+                    sigma_max=opts.sigma_max,
+                    sigma_min=opts.sigma_min,
+                    hidden_size=opts.hidden_size,
+                    render=False
+                    )
+        log.plot("step", "predator_mean", "predator_std", title="Predator")
+        
+    if opts.render:
+        assert opts.render_step > 0
+        render(config, opts.render, opts.render_step, opts.device, opts.hidden_size)
