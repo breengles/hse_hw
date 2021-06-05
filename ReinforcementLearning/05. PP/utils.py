@@ -62,14 +62,6 @@ def grad_clamp(model):
         param.grad.data.clamp_(-1, 1)
 
 
-# def state2tensor(state, device=torch.device("cpu")):
-#     res = []
-#     for _, team_arr in state.items():
-#         for agent_data in team_arr:
-#             res.extend(agent_data.values())
-
-#     return torch.tensor(res, device=device, dtype=torch.float32)
-
 def set_seed(env, seed):
     random.seed(seed)
     random.seed(seed)

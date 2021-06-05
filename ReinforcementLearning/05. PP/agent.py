@@ -27,23 +27,12 @@ class Agent:
             actor.to(self.device)
             target.to(self.device)
 
-        # self.actor = Actor(state_dim, n_agents, hidden_size)
-        # self.actor_target = deepcopy(self.actor)
-        # self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=actor_lr)
-        # self.actor.to(self.device)
-        # self.actor_target.to(self.device)
-
         self.critic = Critic(state_dim, action_dim, 1, hidden_size)
         self.critic_target = deepcopy(self.critic)
         self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=critic_lr)
         self.critic.to(self.device)
         self.critic_target.to(self.device)
 
-    # def act(self, state_dict):
-    #     state_tensor = state2tensor(state_dict, self.device)
-    #     with torch.no_grad():
-    #         return torch.tanh(self.actor(state_tensor))
-        
     def act(self, rel_state):
         actions = []
         with torch.no_grad():
@@ -58,19 +47,6 @@ class Agent:
                 param_target.data.add_(self.tau * param.data)
     
     def update_critic(self, global_state, action, next_global_state, next_rel_state, reward, done):
-    #     state, action, next_state, reward, done = batch
-    #     q = torch.hstack([self.critic(state, action)] * self.n_agents)
-    #     # pred Q value for each action
-    #     with torch.no_grad():
-    #         q_target = reward + self.gamma * (1 - done) * self.critic_target(next_state, self.actor_target(next_state))
-        
-    #     loss = F.mse_loss(q, q_target)
-    #     self.critic_optimizer.zero_grad()
-    #     loss.backward()
-    #     grad_clamp(self.critic)
-    #     self.critic_optimizer.step()
-    #     self.soft_update(self.critic, self.critic_target)
-    
         q = torch.hstack([self.critic(global_state, action)] * self.n_agents)
         # pred Q value for each action
         with torch.no_grad():
@@ -87,13 +63,6 @@ class Agent:
         self.soft_update(self.critic, self.critic_target)        
         
     def update_actors(self, global_state, rel_state, action_others):
-        # loss = -torch.mean(self.critic(state, self.actor(state)))
-        # self.actor_optimizer.zero_grad()
-        # loss.backward()
-        # grad_clamp(self.actor)
-        # self.actor_optimizer.step()
-        # self.soft_update(self.actor, self.actor_target)
-        
         actions = action_others.clone()
         for idx, (actor, target, optim) in enumerate(zip(self.actors, self.actors_target, self.actors_optims)):
             tmp = actions[idx].clone()

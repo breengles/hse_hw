@@ -152,20 +152,6 @@ def train(device,
             f.write(str(actor))
 
     print("Filling up buffer...")
-    # state = env.reset()
-    # for _ in range(buffer_size):
-    #     a_prey = np.random.uniform(-1, 1, n_preys)
-    #     a_predator = np.random.uniform(-1, 1, n_predators)
-
-    #     next_state, reward, done = env.step(a_predator, a_prey)
-    #     r_prey = reward["preys"]
-    #     r_predator = reward["predators"]
-
-    #     prey_buffer.add((state, a_prey, next_state, r_prey, done))
-    #     predator_buffer.add((state, a_predator, next_state, r_predator, done))
-
-    #     state = env.reset() if done else next_state
-        
     gstate, rel_pred_state, rel_prey_state = env.reset()
     for _ in range(16 * batch_size):
         a_pred = np.random.uniform(-1, 1, n_preds)
@@ -207,8 +193,8 @@ def train(device,
         a_pred = predator_agent.act(torch.tensor(rel_pred_state, device=device))
         a_prey = prey_agent.act(torch.tensor(rel_prey_state, device=device))
         
-        # a_prey = add_noise(a_prey, sigma, lower=-0.98).cpu()
-        # a_predator = add_noise(a_predator, sigma, lower=-0.98).cpu()
+        a_prey = add_noise(a_prey, sigma).cpu()
+        a_predator = add_noise(a_predator, sigma).cpu()
 
         next_gstate, next_rel_pred_state, next_rel_prey_state, r_pred, r_prey, done = env.step(a_pred, a_prey)
         
@@ -258,9 +244,6 @@ def train(device,
             predator_agent.save(saved_agent_dir + "predator", i + 1)
             prey_agent.save(saved_agent_dir + "prey", i + 1)
             
-            # predator_agent.save("saved_models/predator_", i + 1)
-            # prey_agent.save("saved_models/prey_", i + 1)
-            
             logger.log("step", i + 1)
             logger.log("predator_mean", predator_mean)
             logger.log("predator_std", predator_std)
@@ -277,6 +260,8 @@ def train(device,
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--train", action="store_true")
+    parser.add_argument("--info", action="store_true")
+    parser.add_argument("--verbose", action="store_true")
     parser.add_argument("--render", type=str, default="")
     parser.add_argument("--render-step", type=int, default=0)
     parser.add_argument("--transitions", type=int, default=100000)
@@ -315,7 +300,9 @@ if __name__ == "__main__":
                     sigma_max=opts.sigma_max,
                     sigma_min=opts.sigma_min,
                     hidden_size=opts.hidden_size,
-                    render=False
+                    info=opts.info,
+                    verbose=opts.verbose,
+                    render=False,
                     )
         log.plot("step", "predator_mean", "predator_std", title="Predator")
         
