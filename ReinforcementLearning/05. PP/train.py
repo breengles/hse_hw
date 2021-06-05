@@ -131,7 +131,7 @@ def train(device,
     #     state = env.reset() if done else next_state
         
     gstate, rel_pred_state, rel_prey_state = env.reset()
-    for _ in range(buffer_size):
+    for _ in range(16 * batch_size):
         a_pred = np.random.uniform(-1, 1, n_preds)
         a_prey = np.random.uniform(-1, 1, n_preys)
 
