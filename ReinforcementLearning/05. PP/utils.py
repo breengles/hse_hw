@@ -7,54 +7,52 @@ from random import sample
 
 
 class ReplayBuffer:
-    def __init__(self, state_dim, n_agents, buffer_size: int = 10_000, device=torch.device("cpu")):
-        self.pos = 0
+    def __init__(self, n_agents, state_dim, action_dim, size: int = 10_000, device=torch.device("cpu")):
+        self.n_agents = n_agents
         self.device = device
-        self.size = buffer_size
-        self.gstates = torch.empty((buffer_size, state_dim), dtype=torch.float, device=device)
-        self.rel_states = torch.empty((buffer_size, n_agents, state_dim), dtype=torch.float, device=device)
-        self.actions = torch.empty((buffer_size, n_agents), dtype=torch.float, device=device)
-        self.next_gstates = torch.empty((buffer_size, state_dim), dtype=torch.float, device=device)
-        self.next_rel_states = torch.empty((buffer_size, n_agents, state_dim), dtype=torch.float, device=device)
-        self.rewards = torch.empty((buffer_size, n_agents), dtype=torch.float, device=device)
-        self.dones = torch.empty((buffer_size, 1), dtype=torch.float, device=device)
+        self.size = size
+        
+        self.gstates = torch.empty((self.size, state_dim), dtype=torch.float, device=device)
+        self.agent_states = torch.empty((n_agents, self.size, state_dim), dtype=torch.float, device=device)
+        self.actions = torch.empty((n_agents, self.size, action_dim), dtype=torch.float, device=device)
+        self.next_gstates = torch.empty((self.size, state_dim), dtype=torch.float, device=device)
+        self.next_agent_states = torch.empty((n_agents, self.size, state_dim), dtype=torch.float, device=device)
+        self.rewards = torch.empty((n_agents, self.size, 1), dtype=torch.float, device=device)
+        self.dones = torch.empty((self.size, 1), dtype=torch.float, device=device)
+        
+        self.pos = 0
+        self.cur_size = 0
 
     def __len__(self):
-        return self.gstates.shape[0]
+        return self.cur_size
 
-    # transition is (state, action, next_state, reward, done)
+    # transition is (state, action, next_state, reward, done) for agent
     def add(self, transition):
-        (self.gstates[self.pos], 
-         self.rel_states[self.pos],
-         self.actions[self.pos], 
-         self.next_gstates[self.pos], 
-         self.next_rel_states[self.pos], 
-         self.rewards[self.pos], 
-         self.dones[self.pos]) = self._encode_transition(transition, self.device)
+        if self.cur_size < self.size:
+            self.cur_size += 1
+            
+        gstate, agent_states, actions, next_gstates, next_agent_states, rewards, dones = transition
+        self.gstates[self.pos] = torch.tensor(gstate, device=self.device)
+        self.next_gstates[self.pos] = torch.tensor(next_gstates, device=self.device)
+        self.dones[self.pos] = torch.tensor(dones, device=self.device)
+        
+        for idx in range(self.n_agents):
+            self.agent_states[idx, self.pos] = torch.tensor(agent_states[idx], device=self.device)
+            self.next_agent_states[idx, self.pos] = torch.tensor(next_agent_states[idx], device=self.device)
+            self.rewards[idx, self.pos] = torch.tensor(rewards[idx], device=self.device)
+            self.actions[idx, self.pos] = torch.tensor(actions[idx], device=self.device)
         self.pos = (self.pos + 1) % self.size
         
     def sample(self, batch_size: int):
         assert self.__len__() >= batch_size
         ids = np.random.choice(self.__len__(), batch_size, replace=False)
         return (self.gstates[ids], 
-                self.rel_states[ids],
-                self.actions[ids], 
+                self.agent_states[:, ids],
+                self.actions[:, ids], 
                 self.next_gstates[ids], 
-                self.next_rel_states[ids], 
-                self.rewards[ids], 
+                self.next_agent_states[:, ids], 
+                self.rewards[:, ids], 
                 self.dones[ids])
-
-    @staticmethod
-    def _encode_transition(transition, device="cpu"):
-        gstate, rel_state, action, next_gstate, next_rel_state, reward, done = transition
-        gstate = torch.tensor(gstate, device=device)
-        rel_state = torch.tensor(rel_state, device=device)
-        action = torch.tensor(action, device=device)
-        next_gstate = torch.tensor(next_gstate, device=device)
-        next_rel_state = torch.tensor(next_rel_state, device=device)
-        reward = torch.tensor(reward, device=device)
-        done = torch.tensor(done, device=device)
-        return gstate, rel_state, action, next_gstate, next_rel_state, reward, done
 
 
 def grad_clamp(model):

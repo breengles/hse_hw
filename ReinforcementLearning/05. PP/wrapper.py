@@ -1,5 +1,6 @@
 from copy import deepcopy
 from itertools import chain
+import numpy as np
 
 
 class VectorizeWrapper:
@@ -7,8 +8,8 @@ class VectorizeWrapper:
         self.env = env
         self.return_state_dict = return_state_dict # TODO: for baseline agents
         
-        self.predator_action_size = env.predator_action_size
-        self.prey_action_size = env.prey_action_size
+        self.n_preds = env.predator_action_size
+        self.n_preys = env.prey_action_size
         
     @staticmethod
     def _vectorize_state(state_dicts):
@@ -22,7 +23,7 @@ class VectorizeWrapper:
     
     @staticmethod
     def _vectorize_reward(reward_dicts):
-        return list(reward_dicts["predators"]), list(reward_dicts["preys"])
+        return np.hstack([reward_dicts["predators"], reward_dicts["preys"]])
             
     def _relative_agents_states(self, state_dicts):
         new_agents_states = []
@@ -43,21 +44,20 @@ class VectorizeWrapper:
             
             new_agents_states.append(new_agent_state)
         
-        #        preds                                            preys
-        return new_agents_states[:self.predator_action_size], new_agents_states[-self.prey_action_size:]
+        return np.array(new_agents_states)
     
-    def step(self, pred_actions, prey_actions):
-        next_state_dict, reward, done = self.env.step(pred_actions, prey_actions)
+    def step(self, actions):
+        next_state_dict, reward, done = self.env.step(actions[self.n_preds:], actions[-self.n_preys:])
         global_state = self._vectorize_state(next_state_dict)
-        rel_preds_states, rel_preys_states = self._relative_agents_states(next_state_dict)
-        r_pred, r_prey = self._vectorize_reward(reward)
-        return global_state, rel_preds_states, rel_preys_states, r_pred, r_prey, done
+        agent_states = self._relative_agents_states(next_state_dict)
+        rewards = self._vectorize_reward(reward)
+        return global_state, agent_states, rewards, done
         
     def reset(self):
         state_dict = self.env.reset()
         global_state = self._vectorize_state(state_dict)
-        rel_preds_states, rel_preys_states = self._relative_agents_states(state_dict)
-        return global_state, rel_preds_states, rel_preys_states
+        agent_states = self._relative_agents_states(state_dict)
+        return global_state, agent_states
         
     def seed(self, seed):
         self.env.seed(seed)
