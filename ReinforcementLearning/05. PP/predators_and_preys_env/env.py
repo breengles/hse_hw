@@ -53,7 +53,8 @@ class PredatorsAndPreysEnv:
         for _ in range(self.frame_skip):
             self.game.step(action_dict)
             if self.visualizer is not None:
-                self.visualizer.update()
+                if self.visualizer.update():
+                    self.time_left = -1
                 time.sleep(self.world_timestep)
 
         self.time_left -= 1
