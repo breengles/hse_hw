@@ -10,11 +10,11 @@
         "predator_radius": 1.0,
         "predator_speed": 6.0,
         "prey_speed": 9.0,
-        "world_timestep": 0.01,
-        "frameskip": 5
+        "world_timestep": 0.025,
+        "frameskip": 2
     },
     "environment": {
-        "frameskip": 5,
+        "frameskip": 2,
         "time_limit": 500
     }
 }
