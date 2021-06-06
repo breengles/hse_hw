@@ -8,6 +8,7 @@ then
     make clean
     make
 else
+    make clean
     clang -dynamiclib -undefined dynamic_lookup -o game.dylib game.c
 fi
  
@@ -17,6 +18,7 @@ then
     make clean
     make
 else
+    make clean
     clang -dynamiclib -undefined dynamic_lookup -o entity.dylib entity.c
 fi
 
