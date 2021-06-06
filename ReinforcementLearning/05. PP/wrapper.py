@@ -1,6 +1,5 @@
 from copy import deepcopy
 from itertools import chain
-import numpy as np
 
 
 class VectorizeWrapper:
@@ -55,17 +54,28 @@ class VectorizeWrapper:
         prey_actions = actions[-self.n_preys:]
         
         state_dict, reward, done = self.env.step(pred_actions, prey_actions)
+        
+        state_dict_ = deepcopy(state_dict)
+        
         state_dict = self._death_masking(state_dict)
         global_state = self._vectorize_state(state_dict)
         agent_states = self._relative_agents_states(state_dict)
         rewards = self._vectorize_reward(reward)
-        return global_state, agent_states, rewards, done
+        
+        if self.return_state_dict:
+            return state_dict_, (global_state, agent_states, rewards, done)
+        else:
+            return global_state, agent_states, rewards, done
         
     def reset(self):
         state_dict = self.env.reset()
         global_state = self._vectorize_state(state_dict)
         agent_states = self._relative_agents_states(state_dict)
-        return global_state, agent_states
+        
+        if self.return_state_dict:
+            return state_dict, (global_state, agent_states)
+        else:
+            return global_state, agent_states
         
     def seed(self, seed):
         self.env.seed(seed)
