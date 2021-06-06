@@ -84,6 +84,7 @@ class MADDPG:
         self.device = device
         self.n_preds = n_preds
         self.n_preys = n_preys
+        #? baseline agents here
         self.agents = ([Agent(state_dim, action_dim, n_preds + n_preys,
                               **pred_cfg, 
                               device=self.device, 
