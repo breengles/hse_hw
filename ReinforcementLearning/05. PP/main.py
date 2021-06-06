@@ -19,11 +19,7 @@ def render(config, path, step, num_evals=200, device="cpu", seed=None):
         rollout(env, maddpg.agents)
 
 
-def add_noise(action, sigma, lower=-1, upper=1):
-    return np.clip(action + np.random.normal(scale=sigma, size=action.shape), lower, upper)
-
-
-def rollout(env, agents):    
+def rollout(env, agents):
     total_reward = []
     _, states = env.reset()
     done = False
@@ -119,9 +115,9 @@ def train(transitions=200_000, hidden_size=64,  buffer_size=10000,
         if done:
             gstate, agent_states = env.reset()
             done = False
-        
+        sigma = sigma_max - (sigma_max - sigma_min) * step / transitions
         actions = np.hstack([agent.act(state) for agent, state in zip(maddpg.agents, agent_states)])
-        # actions = add_noise(actions, sigma_max - (sigma_max - sigma_min) * step / transitions)
+        actions = np.clip(actions + np.random.normal(scale=sigma, size=actions.shape), -1, 1)
         
         next_gstate, next_agent_states, reward, done = env.step(actions)
         
@@ -138,11 +134,6 @@ def train(transitions=200_000, hidden_size=64,  buffer_size=10000,
         if step % update_rate == 0 and step > 16 * batch_size:
             for _ in range(num_updates):
                 batch = buffer.sample(batch_size)
-                
-                # for item in batch:
-                #     print(item.shape)
-                # quit()
-                
                 losses = maddpg.update(batch)
         
         if (step + 1) % saverate == 0:

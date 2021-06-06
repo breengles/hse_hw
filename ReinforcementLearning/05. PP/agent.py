@@ -2,6 +2,7 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 from copy import deepcopy
+import numpy as np
 
 
 class Actor(nn.Module):
@@ -54,10 +55,19 @@ class Agent:
             self.actor_target = deepcopy(self.actor)
             self.critic_target = deepcopy(self.critic)
 
+    # def act(self, state, sigma=-1):
+    #     with torch.no_grad():
+    #         state = torch.tensor(state, dtype=torch.float, device=self.device)
+    #         action = self.actor(state).cpu().numpy()
+    #         if sigma > 0:
+    #             action = np.clip(action + sigma * np.random.randn(*action.shape), -1, 1)
+    #         return action
+        
     def act(self, state):
         with torch.no_grad():
             state = torch.tensor(state, dtype=torch.float, device=self.device)
-            return self.actor(state).cpu().numpy()
+            action = self.actor(state).cpu().numpy()
+            return action
 
     def _soft_update(self, target, source):
         for tp, sp in zip(target.parameters(), source.parameters()):
