@@ -65,6 +65,11 @@ class PredatorsAndPreysEnv:
         is_done = is_done or self.time_left < 0
         
         reward = self.game.get_reward()
+        
+        # 10 = DEATH_REWARD from game.c
+        reward["preys"] += 10 / self.time_limit
+        reward["predators"] -= 10 / self.time_limit
+        
         return state, reward, is_done
 
     def reset(self):
