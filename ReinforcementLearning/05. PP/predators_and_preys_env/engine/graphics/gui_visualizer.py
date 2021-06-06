@@ -26,7 +26,9 @@ class GuiVisualizer:
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
-                    to_break = True    
+                    to_break = True
+                if event.key == pygame.K_q:
+                    quit()
 
         sd = self.game.get_state_dict()
         self.screen.fill((255, 255, 255))
