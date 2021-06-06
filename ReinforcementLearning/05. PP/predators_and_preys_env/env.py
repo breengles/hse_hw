@@ -67,8 +67,8 @@ class PredatorsAndPreysEnv:
         reward = self.game.get_reward()
         
         # 10 = DEATH_REWARD from game.c
-        reward["preys"] += 10 / self.time_limit
-        reward["predators"] -= 10 / self.time_limit
+        # reward["preys"] += 10 / self.time_limit
+        # reward["predators"] -= 10 / self.time_limit
         
         return state, reward, is_done
 
