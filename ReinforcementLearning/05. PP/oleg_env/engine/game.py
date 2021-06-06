@@ -82,7 +82,7 @@ class Game:
             for is_alive, e in self.preys:
                 # if not is_alive:
                 if agent.is_intersect(e):
-                    reward += 10
+                    reward += 1000
                     
         # reward -= 0.1 * min([agent.real_distance(e) for is_alive, e in self.preys if is_alive], default=0.0) 
         
@@ -95,7 +95,7 @@ class Game:
             for is_collide, e in self.predators:
                 # if is_collide:
                 if agent.is_intersect(e):
-                    reward -= 10
+                    reward -= 1000
         
         # reward += 0.1 * min([agent.real_distance(e) for _, e in self.predators])
         

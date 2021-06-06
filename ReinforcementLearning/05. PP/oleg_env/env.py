@@ -61,8 +61,11 @@ class PredatorsAndPreysEnv:
         is_done = is_done or self.time_left < 0
 
         # 10 = DEATH_REWARD from game.c
-        reward["preys"] += 10 / self.time_limit
-        reward["predators"] -= 10 / self.time_limit
+        # reward["preys"] += 10 / self.time_limit
+        # reward["predators"] -= 10 / self.time_limit
+
+        reward["preys"] += 1
+        reward["predators"] -= 1
 
         return state, reward, is_done
 
