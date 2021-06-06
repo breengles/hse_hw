@@ -69,13 +69,13 @@ void force_clip_position(entity* Ent, double min_x, double min_y, double max_x, 
 
     double r = Ent -> radius;
     
-    if (Ent -> position[0] < r + min_x + 1e-2)
+    if (Ent -> position[0] < r + min_x)
         Ent -> position[0] = r + min_x + 1e-2;
-    else if (Ent -> position[0] > max_x - r - 1e-2)
+    else if (Ent -> position[0] > max_x - r)
         Ent -> position[0] = max_x - r - 1e-2;
         
-    if (Ent -> position[1] < r + min_y + 1e-2)
+    if (Ent -> position[1] < r + min_y)
         Ent -> position[1] = r + min_y + 1e-2;
-    else if (Ent -> position[1] > max_y - r - 1e-2)
+    else if (Ent -> position[1] > max_y - r)
         Ent -> position[1] = max_y - r - 1e-2;
 }

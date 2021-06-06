@@ -1,4 +1,4 @@
-from .engine.game import Game
+from .engine.emb_game import Game
 from .engine.graphics.gui_visualizer import GuiVisualizer
 import time
 
@@ -15,6 +15,7 @@ DEFAULT_CONFIG = {
         "predator_speed": 6.0,
         "prey_speed": 9.0,
         "world_timestep": 1/40,
+        "frameskip": 2
     },
     "environment": {
         "frameskip": 2,
@@ -37,6 +38,9 @@ class PredatorsAndPreysEnv:
         else:
             self.visualizer = None
 
+    def seed(self, n):
+        self.game.seed(n)
+
     def step(self, predator_actions, prey_actions):
         if self.time_left < 0:
             return self.game.get_state_dict(), True
@@ -58,8 +62,9 @@ class PredatorsAndPreysEnv:
         for prey in state["preys"]:
             is_done = is_done and not prey["is_alive"]
         is_done = is_done or self.time_left < 0
-
-        return state, is_done
+        
+        reward = self.game.get_reward()
+        return state, reward, is_done
 
     def reset(self):
         self.game.reset()

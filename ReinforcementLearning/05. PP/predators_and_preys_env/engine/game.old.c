@@ -108,7 +108,7 @@ FGame* game_init(double xl, double yl,
         F -> pred_mask[i] = 0;
     }
 
-    F -> preys_reward = (double* ) malloc(sizeof(double) * n_preys);        
+    F -> preys_reward = (double* ) malloc(sizeof(double) * n_preys);
     F -> preds_reward = (double* ) malloc(sizeof(double) * n_preds);
     
     F -> al = n_preys;
@@ -153,17 +153,17 @@ void step(FGame* F, double* action_preys, double* action_predators){
     int shuffle_count = 0;
     
     // while (corrected){
-    for(int i=0; i<20; i++){
+    for (int i = 0; i < 20; i++){
         corrected = 0;
         for(int k=0; k<G.num_preys; k++){
             int i = G.prey_order[k];
             int this_corrected = 0;
             force_clip_position(&G.preys[i], -G.x_limit, -G.y_limit, G.x_limit, G.y_limit);
-            for(int j=0; j<G.num_obstacles; j++)
+            for(int j=0; j<G.num_obstacles; j++){
                 this_corrected += force_not_intersect(&G.preys[i], &G.obstacles[j]);
-                if (this_corrected){
+                if (this_corrected)
                     break;
-                }
+            }
         
             if (!this_corrected){
                 for(int t=0; t<G.num_preys; t++){
@@ -171,11 +171,14 @@ void step(FGame* F, double* action_preys, double* action_predators){
                     if (i==j)
                         continue;
                     this_corrected += force_not_intersect(&G.preys[i], &G.preys[j]);
-                    if (this_corrected){
+                    if (this_corrected)
                         break;
-                    }
                 }
             }
+            // if(!this_corrected){
+            //     for(int j=0; j<G.num_obstacles; j++)
+            //         this_corrected += force_not_intersect(&G.preys[i], &G.obstacles[j]);
+            // }
             corrected += this_corrected;
             force_clip_position(&G.preys[i], -G.x_limit, -G.y_limit, G.x_limit, G.y_limit);
         }
@@ -198,8 +201,7 @@ void step(FGame* F, double* action_preys, double* action_predators){
     corrected = 1;
     it_num = 0;
     shuffle_count = 0;
-    //while (corrected){
-    for(int i=0; i<20; i++){
+    while (corrected){
         corrected = 0;
         for(int k=0; k<G.num_preds; k++){
             int i = G.pred_order[k];
@@ -207,9 +209,6 @@ void step(FGame* F, double* action_preys, double* action_predators){
             force_clip_position(&G.predators[i], -G.x_limit, -G.y_limit, G.x_limit, G.y_limit);
             for(int j=0; j<G.num_obstacles; j++)
                 this_corrected += force_not_intersect(&G.predators[i], &G.obstacles[j]);
-                if (this_corrected){
-                    break;
-                }
         
             if (!this_corrected){
                 for(int t=0; t<G.num_preds; t++){
@@ -217,10 +216,11 @@ void step(FGame* F, double* action_preys, double* action_predators){
                     if (i==j)
                         continue;
                     this_corrected += force_not_intersect(&G.predators[i], &G.predators[j]);
-                    if (this_corrected) {
-                        break;
-                    }
                 }
+            }
+            if(!this_corrected){
+                for(int j=0; j<G.num_obstacles; j++)
+                    this_corrected += force_not_intersect(&G.predators[i], &G.obstacles[j]);
             }
             corrected += this_corrected;
             force_clip_position(&G.predators[i], -G.x_limit, -G.y_limit, G.x_limit, G.y_limit);
@@ -305,7 +305,7 @@ void step(FGame* F, double* action_preys, double* action_predators){
             }
             G.preds_reward[j] *= (-0.1);
         }
-    }  
+    }
 }
 
 void reset(FGame* F){
@@ -324,6 +324,16 @@ void reset(FGame* F){
     F -> al = F -> num_preys;
     
     FGame G = *F;
+
+    for(int i=0; i<G.num_preys; i++){
+        G.prey_mask[i] = 0;
+        G.preys_reward[i] = 0;
+    }
+    
+    for(int i=0; i<G.num_preds; i++){
+        G.pred_mask[i] = 0;
+        G.preds_reward[i] = 0;
+    }
     
     for(int i=0; i<G.num_obstacles; i++){
         double r = double_rand() * (G.r_obst_ub - G.r_obst_lb) + G.r_obst_lb;
