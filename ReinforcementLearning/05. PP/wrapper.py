@@ -33,6 +33,10 @@ class VectorizeWrapper:
             for j, other_agent in enumerate(chain(state_dicts["predators"], state_dicts["preys"], state_dicts["obstacles"])):
                 if i == j:
                     continue
+                # passing dead prey
+                if "is_alive" in other_agent and other_agent["is_alive"] != 1:
+                    new_agent_state.extend(list(other_agent.values()))
+                    continue
                 
                 new_other_agent_state = list(other_agent.values())
                 
@@ -51,6 +55,7 @@ class VectorizeWrapper:
         prey_actions = actions[-self.n_preys:]
         
         state_dict, reward, done = self.env.step(pred_actions, prey_actions)
+        state_dict = self._death_masking(state_dict)
         global_state = self._vectorize_state(state_dict)
         agent_states = self._relative_agents_states(state_dict)
         rewards = self._vectorize_reward(reward)
@@ -64,4 +69,17 @@ class VectorizeWrapper:
         
     def seed(self, seed):
         self.env.seed(seed)
+        
+    @staticmethod
+    def _death_masking(state_dicts):
+        state_dicts = deepcopy(state_dicts)
+        for i, prey in enumerate(state_dicts["preys"]):
+            if not prey["is_alive"]:
+                prey["x_pos"] = 0
+                prey["y_pos"] = 0
+                prey["radius"] = 0
+                prey["speed"] = 0
+                prey["is_alive"] = i + 2
+        # state_dicts["preys"] = sorted(state_dicts["preys"], key=lambda d: d["is_alive"])
+        return state_dicts
         
