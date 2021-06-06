@@ -23,7 +23,7 @@ class VectorizeWrapper:
     
     @staticmethod
     def _vectorize_reward(reward_dicts):
-        return np.hstack([reward_dicts["predators"], reward_dicts["preys"]])
+        return list(reward_dicts["predators"]) + list(reward_dicts["preys"])
             
     def _relative_agents_states(self, state_dicts):
         new_agents_states = []
@@ -44,12 +44,15 @@ class VectorizeWrapper:
             
             new_agents_states.append(new_agent_state)
         
-        return np.array(new_agents_states)
+        return new_agents_states
     
     def step(self, actions):
-        next_state_dict, reward, done = self.env.step(actions[self.n_preds:], actions[-self.n_preys:])
-        global_state = self._vectorize_state(next_state_dict)
-        agent_states = self._relative_agents_states(next_state_dict)
+        pred_actions = actions[:self.n_preds]
+        prey_actions = actions[-self.n_preys:]
+        
+        state_dict, reward, done = self.env.step(pred_actions, prey_actions)
+        global_state = self._vectorize_state(state_dict)
+        agent_states = self._relative_agents_states(state_dict)
         rewards = self._vectorize_reward(reward)
         return global_state, agent_states, rewards, done
         

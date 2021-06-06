@@ -14,11 +14,11 @@ class ReplayBuffer:
         
         self.gstates = torch.empty((self.size, state_dim), dtype=torch.float, device=device)
         self.agent_states = torch.empty((n_agents, self.size, state_dim), dtype=torch.float, device=device)
-        self.actions = torch.empty((n_agents, self.size, action_dim), dtype=torch.float, device=device)
+        self.actions = torch.empty((n_agents, self.size), dtype=torch.float, device=device)
         self.next_gstates = torch.empty((self.size, state_dim), dtype=torch.float, device=device)
         self.next_agent_states = torch.empty((n_agents, self.size, state_dim), dtype=torch.float, device=device)
-        self.rewards = torch.empty((n_agents, self.size, 1), dtype=torch.float, device=device)
-        self.dones = torch.empty((self.size, 1), dtype=torch.float, device=device)
+        self.rewards = torch.empty((n_agents, self.size), dtype=torch.float, device=device)
+        self.dones = torch.empty((self.size), dtype=torch.float, device=device)
         
         self.pos = 0
         self.cur_size = 0
@@ -61,7 +61,6 @@ def grad_clamp(model):
 
 
 def set_seed(env, seed):
-    random.seed(seed)
     random.seed(seed)
     os.environ["PYTHONHASHSEED"] = str(seed)
     np.random.seed(seed)
