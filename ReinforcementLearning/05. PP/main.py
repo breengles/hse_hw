@@ -12,6 +12,11 @@ from argparse import ArgumentParser
 
 def render(config, path, step, num_evals=200, device="cpu", seed=None):
     maddpg = torch.load(path + f"/{step}.pt", map_location=device)
+    
+    for agent in maddpg.agents:
+        agent.device = device
+        # agent.actor.to(device)
+    
     env = VectorizeWrapper(PredatorsAndPreysEnv(config=config, render=render))
     if seed:
         set_seed(env, seed)
@@ -44,7 +49,7 @@ def train(transitions=200_000, hidden_size=64,  buffer_size=10000,
           batch_size=512, actor_lr=1e-3, critic_lr=1e-3, gamma=0.998, tau=0.005, 
           sigma_max=0.2, sigma_min=0, seed=None, info=False, saverate=-1,
           env_config=DEFAULT_CONFIG, update_rate=1, num_updates=1,
-          temperature=1, device="cpu", verbose=False):
+          temperature=1, device="cpu", buffer_init=False, verbose=False):
     if saverate == -1:
         saverate = transitions // 100
         
@@ -93,21 +98,22 @@ def train(transitions=200_000, hidden_size=64,  buffer_size=10000,
     maddpg = MADDPG(n_preds, n_preys, state_dim, 1, pred_config, prey_config, 
                     device=device, temperature=temperature, verbose=verbose)
     
-    # print("Filling buffer...")
-    # gstate, agent_states = env.reset()
-    # done = False
-    # for _ in trange(16 * batch_size):
-    #     if done:
-    #         gstate, agent_states = env.reset()
-    #     actions = np.random.uniform(-1, 1, n_preds + n_preys)
-    #     next_gstate, next_agent_states, rewards, done = env.step(actions)
-    #     maddpg.buffer.add((
-    #         gstate, agent_states, 
-    #         actions, 
-    #         next_gstate, next_agent_states, 
-    #         rewards, done
-    #     ))
-    # print("Finished. Now training...")
+    if buffer_init:
+        print("Filling buffer...")
+        gstate, agent_states = env.reset()
+        done = False
+        for _ in trange(16 * batch_size):
+            if done:
+                gstate, agent_states = env.reset()
+            actions = np.random.uniform(-1, 1, n_preds + n_preys)
+            next_gstate, next_agent_states, rewards, done = env.step(actions)
+            buffer.add((
+                gstate, agent_states, 
+                actions, 
+                next_gstate, next_agent_states, 
+                rewards, done
+            ))
+        print("Finished. Now training...")
 
     gstate, agent_states = env.reset()
     done = False
@@ -131,20 +137,28 @@ def train(transitions=200_000, hidden_size=64,  buffer_size=10000,
         agent_states = next_agent_states
         gstate = next_gstate
         
-        if step % update_rate == 0 and step > 16 * batch_size:
+        if step % update_rate == 0 and (step > 16 * batch_size or buffer_init):
             for _ in range(num_updates):
                 batch = buffer.sample(batch_size)
                 losses = maddpg.update(batch)
         
-        if (step + 1) % saverate == 0:
-            rewards = eval_maddpg(env_config, maddpg, seed=seed)
-            maddpg.save(saved_dir + f"{step + 1}.pt")
-            
-            print(f"=== Step {step + 1} ===")
-            for i in range(len(maddpg.agents)):
-                actor_loss, critic_loss = losses[i]
-                print(f"Agent{i + 1} -- Reward: {rewards[i]}, Actor loss: {actor_loss:0.5f}, Critic loss: {critic_loss:0.5f}")
-    
+            if (step + 1) % saverate == 0:
+                rewards = eval_maddpg(env_config, maddpg, seed=seed)
+                maddpg.save(saved_dir + f"{step + 1}.pt")
+                
+                print(f"=== Step {step + 1} ===")
+                for i in range(len(maddpg.agents)):
+                    actor_loss, critic_loss = losses[i]
+                    print(f"Agent{i + 1} -- Reward: {rewards[i]}, Actor loss: {actor_loss:0.5f}, Critic loss: {critic_loss:0.5f}")
+                
+                
+                preds_total_reward = np.sum(rewards[:n_preds])
+                preys_total_reward = np.sum(rewards[-n_preys:])
+                logger.log("step", step + 1)
+                logger.log("preds_total_reward", preds_total_reward)
+                logger.log("preys_total_reward", preys_total_reward)
+                logger.save(saved_dir + "log.csv")
+                
     return maddpg, logger
             
 
@@ -172,6 +186,7 @@ if __name__ == "__main__":
     parser.add_argument("--seed", type=int, default=None)
     parser.add_argument("--update-rate", type=int, default=1)
     parser.add_argument("--num-updates", type=int, default=1)
+    parser.add_argument("--buffer-init", action="store_true")
 
     opts = parser.parse_args()
     
@@ -200,7 +215,8 @@ if __name__ == "__main__":
               num_updates=opts.num_updates, 
               temperature=opts.temperature, 
               device=opts.device,
-              verbose=opts.verbose)
+              verbose=opts.verbose,
+              buffer_init=opts.buffer_init)
         
     if opts.render:
         assert opts.render_step > 0
