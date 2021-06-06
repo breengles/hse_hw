@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "physics/entity.c"
 
+
 typedef struct{
     entity* predators;
     entity* preys;
@@ -37,6 +38,8 @@ typedef struct{
     double max_dist;
     double min_dist;
     int al;
+
+    double death_reward;
 } FGame;
 
 
@@ -112,6 +115,7 @@ FGame* game_init(double xl, double yl,
     F -> preds_reward = (double* ) malloc(sizeof(double) * n_preds);
     
     F -> al = n_preys;
+    F -> death_reward = 10.0;
     return F;
 }
 
@@ -152,8 +156,7 @@ void step(FGame* F, double* action_preys, double* action_predators){
     int it_num = 0;
     int shuffle_count = 0;
     
-    // while (corrected){
-    for(int i=0; i<20; i++){
+    while (corrected){
         corrected = 0;
         for(int k=0; k<G.num_preys; k++){
             int i = G.prey_order[k];
@@ -161,9 +164,6 @@ void step(FGame* F, double* action_preys, double* action_predators){
             force_clip_position(&G.preys[i], -G.x_limit, -G.y_limit, G.x_limit, G.y_limit);
             for(int j=0; j<G.num_obstacles; j++)
                 this_corrected += force_not_intersect(&G.preys[i], &G.obstacles[j]);
-                if (this_corrected){
-                    break;
-                }
         
             if (!this_corrected){
                 for(int t=0; t<G.num_preys; t++){
@@ -171,9 +171,6 @@ void step(FGame* F, double* action_preys, double* action_predators){
                     if (i==j)
                         continue;
                     this_corrected += force_not_intersect(&G.preys[i], &G.preys[j]);
-                    if (this_corrected){
-                        break;
-                    }
                 }
             }
             corrected += this_corrected;
@@ -183,13 +180,13 @@ void step(FGame* F, double* action_preys, double* action_predators){
         if (!corrected)
             break;
             
-        if (it_num > G.num_preys * G.num_preys){
+        if (it_num > 3 * G.num_preys){
             it_num = 0;
             shuffle_array(G.prey_order, G.num_preys);
             shuffle_count += 1;
         }
         
-        if (shuffle_count > G.num_preys * G.num_preys * 3)
+        if (shuffle_count > 3 * G.num_preys)
            corrected = 0;
            
         it_num += 1;
@@ -198,8 +195,7 @@ void step(FGame* F, double* action_preys, double* action_predators){
     corrected = 1;
     it_num = 0;
     shuffle_count = 0;
-    //while (corrected){
-    for(int i=0; i<20; i++){
+    while (corrected){
         corrected = 0;
         for(int k=0; k<G.num_preds; k++){
             int i = G.pred_order[k];
@@ -207,9 +203,6 @@ void step(FGame* F, double* action_preys, double* action_predators){
             force_clip_position(&G.predators[i], -G.x_limit, -G.y_limit, G.x_limit, G.y_limit);
             for(int j=0; j<G.num_obstacles; j++)
                 this_corrected += force_not_intersect(&G.predators[i], &G.obstacles[j]);
-                if (this_corrected){
-                    break;
-                }
         
             if (!this_corrected){
                 for(int t=0; t<G.num_preds; t++){
@@ -217,9 +210,6 @@ void step(FGame* F, double* action_preys, double* action_predators){
                     if (i==j)
                         continue;
                     this_corrected += force_not_intersect(&G.predators[i], &G.predators[j]);
-                    if (this_corrected) {
-                        break;
-                    }
                 }
             }
             corrected += this_corrected;
@@ -229,13 +219,13 @@ void step(FGame* F, double* action_preys, double* action_predators){
         if (!corrected)
             break;
  
-        if (it_num > G.num_preds * G.num_preds){
+        if (it_num > 3 * G.num_preds){
             it_num = 0;
             shuffle_array(G.pred_order, G.num_preds);
             shuffle_count += 1;
         }
  
-        if (shuffle_count > G.num_preds * G.num_preds * 3)
+        if (shuffle_count > 3 * G.num_preds)
            corrected = 0;
  
         it_num += 1;
@@ -258,76 +248,76 @@ void step(FGame* F, double* action_preys, double* action_predators){
     F -> frame_count--;
     
     // Rewarding
-    if (F -> frame_count == 0){ 
-        F -> frame_count = G.frameskip;
-        
-        if (F -> al){
-            for(int i=0; i<G.num_preds; i++)
-                G.preds_reward[i] = G.max_dist;
-        }
-        else{
-            for(int i=0; i<G.num_preds; i++)
-                G.preds_reward[i] *= (-10);
-        }
-         
-        
-        for(int i=0; i<G.num_preys; i++){
-            if (!G.alive[i]){
-                G.preys_reward[i] = 0;
-                continue;
-            }
-            
-            G.preys_reward[i] = center_distance(&G.predators[0], &G.preys[i]);
-            if (G.preys_reward[i] < G.preds_reward[0])
-                G.preds_reward[0] = G.preys_reward[i];
-             
-            for(int j=1; j<G.num_preds; j++){
-                double d = center_distance(&G.predators[j], &G.preys[i]);
-                if  (d < G.preys_reward[i])
-                    G.preys_reward[i] =  d;
-                if  (d < G.preds_reward[j])
-                    G.preds_reward[j] =  d;
-            }
-        }
-        
-        for(int i=0; i<G.num_preys; i++){
-            if (G.prey_mask[i]){
-                G.preys_reward[i] = -100;
-                G.prey_mask[i] = 0;
-            }
-            G.preys_reward[i] *= 0.1;
-        }
-            
-        for(int j=0; j<G.num_preds; j++){
-            if (G.pred_mask[j]){
-                G.preds_reward[j] = -100 * G.pred_mask[j];
-                G.pred_mask[j] = 0;
-            }
-            G.preds_reward[j] *= (-0.1);
-        }
-    }
-
     // if (F -> frame_count == 0){ 
     //     F -> frame_count = G.frameskip;
-
+        
+    //     if (F -> al){
+    //         for(int i=0; i<G.num_preds; i++)
+    //             G.preds_reward[i] = G.max_dist;
+    //     }
+    //     else{
+    //         for(int i=0; i<G.num_preds; i++)
+    //             G.preds_reward[i] *= (-10);
+    //     }
+         
+        
+    //     for(int i=0; i<G.num_preys; i++){
+    //         if (!G.alive[i]){
+    //             G.preys_reward[i] = 0;
+    //             continue;
+    //         }
+            
+    //         G.preys_reward[i] = center_distance(&G.predators[0], &G.preys[i]);
+    //         if (G.preys_reward[i] < G.preds_reward[0])
+    //             G.preds_reward[0] = G.preys_reward[i];
+             
+    //         for(int j=1; j<G.num_preds; j++){
+    //             double d = center_distance(&G.predators[j], &G.preys[i]);
+    //             if  (d < G.preys_reward[i])
+    //                 G.preys_reward[i] =  d;
+    //             if  (d < G.preds_reward[j])
+    //                 G.preds_reward[j] =  d;
+    //         }
+    //     }
+        
     //     for(int i=0; i<G.num_preys; i++){
     //         if (G.prey_mask[i]){
-    //             G.preys_reward[i] = -10;
+    //             G.preys_reward[i] = -100;
     //             G.prey_mask[i] = 0;
     //         }
-    //         else
-    //             G.preys_reward[i] = 0;
+    //         G.preys_reward[i] *= 0.1;
     //     }
-
+            
     //     for(int j=0; j<G.num_preds; j++){
     //         if (G.pred_mask[j]){
-    //             G.preds_reward[j] = 10 * G.pred_mask[j];
+    //             G.preds_reward[j] = -100 * G.pred_mask[j];
     //             G.pred_mask[j] = 0;
     //         }
-    //         else
-    //              G.preds_reward[j] = 0;
+    //         G.preds_reward[j] *= (-0.1);
     //     }
     // }
+
+    if (F -> frame_count == 0){ 
+        F -> frame_count = G.frameskip;
+
+        for(int i=0; i<G.num_preys; i++){
+            if (G.prey_mask[i]){
+                G.preys_reward[i] = -G.death_reward;
+                G.prey_mask[i] = 0;
+            }
+            else
+                G.preys_reward[i] = 0;
+        }
+
+        for(int j=0; j<G.num_preds; j++){
+            if (G.pred_mask[j]){
+                G.preds_reward[j] = G.death_reward * G.pred_mask[j];
+                G.pred_mask[j] = 0;
+            }
+            else
+                G.preds_reward[j] = 0;
+        }
+    }  
 }
 
 void reset(FGame* F){
@@ -346,7 +336,7 @@ void reset(FGame* F){
     F -> al = F -> num_preys;
     
     FGame G = *F;
-    
+  
     for(int i=0; i<G.num_preys; i++){
         G.prey_mask[i] = 0;
         G.preys_reward[i] = 0;
@@ -356,7 +346,7 @@ void reset(FGame* F){
         G.pred_mask[i] = 0;
         G.preds_reward[i] = 0;
     }
-
+    
     for(int i=0; i<G.num_obstacles; i++){
         double r = double_rand() * (G.r_obst_ub - G.r_obst_lb) + G.r_obst_lb;
         double x = (2 * double_rand() - 1) * (G.x_limit - r);
