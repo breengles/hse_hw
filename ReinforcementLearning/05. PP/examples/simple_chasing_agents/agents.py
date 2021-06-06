@@ -24,7 +24,7 @@ class ChasingPredatorAgent(PredatorAgent):
             else:
                 action.append(np.arctan2(closest_prey["y_pos"] - predator["y_pos"],
                                          closest_prey["x_pos"] - predator["x_pos"]) / np.pi)
-        return action
+        return np.array(action)
 
 
 class FleeingPreyAgent(PreyAgent):
@@ -43,4 +43,4 @@ class FleeingPreyAgent(PreyAgent):
             else:
                 action.append(1 + np.arctan2(closest_predator["y_pos"] - prey["y_pos"],
                                              closest_predator["x_pos"] - prey["x_pos"]) / np.pi)
-        return action
+        return np.array(action)
