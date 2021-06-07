@@ -77,7 +77,7 @@ def train(title="", transitions=200_000, hidden_size=64,  buffer_size=10000,
         pprint.pprint(env_config)
     
     logger = Logger(locals())
-    uniq_dir_name = datetime.now().strftime("%d_%m_%Y-%H:%M:%S")
+    uniq_dir_name = datetime.now().strftime("%d_%m_%Y-%H:%M:%S.%f")
     saved_dir = "experiments/" + str(uniq_dir_name) + "/"
     print("Experiment is saved:", saved_dir)
     os.makedirs(saved_dir, exist_ok=True)
@@ -283,7 +283,6 @@ if __name__ == "__main__":
               prey_baseline=opts.prey_baseline)
         
     if opts.render:
-        # assert opts.render_step > 0
         render(path=opts.render, device=device)
         
 # Sanyok
