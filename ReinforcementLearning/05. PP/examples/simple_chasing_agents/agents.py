@@ -7,6 +7,7 @@ def distance(first, second):
 
 
 class ChasingPredatorAgent(PredatorAgent):
+    kind = "baseline"
     def act(self, state_dict):
         action = []
         for predator in state_dict["predators"]:
@@ -28,6 +29,7 @@ class ChasingPredatorAgent(PredatorAgent):
 
 
 class FleeingPreyAgent(PreyAgent):
+    kind = "baseline"
     def act(self, state_dict):
         action = []
         for prey in state_dict["preys"]:

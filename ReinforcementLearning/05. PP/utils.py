@@ -2,9 +2,7 @@ import torch, random, os, json
 import pandas as pd
 from matplotlib import pyplot as plt
 import numpy as np
-from collections import deque
-from random import sample
-
+from copy import deepcopy
 
 class ReplayBuffer:
     def __init__(self, n_agents, state_dim, action_dim, size: int = 10_000, device=torch.device("cpu")):
@@ -12,6 +10,8 @@ class ReplayBuffer:
         self.device = device
         self.size = size
         
+        self.state_dicts = [None for _ in range(self.size)]
+        self.next_state_dicts = [None for _ in range(self.size)]
         self.gstates = torch.empty((self.size, state_dim), dtype=torch.float, device=device)
         self.agent_states = torch.empty((n_agents, self.size, state_dim), dtype=torch.float, device=device)
         self.actions = torch.empty((n_agents, self.size), dtype=torch.float, device=device)
@@ -31,7 +31,11 @@ class ReplayBuffer:
         if self.cur_size < self.size:
             self.cur_size += 1
             
-        gstate, agent_states, actions, next_gstates, next_agent_states, rewards, dones = transition
+        (state_dict, next_state_dict, 
+         gstate, agent_states, actions, next_gstates, next_agent_states, rewards, dones) = transition
+        
+        self.state_dicts[self.pos] = deepcopy(state_dict)
+        self.next_state_dicts[self.pos] = deepcopy(next_state_dict)
         self.gstates[self.pos] = torch.tensor(gstate, device=self.device)
         self.next_gstates[self.pos] = torch.tensor(next_gstates, device=self.device)
         self.dones[self.pos] = torch.tensor(dones, device=self.device)
@@ -46,7 +50,13 @@ class ReplayBuffer:
     def sample(self, batch_size: int):
         assert self.__len__() >= batch_size
         ids = np.random.choice(self.__len__(), batch_size, replace=False)
-        return (self.gstates[ids], 
+        state_dicts = []
+        next_state_dicts = []
+        for idx in ids:
+            state_dicts.append(self.state_dicts[idx])
+            next_state_dicts.append(self.next_state_dicts[idx])
+        return (state_dicts, next_state_dicts,
+                self.gstates[ids], 
                 self.agent_states[:, ids],
                 self.actions[:, ids], 
                 self.next_gstates[ids], 

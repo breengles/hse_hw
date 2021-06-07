@@ -63,9 +63,9 @@ class VectorizeWrapper:
         rewards = self._vectorize_reward(reward)
         
         if self.return_state_dict:
-            return state_dict_, (global_state, agent_states, rewards, done)
+            return state_dict_, global_state, agent_states, rewards, done
         else:
-            return global_state, agent_states, rewards, done
+            return None, global_state, agent_states, rewards, done
         
     def reset(self):
         state_dict = self.env.reset()
@@ -73,9 +73,9 @@ class VectorizeWrapper:
         agent_states = self._relative_agents_states(state_dict)
         
         if self.return_state_dict:
-            return state_dict, (global_state, agent_states)
+            return state_dict, global_state, agent_states
         else:
-            return global_state, agent_states
+            return None, global_state, agent_states
         
     def seed(self, seed):
         self.env.seed(seed)
