@@ -25,7 +25,7 @@ DEFAULT_CONFIG = {
 
 
 class PredatorsAndPreysEnv:
-    def __init__(self, config=DEFAULT_CONFIG, render=False):
+    def __init__(self, config=DEFAULT_CONFIG, render=False, time_penalty=False):
         self.game = Game(config["game"])
         self.time_limit = config["environment"]["time_limit"]
         self.frame_skip = config["environment"]["frameskip"]
@@ -37,6 +37,7 @@ class PredatorsAndPreysEnv:
             self.visualizer = GuiVisualizer(self.game)
         else:
             self.visualizer = None
+        self.time_penalty = time_penalty
 
     def seed(self, n):
         self.game.seed(n)
@@ -67,8 +68,9 @@ class PredatorsAndPreysEnv:
         reward = self.game.get_reward()
         
         # 10 = DEATH_REWARD from game.c
-        # reward["preys"] += 10 / self.time_limit
-        # reward["predators"] -= 10 / self.time_limit
+        if self.time_penalty:
+            reward["preys"] += 10 / self.time_limit
+            reward["predators"] -= 10 / self.time_limit
         
         return state, reward, is_done
 
