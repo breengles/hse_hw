@@ -1,6 +1,6 @@
 {
     "game": {
-        "num_obsts": 2,
+        "num_obsts": 1,
         "num_preds": 1,
         "num_preys": 1,
         "x_limit": 6,
