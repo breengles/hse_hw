@@ -282,7 +282,7 @@ void step(FGame* F, double* action_preys, double* action_predators){
         
         for(int i=0; i<G.num_preys; i++){
             if (G.prey_mask[i]){
-                G.preys_reward[i] = -100;
+                G.preys_reward[i] = -G.death_reward * 10;
                 G.prey_mask[i] = 0;
             }
             G.preys_reward[i] *= 0.1;
@@ -290,7 +290,7 @@ void step(FGame* F, double* action_preys, double* action_predators){
             
         for(int j=0; j<G.num_preds; j++){
             if (G.pred_mask[j]){
-                G.preds_reward[j] = -100 * G.pred_mask[j];
+                G.preds_reward[j] = -G.death_reward * 10 * G.pred_mask[j];
                 G.pred_mask[j] = 0;
             }
             G.preds_reward[j] *= (-0.1);
