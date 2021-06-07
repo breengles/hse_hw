@@ -15,7 +15,6 @@ def eval_maddpg(config, maddpg, n_evals=25, render=False, seed=None, is_baseline
                            return_state_dict=is_baseline)
     if seed:
         set_seed(env, seed)
-    
     rewards = [rollout(env, maddpg.agents) for _ in range(n_evals)]
     return np.vstack(rewards).mean(axis=0)
 
@@ -25,7 +24,8 @@ def train(title="", transitions=200_000, hidden_size=64,  buffer_size=10000,
           sigma_max=0.2, sigma_min=0, seed=None, info=False, saverate=-1,
           env_config=None, update_rate=1, num_updates=1, temperature=1, 
           device="cpu", buffer_init=False, verbose=False, 
-          pred_baseline=False, prey_baseline=False, time_penalty=False):
+          pred_baseline=False, prey_baseline=False, time_penalty=False,
+          actor_update_delay=1):
     if saverate == -1:
         saverate = transitions // 100
         
@@ -33,7 +33,7 @@ def train(title="", transitions=200_000, hidden_size=64,  buffer_size=10000,
         pprint.pprint(env_config)
     
     logger = Logger(locals())
-    uniq_dir_name = datetime.now().strftime("%d_%m_%Y-%H:%M:%S.%f")
+    uniq_dir_name = datetime.now().strftime("%d_%m_%Y/%H:%M:%S.%f")
     saved_dir = "experiments/" + str(uniq_dir_name) + "/"
     print("Experiment is saved:", saved_dir)
     os.makedirs(saved_dir, exist_ok=True)
@@ -76,13 +76,15 @@ def train(title="", transitions=200_000, hidden_size=64,  buffer_size=10000,
                           device=device)
     maddpg = MADDPG(n_preds, n_preys, state_dim, 1, pred_config, prey_config, 
                     device=device, temperature=temperature, verbose=verbose,
-                    pred_baseline=pred_baseline, prey_baseline=prey_baseline)
+                    pred_baseline=pred_baseline, prey_baseline=prey_baseline,
+                    actor_update_delay=actor_update_delay, saverate=saverate)
     
     if buffer_init:
         print("Filling buffer...")
         state_dict, gstate, agent_states = env.reset()
         done = False
-        for _ in trange(16 * batch_size):
+        
+        for _ in trange(16 * batch_size, leave=False):
             if done:
                 state_dict, gstate, agent_states = env.reset()
             actions = np.random.uniform(-1, 1, n_preds + n_preys)
@@ -106,20 +108,19 @@ def train(title="", transitions=200_000, hidden_size=64,  buffer_size=10000,
             done = False
         
         states = []
+        
         if pred_baseline:
             states.append(state_dict)
         else:
-            states.extend(agent_states[n_preds:])
+            states.extend(agent_states[:n_preds])
         
         if prey_baseline:
             states.append(state_dict)
         else:
             states.extend(agent_states[-n_preys:])
-        
-        actions = np.hstack([agent.act(state) for agent, state in zip(maddpg.agents, states)])
-        
+
         sigma = sigma_max - (sigma_max - sigma_min) * step / transitions
-        actions = np.clip(actions + np.random.normal(scale=sigma, size=actions.shape), -1, 1)
+        actions = np.hstack([agent.act(state, sigma=sigma) for agent, state in zip(maddpg.agents, states)])
         
         next_state_dict, next_gstate, next_agent_states, reward, done = env.step(actions)
         
@@ -131,22 +132,24 @@ def train(title="", transitions=200_000, hidden_size=64,  buffer_size=10000,
             reward, done
         ))
         
-        state_dict, gstate, agent_states = next_state_dict, next_gstate, next_agent_states
+        state_dict = next_state_dict
+        gstate = next_gstate
+        agent_states = next_agent_states
         
         if step % update_rate == 0 and (step > 16 * batch_size or buffer_init):
             for _ in range(num_updates):
                 batch = buffer.sample(batch_size)
-                losses = maddpg.update(batch)
+                maddpg.update(batch, step=step)
         
             if (step + 1) % saverate == 0:
                 rewards = eval_maddpg(env_config, maddpg, seed=seed, 
                                       is_baseline=pred_baseline or prey_baseline)
+                
                 maddpg.save(saved_dir + f"{step + 1}.pt")
                 
-                tqdm.write((f"=== Step {step + 1} ==="))
-                for i in range(len(maddpg.trainable_agents)):
-                    actor_loss, critic_loss = losses[i]
-                    tqdm.write(f"Agent{i + 1} -- Reward: {rewards[i]}, Actor loss: {actor_loss:0.5f}, Critic loss: {critic_loss:0.5f}")
+                tqdm.write(f"--- rewards ---")
+                for idx, agent in enumerate(maddpg.agents):
+                    tqdm.write(f"Agent{idx} ({agent.team}): {rewards[idx]}")
                 
                 preds_total_reward = np.sum(rewards[:n_preds])
                 preys_total_reward = np.sum(rewards[-n_preys:])
@@ -173,8 +176,8 @@ if __name__ == "__main__":
     parser.add_argument("--env-config", type=str, default="", help="specify env config to")
     parser.add_argument("--cuda", action="store_true", help="enable cuda")
     parser.add_argument("--hidden-size", type=int, default=64, help="hidden size in agent network")
-    parser.add_argument("--actor-lr", type=float, default=1e-3)
-    parser.add_argument("--critic-lr", type=float, default=1e-3)
+    parser.add_argument("--actor-lr", type=float, default=1e-4)
+    parser.add_argument("--critic-lr", type=float, default=1e-4)
     parser.add_argument("--gamma", type=float, default=0.99)
     parser.add_argument("--tau", type=float, default=0.001)
     parser.add_argument("--sigma-max", type=float, default=0.3)
@@ -190,6 +193,7 @@ if __name__ == "__main__":
     parser.add_argument("--time-penalty", action="store_true", help="enable time penalty for agents")
     parser.add_argument("--pred-baseline", action="store_true", help="enable predator baseline")
     parser.add_argument("--prey-baseline", action="store_true", help="enable prey baseline")
+    parser.add_argument("-aud", "--actor-update-delay", type=int, default=50)
 
     opts = parser.parse_args()
 
@@ -234,9 +238,5 @@ if __name__ == "__main__":
             buffer_init=opts.buffer_init,
             time_penalty=opts.time_penalty,
             pred_baseline=opts.pred_baseline,
-            prey_baseline=opts.prey_baseline)
-        
-# Sanyok
-# ./main.py --train -t 1000000 --buffer 1000000 --batch 256 --env-config configs/2v1.json --seed 10 --saverate 10000 --actor-lr 0.001 --critic-lr 0.001 --gamma 0.99 --tau 0.001 --sigma-max 0.3
-
-# ./main.py --train -t 2000000 --buffer 1000000 --batch 1024 --env-config configs/1v1.json --seed 42 --actor-lr 0.001 --critic-lr 0.001 --gamma 0.99 --tau 0.001
+            prey_baseline=opts.prey_baseline,
+            actor_update_delay=opts.actor_update_delay)
