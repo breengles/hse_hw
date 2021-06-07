@@ -1,3 +1,4 @@
+from utils import grad_clamp
 import torch
 from torch import nn
 import torch.nn.functional as F
@@ -123,6 +124,7 @@ class MADDPG:
             critic_loss = F.mse_loss(q, q_target.detach())
             agent.critic_optimizer.zero_grad()
             critic_loss.backward()
+            grad_clamp(agent.critic)
             agent.critic_optimizer.step()
             
             with torch.no_grad():
@@ -132,6 +134,7 @@ class MADDPG:
             actor_loss = -agent.critic(gstate, current_actions.T).mean()
             agent.actor_optimizer.zero_grad()
             actor_loss.backward()
+            grad_clamp(agent.actor)
             agent.actor_optimizer.step()
             
             agent.soft_update_targets()
