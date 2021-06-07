@@ -3,14 +3,15 @@
 import os, torch, uuid, pprint, json
 from tqdm import trange
 import numpy as np
-from predators_and_preys_env.env import PredatorsAndPreysEnv, DEFAULT_CONFIG
+# from oleg_env.env import PredatorsAndPreysEnv, DEFAULT_CONFIG
+# from predators_and_preys_env.env import PredatorsAndPreysEnv, DEFAULT_CONFIG
 from agent import MADDPG
 from utils import ReplayBuffer, set_seed, Logger
 from wrapper import VectorizeWrapper
 from argparse import ArgumentParser
 
 
-def render(config, path, step, num_evals=200, device="cpu", seed=None):
+def render(config, path, step, num_evals=200, device="cpu"):
     maddpg = torch.load(path + f"/{step}.pt", map_location=device)
     
     for agent in maddpg.agents:
@@ -18,9 +19,8 @@ def render(config, path, step, num_evals=200, device="cpu", seed=None):
         # agent.actor.to(device)
     
     env = VectorizeWrapper(PredatorsAndPreysEnv(config=config, render=render))
-    if seed:
-        set_seed(env, seed)
     for _ in range(num_evals):
+        set_seed(env, np.random.randint(1, 10000))
         rollout(env, maddpg.agents)
 
 
@@ -48,7 +48,7 @@ def eval_maddpg(config, maddpg, n_evals=25, render=False, seed=None):
 def train(transitions=200_000, hidden_size=64,  buffer_size=10000, 
           batch_size=512, actor_lr=1e-3, critic_lr=1e-3, gamma=0.998, tau=0.005, 
           sigma_max=0.2, sigma_min=0, seed=None, info=False, saverate=-1,
-          env_config=DEFAULT_CONFIG, update_rate=1, num_updates=1,
+          env_config=None, update_rate=1, num_updates=1,
           temperature=1, device="cpu", buffer_init=False, verbose=False):
     if saverate == -1:
         saverate = transitions // 100
@@ -187,8 +187,14 @@ if __name__ == "__main__":
     parser.add_argument("--update-rate", type=int, default=1)
     parser.add_argument("--num-updates", type=int, default=1)
     parser.add_argument("--buffer-init", action="store_true")
+    parser.add_argument("--oleg", action="store_true")
 
     opts = parser.parse_args()
+
+    if opts.oleg:
+        from oleg_env.env import PredatorsAndPreysEnv, DEFAULT_CONFIG
+    else:
+        from predators_and_preys_env.env import PredatorsAndPreysEnv, DEFAULT_CONFIG
     
     if opts.env_config:
         with open(opts.env_config, "r") as f:
@@ -220,7 +226,7 @@ if __name__ == "__main__":
         
     if opts.render:
         assert opts.render_step > 0
-        render(config=env_config, path=opts.render, step=opts.render_step, device=opts.device, seed=opts.seed)
+        render(config=env_config, path=opts.render, step=opts.render_step, device=opts.device)
         
 # Sanyok
 # ./main.py --train -t 1000000 --buffer 1000000 --batch 256 --env-config configs/2v1.json --seed 10 --saverate 10000 --actor-lr 0.001 --critic-lr 0.001 --gamma 0.99 --tau 0.001 --sigma-max 0.3
