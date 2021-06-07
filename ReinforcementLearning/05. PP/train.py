@@ -1,57 +1,13 @@
 #!/usr/bin/env python3
 
-import os, torch, uuid, pprint, json
-from tqdm import trange
+import os, pprint, json
+from tqdm import trange, tqdm
 import numpy as np
-# from oleg_env.env import PredatorsAndPreysEnv, DEFAULT_CONFIG
-# from predators_and_preys_env.env import PredatorsAndPreysEnv, DEFAULT_CONFIG
 from agent import MADDPG
-from utils import ReplayBuffer, set_seed, Logger
+from utils import ReplayBuffer, set_seed, Logger, rollout
 from wrapper import VectorizeWrapper
 from argparse import ArgumentParser
 from datetime import datetime
-
-
-def render(path, num_evals=25, device="cpu"):
-    model = path
-    with open(os.path.dirname(path) + "/params.json") as j:
-        params = json.load(j)
-    config = params["env_config"]
-    is_baseline = params["pred_baseline"] or params["prey_baseline"]
-    
-    maddpg = torch.load(model, map_location=device)
-    
-    for agent in maddpg.agents:
-        agent.device = device
-    
-    env = VectorizeWrapper(PredatorsAndPreysEnv(config=config, render=render), 
-                           return_state_dict=is_baseline)
-    for _ in range(num_evals):
-        set_seed(env, np.random.randint(1, 10000))
-        rollout(env, maddpg.agents)
-
-
-def rollout(env, agents):
-    total_reward = []
-    state_dict, _, states = env.reset()
-    done = False
-    while not done:
-        actions = []
-        states_ = []
-        for agent in agents:
-            if agent.__class__.__name__ == "ChasingPredatorAgent":
-                states_.append(state_dict)
-            else:
-                states_.extend(states[env.n_preds:])
-            if agent.__class__.__name__ == "FleeingPreyAgent":
-                states_.append(state_dict)
-            else:
-                states_.extend(states[-env.n_preys:])
-        actions = np.hstack([agent.act(state) for agent, state in zip(agents, states_)])
-        state_dict, _, states, rewards, done = env.step(actions)
-        total_reward.append(rewards)
-    
-    return np.vstack(total_reward).sum(axis=0)
 
 
 def eval_maddpg(config, maddpg, n_evals=25, render=False, seed=None, is_baseline=False):
@@ -187,10 +143,10 @@ def train(title="", transitions=200_000, hidden_size=64,  buffer_size=10000,
                                       is_baseline=pred_baseline or prey_baseline)
                 maddpg.save(saved_dir + f"{step + 1}.pt")
                 
-                print(f"=== Step {step + 1} ===")
+                tqdm.write((f"=== Step {step + 1} ==="))
                 for i in range(len(maddpg.trainable_agents)):
                     actor_loss, critic_loss = losses[i]
-                    print(f"Agent{i + 1} -- Reward: {rewards[i]}, Actor loss: {actor_loss:0.5f}, Critic loss: {critic_loss:0.5f}")
+                    tqdm.write(f"Agent{i + 1} -- Reward: {rewards[i]}, Actor loss: {actor_loss:0.5f}, Critic loss: {critic_loss:0.5f}")
                 
                 preds_total_reward = np.sum(rewards[:n_preds])
                 preys_total_reward = np.sum(rewards[-n_preys:])
@@ -200,16 +156,15 @@ def train(title="", transitions=200_000, hidden_size=64,  buffer_size=10000,
                 logger.save(saved_dir + "log.csv")
                 
     print("Experiment is done:", saved_dir)
+    print("Config:")
     pprint.pprint(env_config)
     return maddpg, logger
             
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("--train", action="store_true", help="enable training")
     parser.add_argument("--info", action="store_true", help="print out env config at the start")
     parser.add_argument("--verbose", action="store_true", help="print out some debug info")
-    parser.add_argument("--render", type=str, default="", help="path to saved model file")
     parser.add_argument("-t", "--transitions", type=int, default=100000, 
                         help="number of transitions on train")
     parser.add_argument("--saverate", type=int, default=-1, help="how often to evaluate and save model")
@@ -281,9 +236,6 @@ if __name__ == "__main__":
               time_penalty=opts.time_penalty,
               pred_baseline=opts.pred_baseline,
               prey_baseline=opts.prey_baseline)
-        
-    if opts.render:
-        render(path=opts.render, device=device)
         
 # Sanyok
 # ./main.py --train -t 1000000 --buffer 1000000 --batch 256 --env-config configs/2v1.json --seed 10 --saverate 10000 --actor-lr 0.001 --critic-lr 0.001 --gamma 0.99 --tau 0.001 --sigma-max 0.3

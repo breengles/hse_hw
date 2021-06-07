@@ -120,3 +120,26 @@ class Logger:
         
         plt.legend()
         plt.show()
+
+
+def rollout(env, agents):
+    total_reward = []
+    state_dict, _, states = env.reset()
+    done = False
+    while not done:
+        actions = []
+        states_ = []
+        for agent in agents:
+            if agent.__class__.__name__ == "ChasingPredatorAgent":
+                states_.append(state_dict)
+            else:
+                states_.extend(states[env.n_preds:])
+            if agent.__class__.__name__ == "FleeingPreyAgent":
+                states_.append(state_dict)
+            else:
+                states_.extend(states[-env.n_preys:])
+        actions = np.hstack([agent.act(state) for agent, state in zip(agents, states_)])
+        state_dict, _, states, rewards, done = env.step(actions)
+        total_reward.append(rewards)
+    
+    return np.vstack(total_reward).sum(axis=0)
