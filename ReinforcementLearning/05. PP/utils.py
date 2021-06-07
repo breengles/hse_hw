@@ -127,18 +127,18 @@ def rollout(env, agents):
     state_dict, _, states = env.reset()
     done = False
     while not done:
-        actions = []
-        states_ = []
-        for agent in agents:
-            if agent.__class__.__name__ == "ChasingPredatorAgent":
-                states_.append(state_dict)
+        # actions = []
+        agents_and_states = []
+        for idx, agent in enumerate(agents):
+            if agent.kind == "baseline":
+                agents_and_states.append((agent, state_dict))
             else:
-                states_.extend(states[:env.n_preds])
-            if agent.__class__.__name__ == "FleeingPreyAgent":
-                states_.append(state_dict)
-            else:
-                states_.extend(states[-env.n_preys:])
-        actions = np.hstack([agent.act(state) for agent, state in zip(agents, states_)])
+                if agent.team == "pred":
+                    agents_and_states.append((agent, states[idx]))
+                else:  # then prey team
+                    agents_and_states.append((agent, states[-env.n_preys + idx]))
+                    
+        actions = np.hstack([agent.act(state) for agent, state in agents_and_states])
         state_dict, _, states, rewards, done = env.step(actions)
         total_reward.append(rewards)
     
