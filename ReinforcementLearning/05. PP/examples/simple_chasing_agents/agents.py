@@ -9,8 +9,9 @@ def distance(first, second):
 class ChasingPredatorAgent(PredatorAgent):
     def __init__(self, *args, **kwargs):
         self.kind = "baseline"
+        self.team = "pred"
         
-    def act(self, state_dict):
+    def act(self, state_dict, sigma=None):
         action = []
         for predator in state_dict["predators"]:
             closest_prey = None
@@ -33,8 +34,9 @@ class ChasingPredatorAgent(PredatorAgent):
 class FleeingPreyAgent(PreyAgent):
     def __init__(self, *args, **kwargs):
         self.kind = "baseline"
-        
-    def act(self, state_dict):
+        self.team = "prey"
+                 
+    def act(self, state_dict, sigma=None):
         action = []
         for prey in state_dict["preys"]:
             closest_predator = None
