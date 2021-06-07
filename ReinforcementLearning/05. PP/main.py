@@ -9,16 +9,23 @@ from agent import MADDPG
 from utils import ReplayBuffer, set_seed, Logger
 from wrapper import VectorizeWrapper
 from argparse import ArgumentParser
+from datetime import datetime
 
 
-def render(config, path, step, num_evals=200, device="cpu"):
-    maddpg = torch.load(path + f"/{step}.pt", map_location=device)
+def render(path, num_evals=25, device="cpu"):
+    model = path
+    with open(os.path.dirname(path) + "/params.json") as j:
+        params = json.load(j)
+    config = params["env_config"]
+    is_baseline = params["pred_baseline"] or params["prey_baseline"]
+    
+    maddpg = torch.load(model, map_location=device)
     
     for agent in maddpg.agents:
         agent.device = device
-        # agent.actor.to(device)
     
-    env = VectorizeWrapper(PredatorsAndPreysEnv(config=config, render=render))
+    env = VectorizeWrapper(PredatorsAndPreysEnv(config=config, render=render), 
+                           return_state_dict=is_baseline)
     for _ in range(num_evals):
         set_seed(env, np.random.randint(1, 10000))
         rollout(env, maddpg.agents)
@@ -26,18 +33,30 @@ def render(config, path, step, num_evals=200, device="cpu"):
 
 def rollout(env, agents):
     total_reward = []
-    _, states = env.reset()
+    state_dict, _, states = env.reset()
     done = False
     while not done:
-        actions = np.hstack([agent.act(state) for agent, state in zip(agents, states)])
-        _, states, rewards, done = env.step(actions)
+        actions = []
+        states_ = []
+        for agent in agents:
+            if agent.__class__.__name__ == "ChasingPredatorAgent":
+                states_.append(state_dict)
+            else:
+                states_.extend(states[env.n_preds:])
+            if agent.__class__.__name__ == "FleeingPreyAgent":
+                states_.append(state_dict)
+            else:
+                states_.extend(states[-env.n_preys:])
+        actions = np.hstack([agent.act(state) for agent, state in zip(agents, states_)])
+        state_dict, _, states, rewards, done = env.step(actions)
         total_reward.append(rewards)
     
     return np.vstack(total_reward).sum(axis=0)
 
 
-def eval_maddpg(config, maddpg, n_evals=25, render=False, seed=None):
-    env = VectorizeWrapper(PredatorsAndPreysEnv(config=config, render=render))
+def eval_maddpg(config, maddpg, n_evals=25, render=False, seed=None, is_baseline=False):
+    env = VectorizeWrapper(PredatorsAndPreysEnv(config=config, render=render), 
+                           return_state_dict=is_baseline)
     if seed:
         set_seed(env, seed)
     
@@ -45,25 +64,29 @@ def eval_maddpg(config, maddpg, n_evals=25, render=False, seed=None):
     return np.vstack(rewards).mean(axis=0)
 
 
-def train(transitions=200_000, hidden_size=64,  buffer_size=10000, 
+def train(title="", transitions=200_000, hidden_size=64,  buffer_size=10000, 
           batch_size=512, actor_lr=1e-3, critic_lr=1e-3, gamma=0.998, tau=0.005, 
           sigma_max=0.2, sigma_min=0, seed=None, info=False, saverate=-1,
-          env_config=None, update_rate=1, num_updates=1,
-          temperature=1, device="cpu", buffer_init=False, verbose=False):
+          env_config=None, update_rate=1, num_updates=1, temperature=1, 
+          device="cpu", buffer_init=False, verbose=False, 
+          pred_baseline=False, prey_baseline=False, time_penalty=False):
     if saverate == -1:
         saverate = transitions // 100
         
     if info:
         pprint.pprint(env_config)
-        print(pprint.pformat(env_config))
-        
+    
     logger = Logger(locals())
-    saved_dir = "experiments/" + str(uuid.uuid4()) + "/"
+    uniq_dir_name = datetime.now().strftime("%d_%m_%Y-%H:%M:%S")
+    saved_dir = "experiments/" + str(uniq_dir_name) + "/"
     print("Experiment is saved:", saved_dir)
     os.makedirs(saved_dir, exist_ok=True)
     logger.save_params(saved_dir + "params.json")
     
-    env = VectorizeWrapper(PredatorsAndPreysEnv(config=env_config, render=False))
+    env = VectorizeWrapper(PredatorsAndPreysEnv(config=env_config, 
+                                                render=False,
+                                                time_penalty=time_penalty),
+                           return_state_dict=pred_baseline or prey_baseline)
     if seed is not None:
         set_seed(env, seed)
     
@@ -96,46 +119,63 @@ def train(transitions=200_000, hidden_size=64,  buffer_size=10000,
                           size=buffer_size, 
                           device=device)
     maddpg = MADDPG(n_preds, n_preys, state_dim, 1, pred_config, prey_config, 
-                    device=device, temperature=temperature, verbose=verbose)
+                    device=device, temperature=temperature, verbose=verbose,
+                    pred_baseline=pred_baseline, prey_baseline=prey_baseline)
     
     if buffer_init:
         print("Filling buffer...")
-        gstate, agent_states = env.reset()
+        state_dict, gstate, agent_states = env.reset()
         done = False
         for _ in trange(16 * batch_size):
             if done:
-                gstate, agent_states = env.reset()
+                state_dict, gstate, agent_states = env.reset()
             actions = np.random.uniform(-1, 1, n_preds + n_preys)
-            next_gstate, next_agent_states, rewards, done = env.step(actions)
+            next_state_dict, next_gstate, next_agent_states, rewards, done = env.step(actions)
             buffer.add((
+                state_dict, next_state_dict,
                 gstate, agent_states, 
                 actions, 
                 next_gstate, next_agent_states, 
                 rewards, done
             ))
+            state_dict, gstate, agent_states = next_state_dict, next_gstate, next_agent_states
         print("Finished. Now training...")
 
-    gstate, agent_states = env.reset()
+    state_dict, gstate, agent_states = env.reset()
     done = False
-    for step in trange(transitions):
+    t = trange(transitions, desc=title)
+    for step in t:
         if done:
-            gstate, agent_states = env.reset()
+            state_dict, gstate, agent_states = env.reset()
             done = False
+        
+        states = []
+        if pred_baseline:
+            states.append(state_dict)
+        else:
+            states.extend(agent_states[n_preds:])
+        
+        if prey_baseline:
+            states.append(state_dict)
+        else:
+            states.extend(agent_states[-n_preys:])
+        
+        actions = np.hstack([agent.act(state) for agent, state in zip(maddpg.agents, states)])
+        
         sigma = sigma_max - (sigma_max - sigma_min) * step / transitions
-        actions = np.hstack([agent.act(state) for agent, state in zip(maddpg.agents, agent_states)])
         actions = np.clip(actions + np.random.normal(scale=sigma, size=actions.shape), -1, 1)
         
-        next_gstate, next_agent_states, reward, done = env.step(actions)
+        next_state_dict, next_gstate, next_agent_states, reward, done = env.step(actions)
         
         buffer.add((
+            state_dict, next_state_dict,
             gstate, agent_states,
             actions,
             next_gstate, next_agent_states,
             reward, done
         ))
         
-        agent_states = next_agent_states
-        gstate = next_gstate
+        state_dict, gstate, agent_states = next_state_dict, next_gstate, next_agent_states
         
         if step % update_rate == 0 and (step > 16 * batch_size or buffer_init):
             for _ in range(num_updates):
@@ -143,14 +183,14 @@ def train(transitions=200_000, hidden_size=64,  buffer_size=10000,
                 losses = maddpg.update(batch)
         
             if (step + 1) % saverate == 0:
-                rewards = eval_maddpg(env_config, maddpg, seed=seed)
+                rewards = eval_maddpg(env_config, maddpg, seed=seed, 
+                                      is_baseline=pred_baseline or prey_baseline)
                 maddpg.save(saved_dir + f"{step + 1}.pt")
                 
                 print(f"=== Step {step + 1} ===")
-                for i in range(len(maddpg.agents)):
+                for i in range(len(maddpg.trainable_agents)):
                     actor_loss, critic_loss = losses[i]
                     print(f"Agent{i + 1} -- Reward: {rewards[i]}, Actor loss: {actor_loss:0.5f}, Critic loss: {critic_loss:0.5f}")
-                
                 
                 preds_total_reward = np.sum(rewards[:n_preds])
                 preys_total_reward = np.sum(rewards[-n_preys:])
@@ -159,37 +199,49 @@ def train(transitions=200_000, hidden_size=64,  buffer_size=10000,
                 logger.log("preys_total_reward", preys_total_reward)
                 logger.save(saved_dir + "log.csv")
                 
+    print("Experiment is done:", saved_dir)
+    pprint.pprint(env_config)
     return maddpg, logger
             
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("--train", action="store_true")
-    parser.add_argument("--info", action="store_true")
-    parser.add_argument("--verbose", action="store_true")
-    parser.add_argument("--render", type=str, default="")
-    parser.add_argument("-rs","--render-step", type=int, default=0)
-    parser.add_argument("-t", "--transitions", type=int, default=100000)
-    parser.add_argument("--saverate", type=int, default=-1)
-    parser.add_argument("--buffer", type=int, default=200000)
-    parser.add_argument("--batch", type=int, default=512)
-    parser.add_argument("--env-config", type=str, default="")
-    parser.add_argument("--device", type=str, default="cpu")
-    parser.add_argument("--hidden-size", type=int, default=64)
+    parser.add_argument("--train", action="store_true", help="enable training")
+    parser.add_argument("--info", action="store_true", help="print out env config at the start")
+    parser.add_argument("--verbose", action="store_true", help="print out some debug info")
+    parser.add_argument("--render", type=str, default="", help="path to saved model file")
+    parser.add_argument("-t", "--transitions", type=int, default=100000, 
+                        help="number of transitions on train")
+    parser.add_argument("--saverate", type=int, default=-1, help="how often to evaluate and save model")
+    parser.add_argument("--buffer", type=int, default=200000, help="buffer size")
+    parser.add_argument("--batch", type=int, default=512, help="batch size")
+    parser.add_argument("--env-config", type=str, default="", help="specify env config to")
+    parser.add_argument("--cuda", action="store_true", help="enable cuda")
+    parser.add_argument("--hidden-size", type=int, default=64, help="hidden size in agent network")
     parser.add_argument("--actor-lr", type=float, default=1e-3)
     parser.add_argument("--critic-lr", type=float, default=1e-3)
     parser.add_argument("--gamma", type=float, default=0.99)
     parser.add_argument("--tau", type=float, default=0.001)
     parser.add_argument("--sigma-max", type=float, default=0.3)
     parser.add_argument("--sigma-min", type=float, default=0.0)
-    parser.add_argument("--temperature", type=float, default=30)
+    parser.add_argument("--temperature", type=float, default=30,
+                        help="temperature in tanh input of actor network")
     parser.add_argument("--seed", type=int, default=None)
-    parser.add_argument("--update-rate", type=int, default=1)
-    parser.add_argument("--num-updates", type=int, default=1)
-    parser.add_argument("--buffer-init", action="store_true")
-    parser.add_argument("--oleg", action="store_true")
+    parser.add_argument("--update-rate", type=int, default=1, help="how often to update model")
+    parser.add_argument("--num-updates", type=int, default=1, help="how many updates of model at every step")
+    parser.add_argument("--buffer-init", action="store_true", 
+                        help="fill up buffer with uniformly random action")
+    parser.add_argument("--oleg", action="store_true", help="take Oleg's original env instead of Kirill's")
+    parser.add_argument("--time-penalty", action="store_true", help="enable time penalty for agents")
+    parser.add_argument("--pred-baseline", action="store_true", help="enable predator baseline")
+    parser.add_argument("--prey-baseline", action="store_true", help="enable prey baseline")
 
     opts = parser.parse_args()
+
+    if opts.cuda:
+        device = "cuda"
+    else:
+        device = "cpu"
 
     if opts.oleg:
         from oleg_env.env import PredatorsAndPreysEnv, DEFAULT_CONFIG
@@ -202,8 +254,11 @@ if __name__ == "__main__":
     else:
         env_config = DEFAULT_CONFIG
     
+    title = f"#preds: {env_config['game']['num_preds']}, #preys: {env_config['game']['num_preys']}, #obsts: {env_config['game']['num_obsts']}"
+    
     if opts.train:
-        train(transitions=opts.transitions, 
+        train(title=title,
+              transitions=opts.transitions, 
               hidden_size=opts.hidden_size, 
               buffer_size=opts.buffer, 
               batch_size=opts.batch, 
@@ -220,13 +275,16 @@ if __name__ == "__main__":
               update_rate=opts.update_rate, 
               num_updates=opts.num_updates, 
               temperature=opts.temperature, 
-              device=opts.device,
+              device=device,
               verbose=opts.verbose,
-              buffer_init=opts.buffer_init)
+              buffer_init=opts.buffer_init,
+              time_penalty=opts.time_penalty,
+              pred_baseline=opts.pred_baseline,
+              prey_baseline=opts.prey_baseline)
         
     if opts.render:
-        assert opts.render_step > 0
-        render(config=env_config, path=opts.render, step=opts.render_step, device=opts.device)
+        # assert opts.render_step > 0
+        render(path=opts.render, device=device)
         
 # Sanyok
 # ./main.py --train -t 1000000 --buffer 1000000 --batch 256 --env-config configs/2v1.json --seed 10 --saverate 10000 --actor-lr 0.001 --critic-lr 0.001 --gamma 0.99 --tau 0.001 --sigma-max 0.3
