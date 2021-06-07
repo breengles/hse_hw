@@ -133,7 +133,7 @@ def rollout(env, agents):
             if agent.__class__.__name__ == "ChasingPredatorAgent":
                 states_.append(state_dict)
             else:
-                states_.extend(states[env.n_preds:])
+                states_.extend(states[:env.n_preds])
             if agent.__class__.__name__ == "FleeingPreyAgent":
                 states_.append(state_dict)
             else:
