@@ -55,14 +55,13 @@ class VectorizeWrapper:
         
         state_dict, reward, done = self.env.step(pred_actions, prey_actions)
         
-        state_dict_ = deepcopy(state_dict)
-        
         state_dict = self._death_masking(state_dict)
         global_state = self._vectorize_state(state_dict)
         agent_states = self._relative_agents_states(state_dict)
         rewards = self._vectorize_reward(reward)
         
         if self.return_state_dict:
+            state_dict_ = deepcopy(state_dict)
             return state_dict_, global_state, agent_states, rewards, done
         else:
             return None, global_state, agent_states, rewards, done
