@@ -3,9 +3,10 @@ from itertools import chain
 
 
 class VectorizeWrapper:
-    def __init__(self, env, return_state_dict=False):
+    def __init__(self, env, return_state_dict=False, pred_baseline=False):
         self.env = env
         self.return_state_dict = return_state_dict # TODO: for baseline agents
+        self.pred_baseline = pred_baseline
         
         self.n_preds = env.predator_action_size
         self.n_preys = env.prey_action_size
@@ -55,7 +56,8 @@ class VectorizeWrapper:
         
         state_dict, reward, done = self.env.step(pred_actions, prey_actions)
         
-        state_dict = self._death_masking(state_dict)
+        if not self.pred_baseline:
+            state_dict = self._death_masking(state_dict)
         global_state = self._vectorize_state(state_dict)
         agent_states = self._relative_agents_states(state_dict)
         rewards = self._vectorize_reward(reward)
