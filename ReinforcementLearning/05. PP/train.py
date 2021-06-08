@@ -74,7 +74,7 @@ def train(title="", transitions=200_000, hidden_size=64,  buffer_size=10000,
                           action_dim=1, 
                           size=buffer_size, 
                           device=device)
-    maddpg = MADDPG(n_preds, n_preys, state_dim, 1, pred_config, prey_config, 
+    maddpg = MADDPG(buffer, n_preds, n_preys, state_dim, 1, pred_config, prey_config, 
                     device=device, temperature=temperature, verbose=verbose,
                     pred_baseline=pred_baseline, prey_baseline=prey_baseline,
                     actor_update_delay=actor_update_delay, saverate=saverate)
@@ -89,7 +89,7 @@ def train(title="", transitions=200_000, hidden_size=64,  buffer_size=10000,
                 state_dict, gstate, agent_states = env.reset()
             actions = np.random.uniform(-1, 1, n_preds + n_preys)
             next_state_dict, next_gstate, next_agent_states, rewards, done = env.step(actions)
-            buffer.add((
+            maddpg.buffer.add((
                 state_dict, next_state_dict,
                 gstate, agent_states, 
                 actions, 
@@ -124,7 +124,7 @@ def train(title="", transitions=200_000, hidden_size=64,  buffer_size=10000,
         
         next_state_dict, next_gstate, next_agent_states, reward, done = env.step(actions)
         
-        buffer.add((
+        maddpg.buffer.add((
             state_dict, next_state_dict,
             gstate, agent_states,
             actions,
@@ -138,8 +138,8 @@ def train(title="", transitions=200_000, hidden_size=64,  buffer_size=10000,
         
         if step % update_rate == 0 and (step > 16 * batch_size or buffer_init):
             for _ in range(num_updates):
-                batch = buffer.sample(batch_size)
-                maddpg.update(batch, step=step)
+                # batch = buffer.sample(batch_size)
+                maddpg.update(batch_size, step=step)
         
             if (step + 1) % saverate == 0:
                 rewards = eval_maddpg(env_config, maddpg, seed=seed, 
@@ -160,7 +160,7 @@ def train(title="", transitions=200_000, hidden_size=64,  buffer_size=10000,
                 
     print("Experiment is done:", saved_dir)
     print("Config:")
-    pprint.pprint(env_config)
+    pprint.pprint(logger.params)
     return maddpg, logger
             
 
