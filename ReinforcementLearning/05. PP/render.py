@@ -38,13 +38,11 @@ if __name__ == "__main__":
     else:
         agents = []
         if opts.pred:
-            is_baseline = True
             agents.append(ChasingPredatorAgent())
         else:
             agents.extend(maddpg.pred_agents)
         
         if opts.prey:
-            is_baseline = True
             agents.append(FleeingPreyAgent())
         else:
             agents.extend(maddpg.prey_agents)
