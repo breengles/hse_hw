@@ -3,22 +3,20 @@
 os_name=$(uname)
 
 cd ./predators_and_preys_env/engine
+make clean
 if [ $os_name = "Linux" ]
 then
-    make clean
     make
 else
-    make clean
     clang -dynamiclib -undefined dynamic_lookup -o game.dylib game.c
 fi
  
 cd ./physics
+make clean
 if [ $os_name = "Linux" ]
 then
-    make clean
     make
 else
-    make clean
     clang -dynamiclib -undefined dynamic_lookup -o entity.dylib entity.c
 fi
 
