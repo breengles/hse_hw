@@ -10,6 +10,7 @@ class ChasingPredatorAgent(PredatorAgent):
     def __init__(self, *args, **kwargs):
         self.kind = "baseline"
         self.team = "pred"
+        self.device = None
         
     def act(self, state_dict, sigma=None):
         action = []
@@ -35,6 +36,7 @@ class FleeingPreyAgent(PreyAgent):
     def __init__(self, *args, **kwargs):
         self.kind = "baseline"
         self.team = "prey"
+        self.device = None
                  
     def act(self, state_dict, sigma=None):
         action = []
