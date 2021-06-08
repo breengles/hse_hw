@@ -74,7 +74,7 @@ def train(title="", transitions=200_000, hidden_size=64,  buffer_size=10000,
                           action_dim=1, 
                           size=buffer_size, 
                           device=device)
-    maddpg = MADDPG(buffer, n_preds, n_preys, state_dim, 1, pred_config, prey_config, 
+    maddpg = MADDPG(n_preds, n_preys, state_dim, 1, pred_config, prey_config, 
                     device=device, temperature=temperature, verbose=verbose,
                     pred_baseline=pred_baseline, prey_baseline=prey_baseline,
                     actor_update_delay=actor_update_delay, saverate=saverate)
@@ -165,36 +165,42 @@ def train(title="", transitions=200_000, hidden_size=64,  buffer_size=10000,
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("--info", action="store_true", help="print out env config at the start")
-    parser.add_argument("--verbose", action="store_true", help="print out some debug info")
+    parser.add_argument("--seed", type=int, default=None)
     parser.add_argument("-t", "--transitions", type=int, default=100000, 
                         help="number of transitions on train")
-    parser.add_argument("--saverate", type=int, default=-1, help="how often to evaluate and save model")
     parser.add_argument("--buffer", type=int, default=200000, help="buffer size")
+    parser.add_argument("--buffer-init", action="store_true", 
+                        help="fill up buffer with uniformly random action")
     parser.add_argument("--batch", type=int, default=512, help="batch size")
     parser.add_argument("--env-config", type=str, default="", help="specify env config to")
-    parser.add_argument("--cuda", action="store_true", help="enable cuda")
-    parser.add_argument("--hidden-size", type=int, default=64, help="hidden size in agent network")
-    parser.add_argument("--actor-lr", type=float, default=1e-4)
-    parser.add_argument("--critic-lr", type=float, default=1e-4)
+    parser.add_argument("--oleg", action="store_true", help="take Oleg's original env instead of Kirill's")
+    parser.add_argument("--saverate", type=int, default=-1, help="how often to evaluate and save model")
     parser.add_argument("--gamma", type=float, default=0.99)
     parser.add_argument("--tau", type=float, default=0.001)
     parser.add_argument("--sigma-max", type=float, default=0.3)
     parser.add_argument("--sigma-min", type=float, default=0.0)
-    parser.add_argument("--temperature", type=float, default=30,
-                        help="temperature in tanh input of actor network")
-    parser.add_argument("--seed", type=int, default=None)
     parser.add_argument("--update-rate", type=int, default=1, help="how often to update model")
+    parser.add_argument("--actor-lr", type=float, default=1e-4)
+    parser.add_argument("--critic-lr", type=float, default=1e-4)
+    parser.add_argument("-aud", "--actor-update-delay", type=int, default=50)
     parser.add_argument("--num-updates", type=int, default=1, help="how many updates of model at every step")
-    parser.add_argument("--buffer-init", action="store_true", 
-                        help="fill up buffer with uniformly random action")
-    parser.add_argument("--oleg", action="store_true", help="take Oleg's original env instead of Kirill's")
     parser.add_argument("-tp", "--time-penalty", action="store_true", help="enable time penalty for agents")
     parser.add_argument("-pred", "--pred-baseline", action="store_true", help="enable predator baseline")
     parser.add_argument("-prey", "--prey-baseline", action="store_true", help="enable prey baseline")
-    parser.add_argument("-aud", "--actor-update-delay", type=int, default=50)
+    parser.add_argument("--temperature", type=float, default=30,
+                        help="temperature in tanh input of actor network")
+    parser.add_argument("--hidden-size", type=int, default=64, help="hidden size in agent network")
+    parser.add_argument("--cuda", action="store_true", help="enable cuda")
+    parser.add_argument("--info", action="store_true", help="print out env config at the start")
+    parser.add_argument("--verbose", action="store_true", help="print out some debug info")
 
     opts = parser.parse_args()
+
+    args = vars(opts)
+    print("\n--- loaded options ---")
+    for name, value in args.items():
+        print(f"{name}: {value}")
+    print()
 
     if opts.cuda:
         device = "cuda"
@@ -241,3 +247,5 @@ if __name__ == "__main__":
             pred_baseline=opts.pred_baseline,
             prey_baseline=opts.prey_baseline,
             actor_update_delay=opts.actor_update_delay)
+
+# OMP_NUM_THREADS=1 ./train.py  -t 10000000 --buffer 2500000 --batch 2048 --env-config configs/1v1_1.json --seed 42 --sigma-max 0.3 --sigma-min 0.1 --saverate 20000

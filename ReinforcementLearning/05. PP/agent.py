@@ -86,10 +86,9 @@ class Agent:
             self._soft_update(self.critic2_target, self.critic2)
 
 class MADDPG:
-    def __init__(self, buffer, n_preds, n_preys, state_dim, action_dim, pred_cfg, 
+    def __init__(self, n_preds, n_preys, state_dim, action_dim, pred_cfg, 
                  prey_cfg, saverate=1000, device="cpu", temperature=1, verbose=False, 
                  pred_baseline=False, prey_baseline=False, actor_update_delay=1):
-        self.buffer = buffer
         self.n_preds = n_preds
         self.n_preys = n_preys
         self.saverate = saverate
