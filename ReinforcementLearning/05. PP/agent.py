@@ -67,8 +67,9 @@ class Agent:
             if self.team == "prey":
                 if state[4] > 1:
                     return np.array([-2])
-                
+            
             state = torch.tensor(state, dtype=torch.float, device=self.device)
+            
             action = self.actor(state).cpu().numpy()
             if sigma > 0:
                 action = np.clip(action + np.random.normal(scale=sigma, size=action.shape), -1, 1)
@@ -183,6 +184,10 @@ class MADDPG:
             agent.critic2_optimizer.step()
             
             if (step + 1) % self.actor_update_delay == 0:
+                """
+                get new actions from all other agents?
+                see https://github.com/Gouet/maddpg-pytorch-1/blob/40388d7c18e4662cf23c826d97e209df9003d86c/algorithms/maddpg.py#L149
+                """
                 with torch.no_grad():
                     current_actions = deepcopy(actions)
                 current_actions[idx] = agent.actor(agent_states[idx]).squeeze(-1)

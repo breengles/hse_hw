@@ -106,9 +106,8 @@ def train(title="", transitions=200_000, hidden_size=64,  buffer_size=10000,
         if done:
             state_dict, gstate, agent_states = env.reset()
             done = False
-        
+
         states = []
-        
         if pred_baseline:
             states.append(state_dict)
         else:
@@ -190,9 +189,9 @@ if __name__ == "__main__":
     parser.add_argument("--buffer-init", action="store_true", 
                         help="fill up buffer with uniformly random action")
     parser.add_argument("--oleg", action="store_true", help="take Oleg's original env instead of Kirill's")
-    parser.add_argument("--time-penalty", action="store_true", help="enable time penalty for agents")
-    parser.add_argument("--pred-baseline", action="store_true", help="enable predator baseline")
-    parser.add_argument("--prey-baseline", action="store_true", help="enable prey baseline")
+    parser.add_argument("-tp", "--time-penalty", action="store_true", help="enable time penalty for agents")
+    parser.add_argument("-pred", "--pred-baseline", action="store_true", help="enable predator baseline")
+    parser.add_argument("-prey", "--prey-baseline", action="store_true", help="enable prey baseline")
     parser.add_argument("-aud", "--actor-update-delay", type=int, default=50)
 
     opts = parser.parse_args()
@@ -213,7 +212,9 @@ if __name__ == "__main__":
     else:
         env_config = DEFAULT_CONFIG
     
-    title = f"#preds: {env_config['game']['num_preds']}, #preys: {env_config['game']['num_preys']}, #obsts: {env_config['game']['num_obsts']}"
+    title = f"#preds: {env_config['game']['num_preds']} (baseline: {opts.pred_baseline})" \
+            f", #preys: {env_config['game']['num_preys']} (baseline: {opts.prey_baseline})" \
+            f", #obsts: {env_config['game']['num_obsts']}"
     
     train(title=title,
             transitions=opts.transitions, 
