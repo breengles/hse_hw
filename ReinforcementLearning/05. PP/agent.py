@@ -130,9 +130,9 @@ class MADDPG:
                 print(agent.actor)
                 print(agent.critic)
         
-    def update(self, batch_size, step):
+    def update(self, batch, step):
         (_, next_state_dict, gstate, agent_states, actions, next_gstate, 
-         next_agent_states, rewards, done) = self.buffer.sample(batch_size)
+         next_agent_states, rewards, done) = batch
 
         target_next_actions = torch.empty_like(actions, device=self.device)
         
