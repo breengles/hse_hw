@@ -85,17 +85,18 @@ class Agent:
             self._soft_update(self.critic2_target, self.critic2)
 
 class MADDPG:
-    def __init__(self, n_preds, n_preys, state_dim, action_dim, pred_cfg, 
+    def __init__(self, buffer, n_preds, n_preys, state_dim, action_dim, pred_cfg, 
                  prey_cfg, saverate=1000, device="cpu", temperature=1, verbose=False, 
                  pred_baseline=False, prey_baseline=False, actor_update_delay=1):
-        self.device = device
-        self.saverate = saverate
+        self.buffer = buffer
         self.n_preds = n_preds
         self.n_preys = n_preys
-        self.actor_update_delay = actor_update_delay
+        self.saverate = saverate
+        self.device = device
+        self.verbose = verbose
         self.pred_baseline = pred_baseline
         self.prey_baseline = prey_baseline
-        self.verbose = verbose
+        self.actor_update_delay = actor_update_delay
 
         self.trainable_agents = []
         if pred_baseline:
@@ -128,9 +129,9 @@ class MADDPG:
                 print(agent.actor)
                 print(agent.critic)
         
-    def update(self, batch, step):
-        (_, next_state_dict, 
-         gstate, agent_states, actions, next_gstate, next_agent_states, rewards, done) = batch
+    def update(self, batch_size, step):
+        (_, next_state_dict, gstate, agent_states, actions, next_gstate, 
+         next_agent_states, rewards, done) = self.buffer.sample(batch_size)
 
         target_next_actions = torch.empty_like(actions, device=self.device)
         
