@@ -25,7 +25,7 @@ def train(title="", transitions=200_000, hidden_size=64,  buffer_size=10000,
           env_config=None, update_rate=1, num_updates=1, temperature=1, 
           device="cpu", buffer_init=False, verbose=False, 
           pred_baseline=False, prey_baseline=False, time_penalty=False,
-          actor_update_delay=1):
+          actor_update_delay=1, shared_actor=False, shared_critic=False):
     if saverate == -1:
         saverate = transitions // 100
         
@@ -77,7 +77,8 @@ def train(title="", transitions=200_000, hidden_size=64,  buffer_size=10000,
     maddpg = MADDPG(n_preds, n_preys, state_dim, 1, pred_config, prey_config, 
                     device=device, temperature=temperature, verbose=verbose,
                     pred_baseline=pred_baseline, prey_baseline=prey_baseline,
-                    actor_update_delay=actor_update_delay, saverate=saverate)
+                    actor_update_delay=actor_update_delay, saverate=saverate,
+                    shared_actor=shared_actor, shared_critic=shared_critic)
     
     if buffer_init:
         print("Filling buffer...")
@@ -101,7 +102,7 @@ def train(title="", transitions=200_000, hidden_size=64,  buffer_size=10000,
 
     state_dict, gstate, agent_states = env.reset()
     done = False
-    t = trange(transitions, desc=title)
+    t = trange(transitions, desc=uniq_dir_name + "|" + title)
     for step in t:
         if done:
             state_dict, gstate, agent_states = env.reset()
@@ -183,6 +184,8 @@ if __name__ == "__main__":
     parser.add_argument("--actor-lr", type=float, default=1e-4)
     parser.add_argument("--critic-lr", type=float, default=1e-4)
     parser.add_argument("-aud", "--actor-update-delay", type=int, default=50)
+    parser.add_argument("--shared-actor", action="store_true")
+    parser.add_argument("--shared-critic", action="store_true")
     parser.add_argument("--num-updates", type=int, default=1, help="how many updates of model at every step")
     parser.add_argument("-tp", "--time-penalty", action="store_true", help="enable time penalty for agents")
     parser.add_argument("-pred", "--pred-baseline", action="store_true", help="enable predator baseline")
@@ -246,6 +249,8 @@ if __name__ == "__main__":
             time_penalty=opts.time_penalty,
             pred_baseline=opts.pred_baseline,
             prey_baseline=opts.prey_baseline,
-            actor_update_delay=opts.actor_update_delay)
+            actor_update_delay=opts.actor_update_delay,
+            shared_actor=opts.shared_actor,
+            shared_critic=opts.shared_critic)
 
 # OMP_NUM_THREADS=1 ./train.py  -t 10000000 --buffer 2500000 --batch 2048 --env-config configs/1v1_1.json --seed 42 --sigma-max 0.3 --sigma-min 0.1 --saverate 20000
