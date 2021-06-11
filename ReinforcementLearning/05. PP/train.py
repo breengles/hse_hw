@@ -10,8 +10,11 @@ from argparse import ArgumentParser
 from datetime import datetime
 
 
-def eval_maddpg(config, maddpg, n_evals=25, render=False, seed=None, is_baseline=False):
-    env = VectorizeWrapper(PredatorsAndPreysEnv(config=config, render=render), 
+def eval_maddpg(config, maddpg, n_evals=25, render=False, seed=None, is_baseline=False, 
+                distance_reward=True, time_penalty=False):
+    env = VectorizeWrapper(PredatorsAndPreysEnv(config=config, render=render, 
+                                                distance_reward=distance_reward,
+                                                time_penalty=time_penalty), 
                            return_state_dict=is_baseline)
     if seed:
         set_seed(env, seed)
@@ -26,7 +29,7 @@ def train(title="", transitions=200_000, hidden_size=64,  buffer_size=10000,
           device="cpu", buffer_init=False, verbose=False, 
           pred_baseline=False, prey_baseline=False, time_penalty=False,
           actor_update_delay=1, shared_actor=False, shared_critic=False,
-          actor_reg=1e-5):
+          actor_reg=1e-5, distance_reward=True):
     if saverate == -1:
         saverate = transitions // 100
         
@@ -42,7 +45,8 @@ def train(title="", transitions=200_000, hidden_size=64,  buffer_size=10000,
     
     env = VectorizeWrapper(PredatorsAndPreysEnv(config=env_config, 
                                                 render=False,
-                                                time_penalty=time_penalty),
+                                                time_penalty=time_penalty,
+                                                distance_reward=distance_reward),
                            return_state_dict=pred_baseline or prey_baseline)
     if seed is not None:
         set_seed(env, seed)
@@ -145,7 +149,9 @@ def train(title="", transitions=200_000, hidden_size=64,  buffer_size=10000,
         
             if (step + 1) % saverate == 0:
                 rewards = eval_maddpg(env_config, maddpg, seed=seed, 
-                                      is_baseline=pred_baseline or prey_baseline)
+                                      is_baseline=pred_baseline or prey_baseline,
+                                      distance_reward=distance_reward, 
+                                      time_penalty=time_penalty)
                 
                 maddpg.save(saved_dir + f"{step + 1}.pt")
                 
@@ -175,8 +181,8 @@ if __name__ == "__main__":
     parser.add_argument("--buffer-init", action="store_true", 
                         help="fill up buffer with uniformly random action")
     parser.add_argument("--batch", type=int, default=512, help="batch size")
+    parser.add_argument("--env", type=str, default="oleg", help="which env to take")
     parser.add_argument("--env-config", type=str, default="", help="specify env config to")
-    parser.add_argument("--oleg", action="store_true", help="take Oleg's original env instead of Kirill's")
     parser.add_argument("--saverate", type=int, default=-1, help="how often to evaluate and save model")
     parser.add_argument("--gamma", type=float, default=0.99)
     parser.add_argument("--tau", type=float, default=0.001)
@@ -192,6 +198,7 @@ if __name__ == "__main__":
     parser.add_argument("--shared", action="store_true")
     parser.add_argument("--num-updates", type=int, default=1, help="how many updates of model at every step")
     parser.add_argument("-tp", "--time-penalty", action="store_true", help="enable time penalty for agents")
+    parser.add_argument("-ndr", "--no-distance-reward", action="store_true")
     parser.add_argument("-pred", "--pred-baseline", action="store_true", help="enable predator baseline")
     parser.add_argument("-prey", "--prey-baseline", action="store_true", help="enable prey baseline")
     parser.add_argument("--temperature", type=float, default=30,
@@ -225,9 +232,9 @@ if __name__ == "__main__":
     else:
         device = "cpu"
 
-    if opts.oleg:
+    if opts.env.lower() == "oleg":
         from oleg_env.env import PredatorsAndPreysEnv, DEFAULT_CONFIG
-    else:
+    elif opts.env.lower() == "kirill":
         from predators_and_preys_env.env import PredatorsAndPreysEnv, DEFAULT_CONFIG
     
     if opts.env_config:
@@ -267,6 +274,7 @@ if __name__ == "__main__":
             actor_update_delay=opts.actor_update_delay,
             shared_actor=shared_actor,
             shared_critic=shared_critic,
-            actor_reg=opts.actor_reg)
+            actor_reg=opts.actor_reg,
+            distance_reward=not opts.no_distance_reward)
 
 # OMP_NUM_THREADS=1 ./train.py  -t 10000000 --buffer 2500000 --batch 2048 --env-config configs/1v1_1.json --seed 42 --sigma-max 0.3 --sigma-min 0.1 --saverate 20000

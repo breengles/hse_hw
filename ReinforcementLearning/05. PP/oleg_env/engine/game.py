@@ -5,7 +5,7 @@ import numpy as np
 
 
 class Game:
-    def __init__(self, config):
+    def __init__(self, config, distance_reward=True):
         self.config = config
         self.predators = []
         self.preys = []
@@ -24,6 +24,8 @@ class Game:
         self.world_timestep = config["world_timestep"]        # 1/60
 
         self.random = random.Random()
+        self.distance_reward = distance_reward
+        self.death_reward = 10
 
     def seed(self, seed):
         self.random = random.Random(seed)
@@ -86,15 +88,17 @@ class Game:
         if is_collide:
             for _, e in self.preys:
                 if not e.dead and agent.is_intersect(e):
-                    reward += 10
+                    reward += self.death_reward
                     e.dead = True
         
         # negative reward for obstacles 
         # for o in self.obstacles:
         #     if agent.real_distance(o) <= 1e-3:
         #         reward -= 5
-                
-        reward -= 0.1 * min([agent.real_distance(e) for is_alive, e in self.preys if is_alive], default=0.0) 
+        
+        if self.distance_reward:
+            reward -= 0.1 * min([agent.real_distance(e) for is_alive, e in self.preys if is_alive], 
+                                default=0.0) 
         
         return reward
     
@@ -104,10 +108,11 @@ class Game:
         if not is_alive:
             for _, e in self.predators:
                 if not agent.dead and agent.is_intersect(e):
-                    reward -= 1
+                    reward -= self.death_reward
                     agent.dead = True
         
-        reward += 0.1 * sum([agent.real_distance(e) for _, e in self.predators])
+        if self.distance_reward:
+            reward += 0.1 * sum([agent.real_distance(e) for _, e in self.predators])
         
         return reward
 
