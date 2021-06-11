@@ -5,6 +5,7 @@ import numpy as np
 from train import rollout
 from utils import set_seed, rollout
 from wrapper import VectorizeWrapper
+# from oleg_env.env import PredatorsAndPreysEnv, DEFAULT_CONFIG
 from predators_and_preys_env.env import PredatorsAndPreysEnv
 from argparse import ArgumentParser
 from examples.simple_chasing_agents.agents import ChasingPredatorAgent, FleeingPreyAgent
@@ -29,15 +30,14 @@ if __name__ == "__main__":
 
     with open(os.path.dirname(opts.model) + "/params.json") as j:
         params = json.load(j)
-    env = VectorizeWrapper(PredatorsAndPreysEnv(config=params["env_config"], 
-                                                render=True), 
-                           return_state_dict=True)
-    
+
     if not (opts.pred or opts.prey):
         agents = maddpg.agents
+        pred_baseline = params["pred_baseline"]
     else:
         agents = []
         if opts.pred:
+            pred_baseline = True
             agents.append(ChasingPredatorAgent())
         else:
             agents.extend(maddpg.pred_agents)
@@ -50,5 +50,9 @@ if __name__ == "__main__":
     for agent in agents:
         agent.device = "cpu"
         
+    env = VectorizeWrapper(PredatorsAndPreysEnv(config=params["env_config"], 
+                                                render=True), 
+                           pred_baseline=pred_baseline,
+                           return_state_dict=True)   
     render(env, agents, num_evals=opts.num_evals)
     
