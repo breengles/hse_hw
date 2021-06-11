@@ -42,42 +42,25 @@ class Critic(nn.Module):
 class Agent:
     def __init__(self, team, state_dim, actor_action_dim, critic_action_dim,
                  critic_lr=1e-2, actor_lr=1e-2, gamma=0.99, tau=0.01, 
-                 hidden_size=64, device="cpu", temperature=30, actor=None,
-                 actor_target=None, critics=None, critics_target=None):
+                 hidden_size=64, device="cpu", temperature=30):
         self.team = team
         self.gamma = gamma
         self.tau = tau
         self.device = device
         self.kind = "trainable"
 
-        if actor is None:
-            self.actor = Actor(state_dim, actor_action_dim, hidden_size, temperature).to(self.device)
-        else:
-            self.actor = actor.to(self.device)
-        
-        if critics is None:
-            self.critic = Critic(state_dim, critic_action_dim, hidden_size).to(self.device)
-            self.critic2 = Critic(state_dim, critic_action_dim, hidden_size).to(self.device)
-        else:
-            self.critic = critics[0].to(self.device)
-            self.critic2 = critics[1].to(self.device)
-            
+        self.actor = Actor(state_dim, actor_action_dim, hidden_size, temperature).to(self.device)
         self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr=actor_lr)
+        
+        self.critic = Critic(state_dim, critic_action_dim, hidden_size).to(self.device)
+        self.critic2 = Critic(state_dim, critic_action_dim, hidden_size).to(self.device)
         self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=critic_lr)
         self.critic2_optimizer = torch.optim.Adam(self.critic2.parameters(), lr=critic_lr)
 
         with torch.no_grad():
-            if actor_target is None:
-                self.actor_target = deepcopy(self.actor)
-            else:
-                self.actor_target = actor_target.to(self.device)
-            
-            if critics_target is None:
-                self.critic_target = deepcopy(self.critic)
-                self.critic2_target = deepcopy(self.critic)
-            else:
-                self.critic_target = critics_target[0].to(self.device)
-                self.critic2_target = critics_target[1].to(self.device)
+            self.actor_target = deepcopy(self.actor)
+            self.critic_target = deepcopy(self.critic)
+            self.critic2_target = deepcopy(self.critic)
 
     def act(self, state, sigma=-1):
         with torch.no_grad():
@@ -105,8 +88,7 @@ class Agent:
 class MADDPG:
     def __init__(self, n_preds, n_preys, state_dim, action_dim, pred_cfg, 
                  prey_cfg, saverate=1000, device="cpu", temperature=1, verbose=False, 
-                 pred_baseline=False, prey_baseline=False, actor_update_delay=1,
-                 shared_actor=False, shared_critic=False):
+                 pred_baseline=False, prey_baseline=False, actor_update_delay=1):
         self.n_preds = n_preds
         self.n_preys = n_preys
         self.saverate = saverate
@@ -115,51 +97,14 @@ class MADDPG:
         self.pred_baseline = pred_baseline
         self.prey_baseline = prey_baseline
         self.actor_update_delay = actor_update_delay
-        
-        if shared_actor:
-            actor_pred = Actor(state_dim, action_dim, pred_cfg["hidden_size"], 
-                               temperature).to(self.device)
-            actor_prey = Actor(state_dim, action_dim, pred_cfg["hidden_size"], 
-                               temperature).to(self.device)
-            with torch.no_grad():
-                actor_pred_target = deepcopy(actor_pred)
-                actor_prey_target = deepcopy(actor_prey)
-        else:
-            actor_pred = None
-            actor_prey = None
-            actor_pred_target = None
-            actor_prey_target = None
-            
-        if shared_critic:
-            critics_pred = [Critic(state_dim, n_preds + n_preys, 
-                                   pred_cfg["hidden_size"]).to(self.device),
-                            Critic(state_dim, n_preds + n_preys, 
-                                   pred_cfg["hidden_size"]).to(self.device)]
-            critics_prey = [Critic(state_dim, n_preds + n_preys, 
-                                   pred_cfg["hidden_size"]).to(self.device),
-                            Critic(state_dim, n_preds + n_preys, 
-                                   pred_cfg["hidden_size"]).to(self.device)]
-            with torch.no_grad():
-                critics_target_pred = deepcopy(critics_pred)
-                critics_target_prey = deepcopy(critics_prey)
-                
-        else:
-            critics_pred = None
-            critics_prey = None
-            critics_target_pred = None
-            critics_target_prey = None
-            
+
         self.trainable_agents = []
         if pred_baseline:
             self.pred_agents = [ChasingPredatorAgent()]
         else:
             self.pred_agents = [Agent("pred", state_dim, action_dim, n_preds + n_preys,
                                       **pred_cfg, device=self.device, 
-                                      temperature=temperature, 
-                                      actor=actor_pred, 
-                                      actor_target=actor_pred_target,
-                                      critics=critics_pred, 
-                                      critics_target=critics_target_pred) for _ in range(self.n_preds)]
+                                      temperature=temperature) for _ in range(self.n_preds)]
             self.trainable_agents.extend(self.pred_agents)
             
         if prey_baseline:
@@ -167,11 +112,7 @@ class MADDPG:
         else:
             self.prey_agents = [Agent("prey", state_dim, action_dim, n_preds + n_preys,
                                       **prey_cfg, device=self.device, 
-                                      temperature=temperature, 
-                                      actor=actor_prey,
-                                      actor_target=actor_prey_target,
-                                      critics=critics_prey,
-                                      critics_target=critics_target_prey) for _ in range(self.n_preys)]
+                                      temperature=temperature) for _ in range(self.n_preys)]
             self.trainable_agents.extend(self.prey_agents)
         
         self.agents = self.pred_agents + self.prey_agents
@@ -185,15 +126,13 @@ class MADDPG:
             print("=== TRAINABLE AGENTS ===")
             for idx, agent in enumerate(self.trainable_agents):
                 print(f"AGENT {idx} ({agent.team}):", agent)
-                print(id(agent.actor))
                 print(agent.actor)
-                print(id(agent.critic))
                 print(agent.critic)
         
     def update(self, batch, step):
         (_, next_state_dict, gstate, agent_states, actions, next_gstate, 
          next_agent_states, rewards, done) = batch
-        
+
         target_next_actions = torch.empty_like(actions, device=self.device)
         
         if self.pred_baseline:

@@ -8,24 +8,17 @@ class ReplayBuffer:
     def __init__(self, n_agents, state_dim, action_dim, size: int = 10_000, device=torch.device("cpu")):
         self.n_agents = n_agents
         self.device = device
-        # self.device = "cpu"
         self.size = size
         
         self.state_dicts = [None for _ in range(self.size)]
         self.next_state_dicts = [None for _ in range(self.size)]
-        self.gstates = torch.empty((self.size, state_dim), dtype=torch.float, 
-                                   device=self.device)
-        self.agent_states = torch.empty((n_agents, self.size, state_dim), 
-                                        dtype=torch.float, device=self.device)
-        self.actions = torch.empty((n_agents, self.size), dtype=torch.float, 
-                                   device=self.device)
-        self.next_gstates = torch.empty((self.size, state_dim), dtype=torch.float, 
-                                        device=self.device)
-        self.next_agent_states = torch.empty((n_agents, self.size, state_dim), 
-                                             dtype=torch.float, device=self.device)
-        self.rewards = torch.empty((n_agents, self.size), dtype=torch.float, 
-                                   device=self.device)
-        self.dones = torch.empty((self.size), dtype=torch.float, device=self.device)
+        self.gstates = torch.empty((self.size, state_dim), dtype=torch.float, device=device)
+        self.agent_states = torch.empty((n_agents, self.size, state_dim), dtype=torch.float, device=device)
+        self.actions = torch.empty((n_agents, self.size), dtype=torch.float, device=device)
+        self.next_gstates = torch.empty((self.size, state_dim), dtype=torch.float, device=device)
+        self.next_agent_states = torch.empty((n_agents, self.size, state_dim), dtype=torch.float, device=device)
+        self.rewards = torch.empty((n_agents, self.size), dtype=torch.float, device=device)
+        self.dones = torch.empty((self.size), dtype=torch.float, device=device)
         
         self.pos = 0
         self.cur_size = 0
