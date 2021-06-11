@@ -4,27 +4,29 @@ import time
 
 DEFAULT_CONFIG = {
     "game": {
-        "num_obsts": 0, # 16
+        "num_obsts": 10, # 16
         "num_preds": 2, # 3
-        "num_preys": 1, # 7
-        "x_limit": 4, # 12
-        "y_limit": 4, # 12
+        "num_preys": 5, # 7
+        "x_limit": 9, # 12
+        "y_limit": 9, # 12
         "obstacle_radius_bounds": [0.8, 2.0],
         "prey_radius": 0.8,
         "predator_radius": 1.0,
         "predator_speed": 6.0,
         "prey_speed": 9.0, # 9
-        "world_timestep": 1/100,
+        "world_timestep": 1/40,
+        "frameskip": 2,
     },
     "environment": {
-        "frameskip": 5,
-        "time_limit": 500 # 1000
+        "frameskip": 2,
+        "time_limit": 1000 # 1000
     }
 }
 
 
 class PredatorsAndPreysEnv:
-    def __init__(self, config=DEFAULT_CONFIG, render=False):
+    def __init__(self, config=DEFAULT_CONFIG, render=False, time_penalty=False):
+        self.time_penalty = time_penalty
         self.game = Game(config["game"])
         self.time_limit = config["environment"]["time_limit"]
         self.frame_skip = config["environment"]["frameskip"]
@@ -60,12 +62,11 @@ class PredatorsAndPreysEnv:
             is_done = is_done and not prey["is_alive"]
         is_done = is_done or self.time_left < 0
 
-        # 10 = DEATH_REWARD from game.c
-        # reward["preys"] += 10 / self.time_limit
-        # reward["predators"] -= 10 / self.time_limit
-
-        reward["preys"] += 1
-        reward["predators"] -= 1
+        # 10 == kill reward
+        if self.time_penalty:
+            r = 10 / self.time_limit
+            reward["preys"] += r
+            reward["predators"] -= r
 
         return state, reward, is_done
 

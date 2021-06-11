@@ -1,5 +1,6 @@
 from .physics.entity import Entity
 import random
+
 import numpy as np
 
 
@@ -65,10 +66,14 @@ class Game:
         }
         
         for is_collide, e in self.predators:
-            reward_dict["predators"].append(self._get_predator_reward(is_collide, e))
+            reward_dict["predators"].append(
+                self._get_predator_reward(is_collide, e)
+            )
         
         for is_alive, e in self.preys:
-            reward_dict["preys"].append(self._get_prey_reward(is_alive, e))
+            reward_dict["preys"].append(
+                self._get_prey_reward(is_alive, e)
+            )
         
         reward_dict["predators"] = np.array(reward_dict["predators"])
         reward_dict["preys"] = np.array(reward_dict["preys"])
@@ -79,12 +84,17 @@ class Game:
         reward = 0.0
         
         if is_collide:
-            for is_alive, e in self.preys:
-                # if not is_alive:
-                if agent.is_intersect(e):
-                    reward += 1000
-                    
-        # reward -= 0.1 * min([agent.real_distance(e) for is_alive, e in self.preys if is_alive], default=0.0) 
+            for _, e in self.preys:
+                if not e.dead and agent.is_intersect(e):
+                    reward += 10
+                    e.dead = True
+        
+        # negative reward for obstacles 
+        # for o in self.obstacles:
+        #     if agent.real_distance(o) <= 1e-3:
+        #         reward -= 5
+                
+        reward -= 0.1 * min([agent.real_distance(e) for is_alive, e in self.preys if is_alive], default=0.0) 
         
         return reward
     
@@ -92,12 +102,12 @@ class Game:
         reward = 0.0
         
         if not is_alive:
-            for is_collide, e in self.predators:
-                # if is_collide:
-                if agent.is_intersect(e):
-                    reward -= 1000
+            for _, e in self.predators:
+                if not agent.dead and agent.is_intersect(e):
+                    reward -= 1
+                    agent.dead = True
         
-        # reward += 0.1 * min([agent.real_distance(e) for _, e in self.predators])
+        reward += 0.1 * sum([agent.real_distance(e) for _, e in self.predators])
         
         return reward
 
@@ -112,48 +122,48 @@ class Game:
         for a, (is_collide, e) in zip(actions["predators"], self.predators):
             e.move(a, self.world_timestep)
 
-        corrected = True
-        while corrected:
+        for _ in range(20):
             corrected = False
             for i, (is_alive, e) in enumerate(self.preys):
                 this_corrected = False
                 e.force_clip_positon(-self.x_limit, -self.y_limit, self.x_limit, self.y_limit)
                 for other in self.obstacles:
                     this_corrected = this_corrected or e.force_not_intersect(other)
+                    if this_corrected:
+                        break
                 if not this_corrected:
                     for j, (_, other) in enumerate(self.preys):
                         if i == j:
                             continue
                         this_corrected = this_corrected or e.force_not_intersect(other)
-                if not this_corrected:
-                    for other in self.obstacles:
-                        this_corrected = this_corrected or e.force_not_intersect(other)
+                        if this_corrected:
+                            break
                 corrected = corrected or this_corrected
                 e.force_clip_positon(-self.x_limit, -self.y_limit, self.x_limit, self.y_limit)
             if not corrected:
                 break
 
-        corrected = True
-        while corrected:
+        for _ in range(20):
             corrected = False
-            for i, (is_collide, e) in enumerate(self.predators):
+            for i, (_, e) in enumerate(self.predators):
                 this_corrected = False
                 e.force_clip_positon(-self.x_limit, -self.y_limit, self.x_limit, self.y_limit)
                 for other in self.obstacles:
                     this_corrected = this_corrected or e.force_not_intersect(other)
+                    if this_corrected:
+                        break
                 if not this_corrected:
                     for j, (_, other) in enumerate(self.predators):
                         if i == j:
                             continue
                         this_corrected = this_corrected or e.force_not_intersect(other)
-                if not this_corrected:
-                    for other in self.obstacles:
-                        this_corrected = this_corrected or e.force_not_intersect(other)
+                        if this_corrected:
+                            break
                 corrected = corrected or this_corrected
                 e.force_clip_positon(-self.x_limit, -self.y_limit, self.x_limit, self.y_limit)
             if not corrected:
                 break
-
+        
         for i in range(len(self.preys)):
             for j in range(len(self.predators)):
                 if self.predators[j][1].is_intersect(self.preys[i][1]):
