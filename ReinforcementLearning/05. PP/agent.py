@@ -14,13 +14,13 @@ class Actor(nn.Module):
         self.temperature = temperature
         self.model = nn.Sequential(
             nn.Linear(state_dim, hidden_size),
-            nn.LayerNorm(hidden_size),
+            # nn.LayerNorm(hidden_size),
             nn.ReLU(),
             nn.Linear(hidden_size, hidden_size),
             nn.LayerNorm(hidden_size),
             nn.ReLU(),
             nn.Linear(hidden_size, action_dim),
-            nn.LayerNorm(action_dim),
+            # nn.LayerNorm(action_dim),
         )
         self.model[-1].weight.data.uniform_(-3e-3, 3e-3)
 

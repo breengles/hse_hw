@@ -31,6 +31,7 @@ if __name__ == "__main__":
     with open(os.path.dirname(opts.model) + "/params.json") as j:
         params = json.load(j)
 
+    pred_baseline = False
     if not (opts.pred or opts.prey):
         agents = maddpg.agents
         pred_baseline = params["pred_baseline"]

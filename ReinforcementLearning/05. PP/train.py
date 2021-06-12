@@ -8,6 +8,7 @@ from utils import ReplayBuffer, set_seed, Logger, rollout
 from wrapper import VectorizeWrapper
 from argparse import ArgumentParser
 from datetime import datetime
+import torch
 
 
 def eval_maddpg(config, maddpg, n_evals=25, render=False, seed=None, is_baseline=False, 
@@ -184,8 +185,8 @@ if __name__ == "__main__":
     parser.add_argument("--env", type=str, default="oleg", help="which env to take")
     parser.add_argument("--env-config", type=str, default="", help="specify env config to")
     parser.add_argument("--saverate", type=int, default=-1, help="how often to evaluate and save model")
-    parser.add_argument("--gamma", type=float, default=0.99)
-    parser.add_argument("--tau", type=float, default=0.001)
+    parser.add_argument("--gamma", type=float, default=0.95)
+    parser.add_argument("--tau", type=float, default=0.01)
     parser.add_argument("--sigma-max", type=float, default=0.3)
     parser.add_argument("--sigma-min", type=float, default=0.0)
     parser.add_argument("--update-rate", type=int, default=1, help="how often to update model")
@@ -207,6 +208,7 @@ if __name__ == "__main__":
     parser.add_argument("--cuda", action="store_true", help="enable cuda")
     parser.add_argument("--info", action="store_true", help="print out env config at the start")
     parser.add_argument("--verbose", action="store_true", help="print out some debug info")
+    parser.add_argument("--omp", type=int, default=-1)
 
     opts = parser.parse_args()
 
@@ -215,6 +217,9 @@ if __name__ == "__main__":
     for name, value in args.items():
         print(f"{name}: {value}")
     print()
+    
+    if opts.omp > 0:
+        torch.set_num_threads(opts.omp)
 
     shared_actor = False
     shared_critic = False
