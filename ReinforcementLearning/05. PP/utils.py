@@ -34,7 +34,7 @@ class ReplayBuffer:
         return self.cur_size
 
     # transition is (state, action, next_state, reward, done) for agent
-    def add(self, transition):
+    def push(self, transition):
         if self.cur_size < self.size:
             self.cur_size += 1
             

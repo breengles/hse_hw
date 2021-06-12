@@ -197,12 +197,39 @@ class MADDPG:
                 print(id(agent.critic))
                 print(agent.critic)
         
-    def update(self, batch, step):
+    def update(self, buffer, batch_size, step):
+        batch, (weights, idxes) = buffer.sample(batch_size)
         (_, next_state_dict, gstate, agent_states, actions, next_gstate, 
          next_agent_states, rewards, done) = batch
+        weights = torch.tensor(weights, dtype=torch.float, device=self.device)
+        
+        # gstate = torch.tensor(gstate, dtype=torch.float, device=self.device)
+        # agent_states = torch.tensor(agent_states, dtype=torch.float, device=self.device)
+        # actions = torch.tensor(actions, dtype=torch.float, device=self.device)
+        # next_gstate = torch.tensor(next_gstate, dtype=torch.float, device=self.device)
+        # next_agent_states = torch.tensor(next_agent_states, dtype=torch.float, device=self.device)
+        # rewards = torch.tensor(rewards, dtype=torch.float, device=self.device)
+        # done = torch.tensor(done, dtype=torch.float, device=self.device)
         
         target_next_actions = torch.empty_like(actions, device=self.device)
         
+        # if self.pred_baseline:
+        #     for idx, s in enumerate(next_state_dict):
+        #         target_next_actions[idx, :self.n_preds] = \
+        #             torch.tensor(self.pred_agents[0].act(s), device=self.device)
+        # else:
+        #     for idx, agent in enumerate(self.pred_agents):
+        #         target_next_actions[:, idx] = agent.actor_target(next_agent_states[:, idx]).squeeze(-1)
+    
+        # if self.prey_baseline:
+        #     for idx, s in enumerate(next_state_dict):
+        #         target_next_actions[idx, -self.n_preys:] = \
+        #             torch.tensor(self.prey_agents[0].act(s), device=self.device)
+        # else:
+        #     for idx, agent in enumerate(self.prey_agents):
+        #         target_next_actions[:, -self.n_preys + idx] = \
+        #             agent.actor_target(next_agent_states[:, -self.n_preys + idx]).squeeze(-1)
+                    
         if self.pred_baseline:
             for idx, s in enumerate(next_state_dict):
                 target_next_actions[:self.n_preds, idx] = \
@@ -220,9 +247,6 @@ class MADDPG:
                 target_next_actions[-self.n_preys + idx] = \
                     agent.actor_target(next_agent_states[-self.n_preys + idx]).squeeze(-1)
                     
-        # for idx, agent in enumerate(self.trainable_agents):
-        #     target_next_actions[idx] = agent.actor_target(next_agent_states[idx]).squeeze(-1)
-        
         if (step + 1) % self.saverate == 0:
             tqdm.write((f"=== Step {step + 1} ==="))
         
@@ -237,12 +261,20 @@ class MADDPG:
             assert q1.shape == q_target.shape
             assert q2.shape == q_target.shape
             
-            critic_loss = F.mse_loss(q1, q_target)
-            critic2_loss = F.mse_loss(q2, q_target)
+            # critic_loss = F.mse_loss(q1, q_target)
+            # critic2_loss = F.mse_loss(q2, q_target)
+            critic_loss = (q1 - q_target) ** 2 * weights
+            critic2_loss = (q2 - q_target) ** 2 * weights
+            
+            prios = critic_loss + 1e-5
+            
+            critic_loss = critic_loss.mean()
+            critic2_loss = critic2_loss.mean()
             
             agent.critic_optimizer.zero_grad()
             critic_loss.backward()
             # grad_clamp(agent.critic)
+            buffer.update_priorities(idxes, prios.data.cpu().numpy())
             agent.critic_optimizer.step()
             
             agent.critic2_optimizer.zero_grad()
@@ -257,11 +289,11 @@ class MADDPG:
                 """
                 with torch.no_grad():
                     current_actions = deepcopy(actions)
-                action = agent.actor(agent_states[idx], return_raw=True)
-                current_actions[idx] = action[1].squeeze(-1)
+                action = agent.actor(agent_states[:, idx], return_raw=True)
+                current_actions[:, idx] = action[1].squeeze(-1)
                 
                 actor_loss = -agent.critic(gstate, current_actions.T).mean()
-                actor_loss += self.actor_action_reg_coef * (torch.abs(action[0])).mean()
+                actor_loss += self.actor_action_reg_coef * (action[0] ** 2).mean()
                 agent.actor_optimizer.zero_grad()
                 actor_loss.backward()
                 # grad_clamp(agent.actor)
