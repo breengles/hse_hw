@@ -53,7 +53,7 @@ def get_dataset():
         
         if (idx + 1) % saverate == 0:
             tensors = [torch.tensor(states[:idx // skip], dtype=torch.float), 
-                    torch.tensor(actions[:idx // skip], dtype=torch.float)]
+                       torch.tensor(actions[:idx // skip], dtype=torch.float)]
             ds = TensorDataset(*tensors)
             torch.save(ds, f"dataset/{(idx + 1) // skip}.pkl")
 

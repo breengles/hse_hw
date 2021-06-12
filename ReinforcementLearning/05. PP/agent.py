@@ -14,19 +14,16 @@ class Actor(nn.Module):
         self.temperature = temperature
         self.model = nn.Sequential(
             nn.Linear(state_dim, hidden_size),
-            # nn.LayerNorm(hidden_size),
             nn.ReLU(),
             nn.Linear(hidden_size, hidden_size),
-            nn.LayerNorm(hidden_size),
             nn.ReLU(),
+            nn.LayerNorm(hidden_size),
             nn.Linear(hidden_size, action_dim),
-            # nn.LayerNorm(action_dim),
         )
         self.model[-1].weight.data.uniform_(-3e-3, 3e-3)
 
     def forward(self, state, return_raw=False):
         out = self.model(state) / self.temperature
-        # print(out)
         if return_raw:
             return out, torch.tanh(out)
         else:
@@ -197,19 +194,11 @@ class MADDPG:
                 print(id(agent.critic))
                 print(agent.critic)
         
-    def update(self, buffer, batch_size, step):
-        batch, (weights, idxes) = buffer.sample(batch_size)
+    def update(self, buffer, batch_size, step, beta):
+        batch, (weights, idxes) = buffer.sample(batch_size, beta=beta)
         (_, next_state_dict, gstate, agent_states, actions, next_gstate, 
          next_agent_states, rewards, done) = batch
         weights = torch.tensor(weights, dtype=torch.float, device=self.device)
-        
-        # gstate = torch.tensor(gstate, dtype=torch.float, device=self.device)
-        # agent_states = torch.tensor(agent_states, dtype=torch.float, device=self.device)
-        # actions = torch.tensor(actions, dtype=torch.float, device=self.device)
-        # next_gstate = torch.tensor(next_gstate, dtype=torch.float, device=self.device)
-        # next_agent_states = torch.tensor(next_agent_states, dtype=torch.float, device=self.device)
-        # rewards = torch.tensor(rewards, dtype=torch.float, device=self.device)
-        # done = torch.tensor(done, dtype=torch.float, device=self.device)
         
         target_next_actions = torch.empty_like(actions, device=self.device)
         
@@ -263,6 +252,7 @@ class MADDPG:
             
             # critic_loss = F.mse_loss(q1, q_target)
             # critic2_loss = F.mse_loss(q2, q_target)
+            
             critic_loss = (q1 - q_target) ** 2 * weights
             critic2_loss = (q2 - q_target) ** 2 * weights
             

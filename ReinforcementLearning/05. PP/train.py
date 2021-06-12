@@ -83,7 +83,7 @@ def train(title="", transitions=200_000, hidden_size=64,  buffer_size=10000,
     #                       device=device)
     buffer = PrioritizedReplayBuffer(n_agents=n_preds + n_preys, 
                                      state_dim=state_dim, size=buffer_size, 
-                                     alpha=0.5, device=device)
+                                     alpha=0.25, device=device)
     maddpg = MADDPG(n_preds, n_preys, state_dim, 1, pred_config, prey_config, 
                     device=device, temperature=temperature, verbose=verbose,
                     pred_baseline=pred_baseline, prey_baseline=prey_baseline,
@@ -96,7 +96,7 @@ def train(title="", transitions=200_000, hidden_size=64,  buffer_size=10000,
         state_dict, gstate, agent_states = env.reset()
         done = False
         
-        for _ in trange(16 * batch_size, leave=False):
+        for _ in trange(batch_size, leave=False):
             if done:
                 state_dict, gstate, agent_states = env.reset()
             actions = np.random.uniform(-1, 1, n_preds + n_preys)
@@ -130,6 +130,7 @@ def train(title="", transitions=200_000, hidden_size=64,  buffer_size=10000,
         else:
             states.extend(agent_states[-n_preys:])
 
+        beta = min(1.0, 0.4 + step * (1.0 - 0.4) / transitions)
         sigma = sigma_max - (sigma_max - sigma_min) * step / transitions
         actions = np.hstack([agent.act(state, sigma=sigma) for agent, state in zip(maddpg.agents, states)])
         
@@ -147,10 +148,10 @@ def train(title="", transitions=200_000, hidden_size=64,  buffer_size=10000,
         gstate = next_gstate
         agent_states = next_agent_states
         
-        if step % update_rate == 0 and (step > 16 * batch_size or buffer_init):
+        if step % update_rate == 0 and (step > batch_size or buffer_init):
             for _ in range(num_updates):
                 # batch, (weights, idxes) = buffer.sample(batch_size)
-                maddpg.update(buffer, batch_size=batch_size, step=step)
+                maddpg.update(buffer, batch_size=batch_size, step=step, beta=beta)
         
             if (step + 1) % saverate == 0:
                 rewards = eval_maddpg(env_config, maddpg, seed=seed, 
@@ -189,7 +190,7 @@ if __name__ == "__main__":
     parser.add_argument("--env", type=str, default="oleg", help="which env to take")
     parser.add_argument("--env-config", type=str, default="", help="specify env config to")
     parser.add_argument("--saverate", type=int, default=-1, help="how often to evaluate and save model")
-    parser.add_argument("--gamma", type=float, default=0.95)
+    parser.add_argument("--gamma", type=float, default=0.99)
     parser.add_argument("--tau", type=float, default=0.01)
     parser.add_argument("--sigma-max", type=float, default=0.3)
     parser.add_argument("--sigma-min", type=float, default=0.0)
@@ -197,7 +198,7 @@ if __name__ == "__main__":
     parser.add_argument("--actor-lr", type=float, default=1e-4)
     parser.add_argument("--critic-lr", type=float, default=1e-4)
     parser.add_argument("-aud", "--actor-update-delay", type=int, default=50)
-    parser.add_argument("--actor-reg", type=float, default=1e-5)
+    parser.add_argument("--actor-reg", type=float, default=0)
     parser.add_argument("--shared-actor", action="store_true")
     parser.add_argument("--shared-critic", action="store_true")
     parser.add_argument("--shared", action="store_true")

@@ -1,4 +1,5 @@
-import pickle
+import torch
+import torch.nn as nn
 
 try:
     from utils import death_masking, vectorize_state
@@ -6,26 +7,48 @@ except ImportError:
     from .utils import death_masking, vectorize_state
 
 
-model = open(__file__[:-13] + f"/model.pkl", "rb")
-predictor = pickle.load(model)
+class Net(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.model = nn.Sequential(
+            nn.Linear(2 * 4 + 5 * 5, 64),
+            nn.ReLU(),
+            nn.Linear(64, 128),
+            nn.ReLU(),
+            nn.Linear(128, 128),
+            nn.ReLU(),
+            nn.Linear(128, 64),
+            nn.ReLU(),
+            nn.Linear(64, 7),
+        )
+    
+    def forward(self, state):
+        return torch.tanh(self.model(state))
+
+
+model = Net()
+model.load_state_dict(torch.load(__file__[:-13] + f"/model.pt"))
+model.eval()
 
 
 class PredatorAgent:
     def __init__(self):
-        self.agent = predictor
+        self.agent = model
     
     def act(self, state_dict):
-        state = vectorize_state(state_dict)[:-10 * 3]
-        return predictor.predict([state])[0][:2]
+        with torch.no_grad():
+            state = torch.FloatTensor(vectorize_state(state_dict)[:-10 * 3])
+            return self.agent(state).data.numpy()[:2]
 
 
 class PreyAgent:
     def __init__(self):
-        self.agent = predictor
+        self.agent = model
     
     def act(self, state_dict):
-        state = vectorize_state(state_dict)[:-10 * 3]
-        return predictor.predict([state])[0][2:]
+        with torch.no_grad():
+            state = torch.FloatTensor(vectorize_state(state_dict)[:-10 * 3])
+            return self.agent(state).data.numpy()[2:]
 
 
 if __name__ == "__main__":

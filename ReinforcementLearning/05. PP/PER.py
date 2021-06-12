@@ -203,38 +203,8 @@ class ReplayBuffer(object):
             self.rewards[idx, self.pos] = torch.tensor(rewards[idx], dtype=torch.float, device=self.device)
             self.actions[idx, self.pos] = torch.tensor(actions[idx], dtype=torch.float, device=self.device)
         self.pos = (self.pos + 1) % self._maxsize
-        
-        # if self._next_idx >= len(self._storage):
-        #     self._storage.append(transition)
-        # else:
-        #     self._storage[self._next_idx] = transition
-        # self._next_idx = (self._next_idx + 1) % self._maxsize
 
     def _encode_sample(self, idxes):
-        # sd = []
-        # nsd = []
-        # global_states = []
-        # agent_states = []
-        # actions = []
-        # next_global_states = []
-        # next_agent_states = [] 
-        # rewards = [] 
-        # dones = []
-        # for i in idxes:
-        #     (state_dict, next_state_dict, gstates, a_s, action, next_gstates, 
-        #      na_s, reward, done) = self._storage[i]
-        #     sd.append(state_dict)
-        #     nsd.append(next_state_dict)
-        #     global_states.append(np.array(gstates, copy=False))
-        #     agent_states.append(np.array(a_s, copy=False))
-        #     actions.append(np.array(action, copy=False))
-        #     next_global_states.append(np.array(next_gstates, copy=False))
-        #     next_agent_states.append(np.array(na_s, copy=False))
-        #     rewards.append(reward)
-        #     dones.append(done)
-        # return (sd, nsd, np.array(global_states), np.array(agent_states), 
-        #         np.array(actions), np.array(next_global_states), 
-        #         np.array(next_agent_states), np.array(rewards), np.array(dones))
         state_dicts = []
         next_state_dicts = []
         for idx in idxes:
