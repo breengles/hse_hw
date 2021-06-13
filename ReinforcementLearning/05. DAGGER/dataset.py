@@ -1,13 +1,9 @@
-from predators_and_preys_env.env import PredatorsAndPreysEnv, DEFAULT_CONFIG
-from wrapper import VectorizeWrapper
-from examples.simple_chasing_agents.agents import ChasingPredatorAgent, FleeingPreyAgent
+from predators_and_preys_env.env import PredatorsAndPreysEnv
 import numpy as np
-import pandas as pd
 from torch.utils.data import TensorDataset
 import torch
 from tqdm import trange
 from better_baseline import PreyAgent, PredatorAgent
-from joblib import delayed, Parallel
 
 
 def vectorize_state(state_dicts):
@@ -20,14 +16,13 @@ def vectorize_state(state_dicts):
     return [*_state_to_array(state_dicts["predators"]), *_state_to_array(state_dicts["preys"]), *_state_to_array(state_dicts["obstacles"])]
 
 
-agent_pred = PredatorAgent()
-agent_prey = PreyAgent()
-
-env = PredatorsAndPreysEnv()
-
-
 def get_dataset(transitions=100_000_000, saverate=-1, skip=5):
+    agent_pred = PredatorAgent()
+    agent_prey = PreyAgent()
+    env = PredatorsAndPreysEnv()
+    
     saverate = saverate if saverate > 0 else transitions // 10
+    
     states = np.zeros(shape=(transitions, 33))
     actions = np.zeros(shape=(transitions, 7))
     
