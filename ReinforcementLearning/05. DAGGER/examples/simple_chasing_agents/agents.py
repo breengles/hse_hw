@@ -52,8 +52,8 @@ class FleeingPreyAgent(PreyAgent):
             if closest_predator is None:
                 action.append(0.)
             else:
-                action.append(1 + np.arctan2(closest_predator["y_pos"] - prey["y_pos"],
-                                             closest_predator["x_pos"] - prey["x_pos"]) / np.pi)
+                action.append(np.arctan2(closest_predator["y_pos"] - prey["y_pos"],
+                                         closest_predator["x_pos"] - prey["x_pos"]) / np.pi)
         return np.array(action)
     
     
