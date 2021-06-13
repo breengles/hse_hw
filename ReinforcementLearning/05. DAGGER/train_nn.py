@@ -4,10 +4,12 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from tqdm import trange, tqdm
 
+
 n_preds = 2
 n_preys = 5
 pred_state_dim = 4
 prey_state_dim = 5
+
 
 class Net(nn.Module):
     def __init__(self, outdim=7):
