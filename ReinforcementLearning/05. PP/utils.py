@@ -3,6 +3,9 @@ import pandas as pd
 from matplotlib import pyplot as plt
 import numpy as np
 from copy import deepcopy
+from torch import Tensor
+from typing import List, Tuple
+from better_baseline import PredatorAgent, PreyAgent
 
 class ReplayBuffer:
     def __init__(self, n_agents, state_dim, action_dim, size: int = 10_000, device=torch.device("cpu")):
@@ -54,7 +57,7 @@ class ReplayBuffer:
             self.actions[idx, self.pos] = torch.tensor(actions[idx], device=self.device)
         self.pos = (self.pos + 1) % self.size
         
-    def sample(self, batch_size: int):
+    def sample(self, batch_size, beta=None):
         assert self.__len__() >= batch_size
         ids = np.random.choice(self.__len__(), batch_size, replace=False)
         state_dicts = []
@@ -69,7 +72,10 @@ class ReplayBuffer:
                 self.next_gstates[ids], 
                 self.next_agent_states[:, ids], 
                 self.rewards[:, ids], 
-                self.dones[ids])
+                self.dones[ids]), (None, None)
+    
+    def update_priorities(self, idxes, priorities):
+        pass
 
 
 def grad_clamp(model):
@@ -130,6 +136,9 @@ class Logger:
 
 
 def rollout(env, agents):
+    baseline_pred = PredatorAgent()
+    baseline_prey = PreyAgent()
+    
     total_reward = []
     state_dict, _, states = env.reset()
     done = False
@@ -146,7 +155,73 @@ def rollout(env, agents):
                     agents_and_states.append((agent, states[-env.n_preys + idx]))
                     
         actions = np.hstack([agent.act(state) for agent, state in agents_and_states])
-        state_dict, _, states, rewards, done = env.step(actions)
+        baseline_pred_actions = baseline_pred.act(state_dict)
+        baseline_prey_actions = baseline_prey.act(state_dict)
+        baseline_actions = baseline_pred_actions + baseline_prey_actions
+        rewards = -mse(baseline_actions, actions)
+        
+        state_dict, _, states, _, done = env.step(actions)
+        # state_dict, _, states, rewards, done = env.step(actions)
         total_reward.append(rewards)
+        
+    # print(total_reward)
+    # quit()
+    return np.vstack(total_reward).mean(axis=0)
+
+
+class Buffer(object):
+    def __init__(self, pred_feature_dim, prey_feature_dim, action_dim_pred, 
+                 action_dim_prey, max_size):
+        self.max_size = max_size
+
+        self.pred_feature = torch.zeros(max_size, pred_feature_dim).float()
+        self.prey_feature = torch.zeros(max_size, prey_feature_dim).float()
+        self.action = torch.zeros(max_size, action_dim_pred + action_dim_prey).float()
+        self.reward = torch.zeros(max_size).float()
+        self.next_pred_feature = torch.zeros(max_size, pred_feature_dim).float()
+        self.next_prey_feature = torch.zeros(max_size, prey_feature_dim).float()
+        self.done = torch.zeros(max_size).float()
+
+        self.filled_i = 0
+        self.curr_size = 0
+
+    def push(self, pred_feature, prey_feature, action, next_pred_feature, 
+             next_prey_feature, reward, done):
+        if self.curr_size < self.max_size:
+            self.curr_size += 1
+            
+        self.pred_feature[self.filled_i] = torch.FloatTensor(pred_feature)
+        self.prey_feature[self.filled_i] = torch.FloatTensor(prey_feature)
+        self.action[self.filled_i] = torch.FloatTensor(action)
+        self.reward[self.filled_i] = torch.FloatTensor(reward)
+        self.next_pred_feature[self.filled_i] = torch.FloatTensor(next_pred_feature)
+        self.next_prey_feature[self.filled_i] = torch.FloatTensor(next_prey_feature)
+        self.done[self.filled_i] = torch.FloatTensor(done)
+
+        self.curr_size = min(self.max_size, self.curr_size + 1)
+        self.filled_i = (self.filled_i + 1) % self.max_size
+
+    def sample(self, batch_size: int, norm_rew: bool = True) -> Tuple[Tensor, Tensor, Tensor, Tensor, Tensor]:
+        indices = np.random.choice(self.curr_size, batch_size, replace=False)
+        # indices = torch.Tensor(indices).long()
+
+        if norm_rew:
+            mean = torch.mean(self.reward[:self.curr_size])
+            std = torch.std(self.reward[:self.curr_size])
+            rew = (self.reward[indices] - mean) / std
+        else:
+            rew = self.reward_buff[indices]
+
+        return self.pred_feature[indices], self.prey_feature[indices], \
+            self.action[indices], self.next_pred_feature[indices], \
+            self.next_prey_feature[indices], rew, self.done[indices]
+
+    def __len__(self):
+        return self.curr_size
     
-    return np.vstack(total_reward).sum(axis=0)
+    
+def mse(y, y_true):
+    y_ = np.array(y)
+    y_true_ = np.array(y_true)
+    return (y_ - y_true_) ** 2
+    

@@ -198,7 +198,9 @@ class MADDPG:
         batch, (weights, idxes) = buffer.sample(batch_size, beta=beta)
         (_, next_state_dict, gstate, agent_states, actions, next_gstate, 
          next_agent_states, rewards, done) = batch
-        weights = torch.tensor(weights, dtype=torch.float, device=self.device)
+        
+        if weights is not None:
+            weights = torch.tensor(weights, dtype=torch.float, device=self.device)
         
         target_next_actions = torch.empty_like(actions, device=self.device)
         
@@ -253,10 +255,14 @@ class MADDPG:
             # critic_loss = F.mse_loss(q1, q_target)
             # critic2_loss = F.mse_loss(q2, q_target)
             
-            critic_loss = (q1 - q_target) ** 2 * weights
-            critic2_loss = (q2 - q_target) ** 2 * weights
-            
-            prios = critic_loss + 1e-5
+            if weights is not None:
+                critic_loss = (q1 - q_target) ** 2 * weights
+                critic2_loss = (q2 - q_target) ** 2 * weights
+                prios = critic_loss + 1e-5
+            else:
+                critic_loss = F.mse_loss(q1, q_target)
+                critic2_loss = F.mse_loss(q2, q_target)
+                prios = critic_loss  # it does not matter: using non-prioritized buffer
             
             critic_loss = critic_loss.mean()
             critic2_loss = critic2_loss.mean()

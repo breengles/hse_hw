@@ -4,20 +4,21 @@ import os, pprint, json
 from tqdm import trange, tqdm
 import numpy as np
 from agent import MADDPG
-from utils import ReplayBuffer, set_seed, Logger, rollout
+from utils import ReplayBuffer, set_seed, Logger, rollout, Buffer, mse
 from wrapper import VectorizeWrapper
 from argparse import ArgumentParser
 from datetime import datetime
 import torch
 from PER import PrioritizedReplayBuffer
+from sklearn.metrics import mean_squared_error
+from better_baseline import PredatorAgent, PreyAgent
 
 
-def eval_maddpg(config, maddpg, n_evals=25, render=False, seed=None, is_baseline=False, 
+def eval_maddpg(config, maddpg, n_evals=25, render=False, seed=None, 
                 distance_reward=True, time_penalty=False):
     env = VectorizeWrapper(PredatorsAndPreysEnv(config=config, render=render, 
                                                 distance_reward=distance_reward,
-                                                time_penalty=time_penalty), 
-                           return_state_dict=is_baseline)
+                                                time_penalty=time_penalty))
     if seed:
         set_seed(env, seed)
     rewards = [rollout(env, maddpg.agents) for _ in range(n_evals)]
@@ -32,6 +33,7 @@ def train(title="", transitions=200_000, hidden_size=64,  buffer_size=10000,
           pred_baseline=False, prey_baseline=False, time_penalty=False,
           actor_update_delay=1, shared_actor=False, shared_critic=False,
           actor_reg=1e-5, distance_reward=True):
+    
     if saverate == -1:
         saverate = transitions // 100
         
@@ -48,8 +50,11 @@ def train(title="", transitions=200_000, hidden_size=64,  buffer_size=10000,
     env = VectorizeWrapper(PredatorsAndPreysEnv(config=env_config, 
                                                 render=False,
                                                 time_penalty=time_penalty,
-                                                distance_reward=distance_reward),
-                           return_state_dict=pred_baseline or prey_baseline)
+                                                distance_reward=distance_reward))
+    
+    baseline_pred = PredatorAgent()
+    baseline_prey = PreyAgent()
+    
     if seed is not None:
         set_seed(env, seed)
     
@@ -76,14 +81,21 @@ def train(title="", transitions=200_000, hidden_size=64,  buffer_size=10000,
         "hidden_size": hidden_size,
     }
     
-    # buffer = ReplayBuffer(n_agents=n_preds + n_preys, 
-    #                       state_dim=state_dim, 
-    #                       action_dim=1, 
-    #                       size=buffer_size, 
-    #                       device=device)
-    buffer = PrioritizedReplayBuffer(n_agents=n_preds + n_preys, 
-                                     state_dim=state_dim, size=buffer_size, 
-                                     alpha=0.25, device=device)
+    buffer = ReplayBuffer(n_agents=n_preds + n_preys, 
+                          state_dim=state_dim, 
+                          action_dim=1, 
+                          size=buffer_size, 
+                          device=device)
+    
+    # buffer = PrioritizedReplayBuffer(n_agents=n_preds + n_preys, 
+    #                                  state_dim=state_dim, size=buffer_size, 
+    #                                  alpha=0.25, device=device)
+
+    # preds_feature, preys_feature, _ = env.reset()
+    # buffer = Buffer(prey_feature_dim=preds_feature.shape[0], 
+    #                 preys_feature_dim=preys_feature.shape[0], 
+    #                 action_dim=n_preds + n_preys, max_size=buffer_size)
+    
     maddpg = MADDPG(n_preds, n_preys, state_dim, 1, pred_config, prey_config, 
                     device=device, temperature=temperature, verbose=verbose,
                     pred_baseline=pred_baseline, prey_baseline=prey_baseline,
@@ -111,7 +123,7 @@ def train(title="", transitions=200_000, hidden_size=64,  buffer_size=10000,
             state_dict, gstate, agent_states = next_state_dict, next_gstate, next_agent_states
         print("Finished. Now training...")
 
-    state_dict, gstate, agent_states = env.reset()
+    state_dict, gstate, agent_states = env.reset()    
     done = False
     t = trange(transitions, desc=uniq_dir_name + "/ | " + title)
     for step in t:
@@ -134,7 +146,13 @@ def train(title="", transitions=200_000, hidden_size=64,  buffer_size=10000,
         sigma = sigma_max - (sigma_max - sigma_min) * step / transitions
         actions = np.hstack([agent.act(state, sigma=sigma) for agent, state in zip(maddpg.agents, states)])
         
+        
         next_state_dict, next_gstate, next_agent_states, reward, done = env.step(actions)
+        
+        baseline_pred_actions = baseline_pred.act(state_dict)
+        baseline_prey_actions = baseline_prey.act(state_dict)
+        baseline_actions = baseline_pred_actions + baseline_prey_actions
+        reward = -mse(baseline_actions, actions)
         
         buffer.push((
             state_dict, next_state_dict,
@@ -154,8 +172,7 @@ def train(title="", transitions=200_000, hidden_size=64,  buffer_size=10000,
                 maddpg.update(buffer, batch_size=batch_size, step=step, beta=beta)
         
             if (step + 1) % saverate == 0:
-                rewards = eval_maddpg(env_config, maddpg, seed=seed, 
-                                      is_baseline=pred_baseline or prey_baseline,
+                rewards = eval_maddpg(env_config, maddpg, seed=seed,
                                       distance_reward=distance_reward, 
                                       time_penalty=time_penalty)
                 

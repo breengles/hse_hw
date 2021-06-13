@@ -25,7 +25,7 @@ DEFAULT_CONFIG = {
 
 
 class PredatorsAndPreysEnv:
-    def __init__(self, config=DEFAULT_CONFIG, render=False, time_penalty=False):
+    def __init__(self, config=DEFAULT_CONFIG, render=False, time_penalty=False, distance_reward=None):
         self.game = Game(config["game"])
         self.time_limit = config["environment"]["time_limit"]
         self.frame_skip = config["environment"]["frameskip"]

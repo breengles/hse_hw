@@ -53,7 +53,6 @@ if __name__ == "__main__":
         
     env = VectorizeWrapper(PredatorsAndPreysEnv(config=params["env_config"], 
                                                 render=True), 
-                           pred_baseline=pred_baseline,
-                           return_state_dict=True)   
+                           pred_baseline=pred_baseline)   
     render(env, agents, num_evals=opts.num_evals)
     
