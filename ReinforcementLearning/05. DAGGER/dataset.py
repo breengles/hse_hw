@@ -4,16 +4,17 @@ from torch.utils.data import TensorDataset
 import torch
 from tqdm import trange
 from better_baseline import PreyAgent, PredatorAgent
+from utils import vectorize_state
 
 
-def vectorize_state(state_dicts):
-    def _state_to_array(state_dicts_):
-        states = []
-        for state_dict in state_dicts_:
-            states.extend(list(state_dict.values()))
-        return states
+# def vectorize_state(state_dicts):
+#     def _state_to_array(state_dicts_):
+#         states = []
+#         for state_dict in state_dicts_:
+#             states.extend(list(state_dict.values()))
+#         return states
     
-    return [*_state_to_array(state_dicts["predators"]), *_state_to_array(state_dicts["preys"]), *_state_to_array(state_dicts["obstacles"])]
+#     return [*_state_to_array(state_dicts["predators"]), *_state_to_array(state_dicts["preys"]), *_state_to_array(state_dicts["obstacles"])]
 
 
 def get_dataset(transitions=100_000_000, saverate=-1, skip=5):

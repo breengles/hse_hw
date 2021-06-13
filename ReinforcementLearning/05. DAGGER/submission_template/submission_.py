@@ -1,9 +1,9 @@
 import pickle
 
 try:
-    from utils import death_masking, vectorize_state
+    from utils import vectorize_state
 except ImportError: 
-    from .utils import death_masking, vectorize_state
+    from .utils import vectorize_state
 
 
 model = open(__file__[:-13] + f"/model.pkl", "rb")

@@ -1,34 +1,9 @@
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from tqdm import trange, tqdm
+from model import Net
 
-
-n_preds = 2
-n_preys = 5
-pred_state_dim = 4
-prey_state_dim = 5
-
-
-class Net(nn.Module):
-    def __init__(self, outdim=7):
-        super().__init__()
-        self.model = nn.Sequential(
-            nn.Linear(n_preds * pred_state_dim + n_preys * prey_state_dim, 64),
-            nn.ReLU(),
-            nn.Linear(64, 256),
-            nn.ReLU(),
-            nn.Linear(256, 256),
-            nn.ReLU(),
-            nn.Linear(256, 64),
-            nn.ReLU(),
-            nn.Linear(64, outdim),
-        )
-    
-    def forward(self, state):
-        return torch.tanh(self.model(state))
-    
 
 def train(ds, num_epoch=1000, batch_size=256, saverate=10, device="cpu", path=""):
     net = Net()
@@ -77,5 +52,5 @@ def train(ds, num_epoch=1000, batch_size=256, saverate=10, device="cpu", path=""
 
 
 if __name__ == "__main__":
-    ds = torch.load("dataset/14136792.pkl")
+    ds = torch.load("dataset/20195482.pkl")
     train(ds, device="cuda", batch_size=65536 * 8, saverate=1)

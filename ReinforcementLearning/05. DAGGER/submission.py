@@ -1,34 +1,11 @@
 import torch
-import torch.nn as nn
 
 try:
-    from utils import death_masking, vectorize_state
+    from utils import vectorize_state
+    from model import Net
 except ImportError: 
-    from .utils import death_masking, vectorize_state
-
-
-class Net(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.model = nn.Sequential(
-            nn.Linear(2 * 4 + 5 * 5, 64),
-            nn.ReLU(),
-            nn.Linear(64, 128),
-            nn.ReLU(),
-            nn.Linear(128, 128),
-            nn.ReLU(),
-            nn.Linear(128, 64),
-            nn.ReLU(),
-            nn.Linear(64, 7),
-        )
-    
-    def forward(self, state):
-        return torch.tanh(self.model(state))
-
-
-model = Net()
-model.load_state_dict(torch.load(__file__[:-13] + f"/model.pt"))
-model.eval()
+    from .utils import vectorize_state
+    from .model import Net
 
 
 class PredatorAgent:
@@ -54,6 +31,10 @@ class PreyAgent:
 if __name__ == "__main__":
     from predators_and_preys_env.env import PredatorsAndPreysEnv
     
+    model = Net()
+    model.load_state_dict(torch.load("model.pt"))
+    model.eval()
+    
     pred = PredatorAgent()
     prey = PreyAgent()
     env = PredatorsAndPreysEnv(render=True)
@@ -66,4 +47,8 @@ if __name__ == "__main__":
             pred_actions = pred.act(state)
             prey_actions = prey.act(state)
             state, _, done = env.step(pred_actions, prey_actions)
+else:
+    model = Net()
+    model.load_state_dict(torch.load(__file__[:-13] + "/model.pt"))
+    model.eval()
         
