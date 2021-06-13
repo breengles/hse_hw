@@ -20,42 +20,41 @@ def vectorize_state(state_dicts):
     return [*_state_to_array(state_dicts["predators"]), *_state_to_array(state_dicts["preys"]), *_state_to_array(state_dicts["obstacles"])]
 
 
-# agent_pred = ChasingPredatorAgent()
-# agent_prey = FleeingPreyAgent()
-
 agent_pred = PredatorAgent()
 agent_prey = PreyAgent()
 
 env = PredatorsAndPreysEnv()
 
-ds_size = 100_000_000
-saverate = 10_000_000
-skip = 5
 
-states = np.zeros(shape=(ds_size // skip, 33))
-actions = np.zeros(shape=(ds_size // skip, 7))
-
-def get_dataset():
+def get_dataset(transitions=100_000_000, saverate=-1, skip=5):
+    saverate = saverate if saverate > 0 else transitions // 10
+    states = np.zeros(shape=(transitions, 33))
+    actions = np.zeros(shape=(transitions, 7))
+    
+    cur_size = 0
+    
     done = False
-    for idx in trange(ds_size):
-        state_dict = env.reset()
-        
+    state_dict = env.reset()
+    for idx in trange(transitions):
         if done:
             state_dict = env.reset()
             done = False
-        
+            
         action = np.hstack([agent.act(state_dict) for agent in (agent_pred, agent_prey)])
-        state = vectorize_state(state_dict)
-        if idx % skip == 0:
-            states[idx // skip] = state[:-10 * 3]
-            actions[idx // skip] = action
-        state_dict = env.step(action[:2], action[2:])
+        next_state_dict, _, done = env.step(action[:2], action[2:])
+        
+        if idx % skip == 0 or done:
+            state = vectorize_state(state_dict)
+            states[cur_size] = state[:-10 * 3]
+            actions[cur_size] = action
+            cur_size += 1
+        state_dict = next_state_dict
         
         if (idx + 1) % saverate == 0:
-            tensors = [torch.tensor(states[:idx // skip], dtype=torch.float), 
-                       torch.tensor(actions[:idx // skip], dtype=torch.float)]
+            tensors = [torch.FloatTensor(states[:cur_size]), 
+                       torch.FloatTensor(actions[:cur_size])]
             ds = TensorDataset(*tensors)
-            torch.save(ds, f"dataset/{(idx + 1) // skip}.pkl")
+            torch.save(ds, f"dataset/{cur_size}.pkl")
 
 
 if __name__ == "__main__":
