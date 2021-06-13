@@ -3,28 +3,25 @@ import numpy as np
 from torch.utils.data import TensorDataset
 import torch
 from tqdm import trange
+from examples.simple_chasing_agents.agents import ChasingPredatorAgent, FleeingPreyAgent
 from better_baseline import PreyAgent, PredatorAgent
 from utils import vectorize_state
 
 
-# def vectorize_state(state_dicts):
-#     def _state_to_array(state_dicts_):
-#         states = []
-#         for state_dict in state_dicts_:
-#             states.extend(list(state_dict.values()))
-#         return states
-    
-#     return [*_state_to_array(state_dicts["predators"]), *_state_to_array(state_dicts["preys"]), *_state_to_array(state_dicts["obstacles"])]
-
-
-def get_dataset(transitions=100_000_000, saverate=-1, skip=5):
+def get_dataset(config=None, transitions=100_000_000, saverate=-1, skip=5, 
+                delete_obsts=True):
     agent_pred = PredatorAgent()
     agent_prey = PreyAgent()
-    env = PredatorsAndPreysEnv()
+    # agent_pred = ChasingPredatorAgent()
+    # agent_prey = FleeingPreyAgent()
+    if config is None:
+        env = PredatorsAndPreysEnv()
+    else:
+        env = PredatorsAndPreysEnv(config)
     
     saverate = saverate if saverate > 0 else transitions // 10
     
-    states = np.zeros(shape=(transitions, 33))
+    states = np.zeros(shape=(transitions, 33)) if delete_obsts else np.zeros(shape=(transitions, 63))
     actions = np.zeros(shape=(transitions, 7))
     
     cur_size = 0
@@ -41,7 +38,7 @@ def get_dataset(transitions=100_000_000, saverate=-1, skip=5):
         
         if idx % skip == 0 or done:
             state = vectorize_state(state_dict)
-            states[cur_size] = state[:-10 * 3]
+            states[cur_size] = state[:-10 * 3] if delete_obsts else state
             actions[cur_size] = action
             cur_size += 1
         state_dict = next_state_dict
@@ -50,9 +47,30 @@ def get_dataset(transitions=100_000_000, saverate=-1, skip=5):
             tensors = [torch.FloatTensor(states[:cur_size]), 
                        torch.FloatTensor(actions[:cur_size])]
             ds = TensorDataset(*tensors)
-            torch.save(ds, f"dataset/{cur_size}.pkl")
+            torch.save(ds, f"dataset/kirill_{cur_size}.pkl")
 
 
 if __name__ == "__main__":
-    get_dataset()
+    for_kirill = {
+        "game": {
+            "num_obsts": 10,
+            "num_preds": 2,
+            "num_preys": 5,
+            "x_limit": 9,
+            "y_limit": 9,
+            "obstacle_radius_bounds": [0.8, 1.5],
+            "prey_radius": 0.8,
+            "predator_radius": 1.0,
+            "predator_speed": 6.0,
+            "prey_speed": 9.0,
+            "world_timestep": 1/40,
+            "frameskip": 2
+        },
+        "environment": {
+            "frameskip": 2,
+            "time_limit": 300
+        }
+    }
+    get_dataset(config=for_kirill, skip=3, delete_obsts=False)
+    # get_dataset(skip=3, delete_obsts=False)
     

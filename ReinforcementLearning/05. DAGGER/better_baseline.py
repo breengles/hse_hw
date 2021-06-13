@@ -1,14 +1,14 @@
-# credits to grazder
-
 import numpy as np
-#from predators_and_preys_env.agent import PredatorAgent, PreyAgent
+
 
 def distance(first, second):
     return ((first["x_pos"] - second["x_pos"]) ** 2 + (first["y_pos"] - second["y_pos"]) ** 2) ** 0.5
 
+
 EPS = 0.01
 DELTA = 10
 BACK_DELTA = 10
+
 
 class PredatorAgent:
     def __init__(self):
@@ -21,7 +21,7 @@ class PredatorAgent:
 
         for j, predator in enumerate(state_dict["predators"]):
             closest_prey = None
-            angle_value = 0.
+            angle_value = 0.0
 
             if self.random_delay[j] < 0:
                 for i, prey in enumerate(state_dict["preys"]):
@@ -34,21 +34,26 @@ class PredatorAgent:
                             closest_prey = prey
 
                 if closest_prey is not None:
-                    angle_value = np.arctan2(closest_prey["y_pos"] - predator["y_pos"],
-                                             closest_prey["x_pos"] - predator["x_pos"]) / np.pi
+                    angle_value = (
+                        np.arctan2(closest_prey["y_pos"] - predator["y_pos"], closest_prey["x_pos"] - predator["x_pos"])
+                        + np.pi
+                    )
 
                 if self.priv_state is not None:
                     priv_predator = self.priv_state["predators"][j]
 
-                    if abs(priv_predator["y_pos"] - predator["y_pos"]) + abs(
-                            priv_predator["x_pos"] - predator["x_pos"]) < EPS:
+                    if (
+                        abs(priv_predator["y_pos"] - predator["y_pos"])
+                        + abs(priv_predator["x_pos"] - predator["x_pos"])
+                        < EPS
+                    ):
                         self.random_delay[j] = DELTA + BACK_DELTA
-                        self.random_angle[j] = [1 + angle_value] * BACK_DELTA + [np.random.uniform(-1, 1)] * DELTA
+                        self.random_angle[j] = [np.pi + angle_value] * BACK_DELTA + [np.random.uniform(-1, 1)] * DELTA
             else:
                 self.random_delay[j] -= 1
                 angle_value = self.random_angle[j][self.random_delay[j]]
 
-            action.append(angle_value)
+            action.append((angle_value % (2 * np.pi) - np.pi) / np.pi)
 
         self.priv_state = state_dict
         return action
@@ -66,8 +71,12 @@ class PreyAgent:
                     if distance(closest_predator, prey) > distance(prey, predator):
                         closest_predator = predator
             if closest_predator is None:
-                action.append(0.)
+                action.append(0.0)
             else:
-                action.append(1 + np.arctan2(closest_predator["y_pos"] - prey["y_pos"],
-                                             closest_predator["x_pos"] - prey["x_pos"]) / np.pi)
+                angle_value = (
+                    np.arctan2(closest_predator["y_pos"] - prey["y_pos"], closest_predator["x_pos"] - prey["x_pos"])
+                    + np.pi
+                    + np.pi
+                )
+                action.append((angle_value % (2 * np.pi) - np.pi) / np.pi)
         return action
