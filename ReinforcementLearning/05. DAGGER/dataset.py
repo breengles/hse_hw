@@ -8,7 +8,7 @@ from better_baseline import PreyAgent, PredatorAgent
 from utils import vectorize_state
 
 
-def get_dataset(config=None, transitions=100_000_000, saverate=-1, skip=5, 
+def get_dataset(config=None, transitions=60_000_000, saverate=-1, skip=5, 
                 delete_obsts=True):
     agent_pred = PredatorAgent()
     agent_prey = PreyAgent()

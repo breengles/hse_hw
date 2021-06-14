@@ -52,8 +52,8 @@ if __name__ == "__main__":
     
     pred_model = SinglePred()
     prey_model = SinglePrey()
-    pred_model.load_state_dict(torch.load("pred_bn_200.pt", map_location="cpu"))
-    prey_model.load_state_dict(torch.load("prey_bn_200.pt", map_location="cpu"))
+    pred_model.load_state_dict(torch.load("oleg_pred_bn_21.pt", map_location="cpu"))
+    prey_model.load_state_dict(torch.load("oleg_prey_bn_21.pt", map_location="cpu"))
     pred_model.eval()
     prey_model.eval()
     
