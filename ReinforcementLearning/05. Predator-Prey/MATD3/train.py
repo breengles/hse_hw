@@ -12,6 +12,7 @@ import torch
 from PER import PrioritizedReplayBuffer
 from sklearn.metrics import mean_squared_error
 from better_baseline import PredatorAgent, PreyAgent
+import pprint
 
 
 def eval_maddpg(config, maddpg, n_evals=25, render=False, seed=None, 
@@ -106,6 +107,7 @@ def train(title="", transitions=200_000, hidden_size=64,  buffer_size=10000,
     if buffer_init:
         print("Filling buffer...")
         state_dict, gstate, agent_states = env.reset()
+        
         done = False
         
         for _ in trange(batch_size, leave=False):
@@ -123,7 +125,11 @@ def train(title="", transitions=200_000, hidden_size=64,  buffer_size=10000,
             state_dict, gstate, agent_states = next_state_dict, next_gstate, next_agent_states
         print("Finished. Now training...")
 
-    state_dict, gstate, agent_states = env.reset()    
+    state_dict, gstate, agent_states = env.reset()
+    
+    pprint.pprint(state_dict)
+    quit()
+    
     done = False
     t = trange(transitions, desc=uniq_dir_name + "/ | " + title)
     for step in t:
