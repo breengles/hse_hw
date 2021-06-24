@@ -50,3 +50,42 @@ def gabour_bank(size, phi_bins, scale_bins, max_scale, min_scale, sigma_scale=0.
             filters.append(np.copy(kernel))
             # filters[i, j] = np.copy(kernel)
     return filters
+
+
+def retrieve(img, gist, kmeans, train_embeddings, lsh_array, train_ids, k = 10):
+    cluster_ids = kmeans.labels_
+    centroids = kmeans.cluster_centers_
+    lsh_length = lsh_array[0].length
+    num_clusters = centroids.shape[0]
+    
+    cur_point = gist.get_gist_descriptor(img)
+
+    cluster_distance = np.apply_along_axis(lambda x: np.linalg.norm(cur_point - x), 1, centroids)
+
+    res_positions = np.zeros(train_embeddings.shape[0], dtype=bool)
+    nearest_clusters = np.argsort(cluster_distance)[:int(0.1 * num_clusters)]
+
+    for cur_cluster in nearest_clusters:
+        cur_lsh = lsh_array[cur_cluster]
+        point_lsh = cur_lsh.create_lsh_code(cur_point) 
+        res_positions[cluster_ids == cur_cluster] = \
+            np.sum(np.abs(cur_lsh.get_lsh_codes() - point_lsh), 1) < int(0.5 * lsh_length) 
+
+    res_points = train_embeddings[res_positions]
+    res_distance = np.apply_along_axis(lambda x: np.linalg.norm(cur_point - x), 1, res_points)
+
+    k_nearest_position = train_ids[res_positions][np.argsort(res_distance)[:k]]
+    return k_nearest_position
+
+
+def apk(point_class, k_nearest_class):
+    # point_class = cur_pos // 100
+    # k_nearest_class = retrieve(index, k=k) // 100
+    
+    true_position = np.where(k_nearest_class == point_class)[0]
+    ap = 0
+    if len(true_position) > 0:
+        for i in range(len(true_position)):
+            ap += (i + 1) / (true_position[i] + 1)
+        ap /= len(true_position)
+    return ap
