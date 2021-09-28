@@ -59,3 +59,25 @@ def visualize_clusters(km, X_train, y_pred=None, title=None):
             plt.title(title)
 
     plt.show()
+
+
+def hoora(X_train, X_train_prep, n_clusters, n_init=1, seed=None, title_suffix=""):
+    X_train_eucl = np.nan_to_num(X_train, 0)
+
+    km, y_pred = KMeans(X_train_eucl, n_clusters, "euclidean", n_init, seed)
+    visualize_clusters(km, X_train_eucl, y_pred, title="Euclidean KMeans, not equalized" + title_suffix)
+
+    km, y_pred = KMeans(X_train_prep, n_clusters, "euclidean", n_init, seed)
+    visualize_clusters(km, X_train_prep, y_pred, title="Euclidean KMeans, equalized" + title_suffix)
+
+    km, y_pred = KMeans(X_train, n_clusters, "dtw", n_init, seed)
+    visualize_clusters(km, X_train, y_pred, title="DTW KMeans, not equalized" + title_suffix)
+
+    km, y_pred = KMeans(X_train_prep, n_clusters, "dtw", n_init, seed)
+    visualize_clusters(km, X_train_prep, y_pred, title="DTW KMeans, equalized" + title_suffix)
+
+    km, y_pred = MyKernelKMeans(X_train, n_clusters, "cosine", n_init, seed)
+    visualize_kernel_kmeans(km, X_train, y_pred, title="Kernel KMeans, not equalized" + title_suffix)
+
+    km, y_pred = MyKernelKMeans(X_train_prep, n_clusters, "cosine", n_init, seed)
+    visualize_kernel_kmeans(km, X_train_prep, y_pred, title="Kernel KMeans, equalized" + title_suffix)
