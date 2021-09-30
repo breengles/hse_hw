@@ -150,7 +150,7 @@ if __name__ == "__main__":
     words_list = sorted(list(words_set))
 
     # создаём спеллер
-    speller = Speller(1000)
+    speller = Speller(100)
     speller.fit(words_list)
 
     # читаем выборку
