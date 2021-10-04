@@ -10,7 +10,7 @@ from scipy.stats import rankdata
 
 
 def main(input_file_path: str, output_file_path: str):
-    data = read_data(input_file_path)
+    data = read_data(input_file_path)  # data is sorted by first column (x)
 
     n = data.shape[0]
 
