@@ -13,6 +13,9 @@ def main(input_file_path: str, output_file_path: str):
     data = read_data(input_file_path)
 
     n = data.shape[0]
+
+    assert n >= 9, f"Number of entries is not enough for this method; {n=} < 9"
+
     p = int(round(n / 3))
 
     rs = rankdata(data[:, 1])
