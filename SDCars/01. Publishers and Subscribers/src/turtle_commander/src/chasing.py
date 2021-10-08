@@ -10,7 +10,6 @@ import numpy as np
 
 class Chaser:
     pos = np.zeros(2)
-    theta = 0.0
     n = np.array([1, 0])
     msg = Twist()
 
@@ -45,8 +44,7 @@ class Chaser:
     def __update_position(self, msg: Pose):
         self.pos[0] = msg.x
         self.pos[1] = msg.y
-        self.theta = msg.theta
-        self.n = np.array([np.cos(self.theta), np.sin(self.theta)])
+        self.n = np.array([np.cos(msg.theta), np.sin(msg.theta)])
 
     @staticmethod
     def __init_subscriber(name, callback):
