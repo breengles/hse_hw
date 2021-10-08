@@ -1,0 +1,23 @@
+<launch>
+    <node
+        pkg='turtlesim'
+        type='turtlesim_node'
+        name='turtlesim'
+    />
+    <node
+        pkg='turtlesim'
+        type='turtle_teleop_key'
+        name='teleop_key'
+    />
+    <node
+        pkg='rosservice'
+        type='rosservice'
+        name='chasing_turtle'
+        args="call /spawn 1 1 0 'chaser'"
+    />
+    <node
+        pkg='turtle_commander'
+        type='chasing.py'
+        name='chasing_code'
+    />
+</launch>
