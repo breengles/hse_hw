@@ -1,17 +1,20 @@
 #!/usr/bin/env python
 
-from math import atan2
+from math import atan2, acos, cos, sin, sqrt, pi
 
 import rospy
 from geometry_msgs.msg import Twist
 from turtlesim.msg import Pose
+import numpy as np
 
 
 class Chaser:
-    x = 0.0
-    y = 0.0
+    pos = np.zeros(2)
     theta = 0.0
+    n = np.array([1, 0])
     msg = Twist()
+
+    eps = 1e-8
 
     def __call__(self):
         self.pub = rospy.Publisher("/chaser/cmd_vel", Twist, queue_size=10)
@@ -23,16 +26,27 @@ class Chaser:
         self.__init_subscriber("/turtle1/pose", self.__move_to)  # turtle1 == victim
 
     def __move_to(self, msg: Pose):
-        self.msg.linear.x = msg.x - self.x
-        self.msg.linear.y = msg.y - self.y
-        self.msg.angular.z = atan2(self.msg.linear.y, self.msg.linear.x) - self.theta
+        v_pos = np.array([msg.x, msg.y])  # vector of the target coords
+
+        d = v_pos - self.pos  # difference vector
+        d_norm = np.linalg.norm(d)
+        d /= d_norm  # normalize it
+
+        self.msg.linear.x = d_norm / 2  # naive approach to stop when the target is approached
+
+        angle = np.arccos(d.dot(self.n))  # get absolute angle
+
+        # The sign of the dot product of cross-vector and plane norm ([0, 0, 1])
+        # detemines (counter) clockwise rotation
+        self.msg.angular.z = angle * np.sign(np.cross(self.n, d))
 
         self.pub.publish(self.msg)
 
     def __update_position(self, msg: Pose):
-        self.x = msg.x
-        self.y = msg.y
+        self.pos[0] = msg.x
+        self.pos[1] = msg.y
         self.theta = msg.theta
+        self.n = np.array([np.cos(self.theta), np.sin(self.theta)])
 
     @staticmethod
     def __init_subscriber(name, callback):
