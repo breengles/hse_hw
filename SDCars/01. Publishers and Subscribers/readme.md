@@ -4,3 +4,5 @@
 > cd src
 > roslaunch chasing.launch
 ```
+
+or simply `./run.sh`
