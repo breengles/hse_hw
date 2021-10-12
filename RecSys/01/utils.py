@@ -9,7 +9,7 @@ def roc_auc(R, model):
         if row.indices.shape[0] == 0:
             continue
 
-        y_pred = model._predict_user(user)
+        y_pred = model.predict_user(user)
 
         y_true = np.zeros(R.shape[1])
         y_true[row.indices] = 1

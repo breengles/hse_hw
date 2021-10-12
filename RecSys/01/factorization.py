@@ -1,3 +1,4 @@
+from itertools import islice
 import numpy as np
 from sklearn.metrics import mean_squared_error as mse
 from scipy.special import expit
@@ -29,18 +30,17 @@ class MatrixFactorization:
         self.U = None
         self.I = None
 
-        self.kdtree = None
+    def predict_user(self, user_id):
+        return self.I @ self.U[user_id].T
 
     def similar_items(self, item_id, n=10):
-        # _, nn = self.kdtree.query([self.I[item_id]], n)
-        # return nn.flatten() + 1
-
         sims = cosine_similarity(self.I)[item_id]
         return np.argsort(sims)[-n:][::-1]
 
     def recommend(self, user_id, n=10):
-        pred = self.I @ self.U[user_id].T
-        return np.argsort(pred)[-n:]
+        already_liked = set(self.R[user_id].indices)
+        rec = np.argsort(self.predict_user(user_id))[::-1]
+        return list(islice((r for r in rec if r not in already_liked), n))
 
     def _init_matrices(self, R):
         self.R = R
@@ -69,7 +69,7 @@ class SVDS(MatrixFactorization):
         samples = [(i, j, v) for i, j, v in zip(rows, cols, R.data)]
 
         for it in range(self.iterations):
-            for u, i, v in np.random.permutation(samples):
+            for u, i, v in np.random.permutation(samples):  # very stochastic xD
                 loss = self.U[u] @ self.I[i] - v + self.U_bias[u] + self.I_bias[i] + data_bias
 
                 self.U[u] -= self.lr * (loss * self.I[i] + self.weight_decay * self.U[u])
@@ -116,40 +116,21 @@ class SVD(MatrixFactorization):
                 if self.verbose:
                     print(f"Iter: {i + 1: 4d} | RMSE: {rmse_:0.5E}")
 
-        self.kdtree = KDTree(self.I)
         return self
 
 
 class ALS(MatrixFactorization):
     def __update_user(self):
-        for u in range(self.R.shape[0]):
-            r = self.R[u].toarray().flatten()
-
-            msk = r != 0
-
-            if msk.sum() == 0:
-                # otherwise it will choose array with size of 0 in 1st dim
-                continue
-
-            Is = self.I[msk]
-
-            self.U[u] = np.linalg.inv(
-                np.einsum("ij,ik->jk", Is, Is) + self.weight_decay * np.eye(self.factors)
-            ) @ np.sum(r[msk].reshape(-1, 1) * Is, axis=0)
+        E = self.lr * np.eye(self.factors)
+        II = self.I.T @ self.I
+        for i in range(self.U.shape[0]):
+            self.U[i] = (np.linalg.inv(II + E) @ self.I.T @ self.R[i].T).flatten()
 
     def __update_item(self):
-        for i in range(self.R.shape[1]):
-            r = self.R[:, i].toarray().flatten()
-            msk = r != 0
-
-            if msk.sum() == 0:
-                continue
-
-            Us = self.U[msk]
-
-            self.I[i] = np.linalg.inv(
-                np.einsum("ij,ik->jk", Us, Us) + self.weight_decay * np.eye(self.factors)
-            ) @ np.sum(r[msk].reshape(-1, 1) * Us, axis=0)
+        E = self.lr * np.eye(self.factors)
+        UU = self.U.T @ self.U
+        for j in range(self.I.shape[0]):
+            self.I[j] = (np.linalg.inv(UU + E) @ self.U.T @ self.R[:, j]).flatten()
 
     def fit(self, R):
         self._init_matrices(R)
@@ -157,20 +138,6 @@ class ALS(MatrixFactorization):
         for it in range(self.iterations):
             self.__update_user()
             self.__update_item()
-
-            # for idx, u in enumerate(self.U):
-            #     u = (
-            #         np.linalg.inv(self.I.T @ self.I + self.weight_decay * np.eye(self.factors))
-            #         @ self.I.T
-            #         @ R[idx].toarray().T
-            #     )
-
-            # for idx, i in enumerate(self.I):
-            #     i = (
-            #         np.linalg.inv(self.U.T @ self.U + self.weight_decay * np.eye(self.factors))
-            #         @ self.U.T
-            #         @ R[:, idx].toarray()
-            #     )
 
             if (it + 1) % self.save_every == 0:
                 rmse_ = self._calc_rmse()
@@ -181,7 +148,7 @@ class ALS(MatrixFactorization):
                 if self.verbose:
                     print(f"Iter: {it + 1: 4d} | RMSE: {rmse_:0.5E}")
 
-        self.kdtree = KDTree(self.I)
+        return self
 
 
 class BPR(MatrixFactorization):
@@ -190,12 +157,13 @@ class BPR(MatrixFactorization):
         item_i = self.I[i]
         item_j = self.I[j]
 
-        r_uij = np.sum(user_u * (item_i - item_j), axis=1)
+        # r_uij = np.sum(user_u * (item_i - item_j), axis=1)
+        r_uij = user_u @ (item_i - item_j)
 
-        sigmoid = np.tile(expit(r_uij), (self.factors, 1)).T
+        sigmoid = expit(r_uij)
 
-        grad_u = sigmoid * (item_j - item_i) + self.weight_decay * user_u
-        grad_i = sigmoid * -user_u + self.weight_decay * item_i
+        grad_u = -sigmoid * (item_i - item_j) + self.weight_decay * user_u
+        grad_i = -sigmoid * user_u + self.weight_decay * item_i
         grad_j = sigmoid * user_u + self.weight_decay * item_j
         self.U[u] -= self.lr * grad_u
         self.I[i] -= self.lr * grad_i
@@ -242,6 +210,3 @@ class BPR(MatrixFactorization):
                     print(f"Iter: {it + 1: 6d} | AUC: {auc:0.5f}")
 
         return self
-
-    def _predict_user(self, user):
-        return self.U[user] @ self.I.T

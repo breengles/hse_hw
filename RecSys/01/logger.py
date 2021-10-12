@@ -1,8 +1,10 @@
+from genericpath import exists
 import numpy as np
 import pandas as pd
 import yaml
 from matplotlib import pyplot as plt
 from typing import Tuple
+import os
 
 
 class Logger:
@@ -20,8 +22,9 @@ class Logger:
         with open(file_path, mode) as f:
             yaml.dump(self.params, f, indent=4)
 
-    def save(self, file_path: str, mode: str = "w+"):
-        pd.DataFrame(self.history).to_csv(file_path, mode=mode, index=False)
+    def save(self, file_path: str, mode: str = "w+", dir_path: str = "log/"):
+        os.makedirs(dir_path, exist_ok=True)
+        pd.DataFrame(self.history).to_csv(dir_path + file_path, mode=mode, index=False)
 
     def plot(
         self,
