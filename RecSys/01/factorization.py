@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.metrics import mean_squared_error as mse
 from scipy.special import expit
 from logger import Logger
-from utils import roc_auc
+from utils import roc_auc, roc_auc_2
 from sklearn.neighbors import KDTree
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -35,10 +35,10 @@ class MatrixFactorization:
 
     def similar_items(self, item_id, n=10):
         sims = cosine_similarity(self.I)[item_id]
-        return np.argsort(sims)[-n:][::-1]
+        return np.argsort(sims)[-(n + 1) : -1][::-1]
 
     def recommend(self, user_id, n=10):
-        already_liked = set(self.R[user_id].indices)
+        already_liked = set(self.R.getrow(user_id).indices)
         rec = np.argsort(self.predict_user(user_id))[::-1]
         return list(islice((r for r in rec if r not in already_liked), n))
 
@@ -157,12 +157,11 @@ class BPR(MatrixFactorization):
         item_i = self.I[i]
         item_j = self.I[j]
 
-        # r_uij = np.sum(user_u * (item_i - item_j), axis=1)
-        r_uij = user_u @ (item_i - item_j)
+        r_uij = np.sum(user_u * (item_i - item_j), axis=1)
 
-        sigmoid = expit(r_uij)
+        sigmoid = np.tile(expit(-r_uij), (self.factors, 1)).T
 
-        grad_u = -sigmoid * (item_i - item_j) + self.weight_decay * user_u
+        grad_u = sigmoid * (item_j - item_i) + self.weight_decay * user_u
         grad_i = -sigmoid * user_u + self.weight_decay * item_i
         grad_j = sigmoid * user_u + self.weight_decay * item_j
         self.U[u] -= self.lr * grad_u
@@ -201,12 +200,13 @@ class BPR(MatrixFactorization):
             self.__step(users, items_pos, items_neg)
 
             if (it + 1) % self.save_every == 0:
-                auc = roc_auc(R, self)
+                auc, auc2 = roc_auc(R, self)
 
                 self.logger.log("iter", it + 1)
                 self.logger.log("AUC", auc)
+                self.logger.log("AUC2", auc2)
 
                 if self.verbose:
-                    print(f"Iter: {it + 1: 6d} | AUC: {auc:0.5f}")
+                    print(f"Iter: {it + 1: 6d} | AUC: {auc:0.5f} | AUC2: {auc2:0.5f}")
 
         return self
