@@ -152,8 +152,8 @@ class BPR(MatrixFactorization):
         item_i = self.I[i]
         item_j = self.I[j]
 
-        r_uij = np.sum(user_u * (item_i - item_j), axis=1)
-        sigmoid = expit(-r_uij, keepdims=True)
+        r_uij = np.sum(user_u * (item_i - item_j), axis=1, keepdims=True)
+        sigmoid = expit(-r_uij)
 
         self.U[u] -= self.lr * (sigmoid * (item_j - item_i) + self.weight_decay * user_u)
         self.I[i] -= self.lr * (-sigmoid * user_u + self.weight_decay * item_i)
