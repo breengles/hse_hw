@@ -1,16 +1,25 @@
+import random
 from itertools import islice
+
 import numpy as np
-from sklearn.metrics import mean_squared_error as mse
 from scipy.special import expit
-from logger import Logger
-from utils import roc_auc, roc_auc_2
-from sklearn.neighbors import KDTree
 from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.neighbors import KDTree
+
+from logger import Logger
+from utils import rmse, roc_auc
 
 
 class MatrixFactorization:
-    def __init__(self, factors, iterations=100, lr=1e-4, weight_decay=0, verbose=False, save_every=None) -> None:
-        self.logger = Logger({"factors": factors, "iterations": iterations, "lr": lr, "weight_decay": weight_decay})
+    def __init__(
+        self, factors, iterations=100, lr=1e-4, weight_decay=0, verbose=False, save_every=None, seed=42
+    ) -> None:
+        self.logger = Logger(
+            {"factors": factors, "iterations": iterations, "lr": lr, "weight_decay": weight_decay, "seed": seed}
+        )
+
+        np.random.seed(seed)
+        random.seed(seed)
 
         self.factors = factors
         self.iterations = iterations
@@ -20,7 +29,7 @@ class MatrixFactorization:
         self.verbose = verbose
 
         if save_every is None:
-            self.save_every = iterations // 100
+            self.save_every = iterations // 10
             if self.save_every == 0:
                 self.save_every = 1
         else:
@@ -44,16 +53,8 @@ class MatrixFactorization:
 
     def _init_matrices(self, R):
         self.R = R
-        self.U = np.random.uniform(0, 1 / np.sqrt(self.factors), size=(self.R.shape[0], self.factors))
-        self.I = np.random.uniform(0, 1 / np.sqrt(self.factors), size=(self.R.shape[1], self.factors))
-
-        self.U_bias = np.zeros(R.shape[0])
-        self.I_bias = np.zeros(R.shape[1])
-
-    def _calc_rmse(self):
-        y_pred = (self.U @ self.I.T)[self.R.nonzero()]
-        y_true = self.R.data
-        return np.sqrt(mse(y_pred, y_true))
+        self.U = np.random.normal(scale=1 / np.sqrt(self.factors), size=(self.R.shape[0], self.factors))
+        self.I = np.random.normal(scale=1 / np.sqrt(self.factors), size=(self.R.shape[1], self.factors))
 
     def fit(self, R):
         raise NotImplementedError
@@ -63,24 +64,18 @@ class SVDS(MatrixFactorization):
     def fit(self, R):
         self._init_matrices(R)
 
-        data_bias = np.mean(R)
-
         rows, cols = R.nonzero()
         samples = [(i, j, v) for i, j, v in zip(rows, cols, R.data)]
 
         for it in range(self.iterations):
             for u, i, v in np.random.permutation(samples):  # very stochastic xD
-                loss = self.U[u] @ self.I[i] - v + self.U_bias[u] + self.I_bias[i] + data_bias
+                loss = self.U[u] @ self.I[i] - v
 
                 self.U[u] -= self.lr * (loss * self.I[i] + self.weight_decay * self.U[u])
                 self.I[i] -= self.lr * (loss * self.U[u] + self.weight_decay * self.I[i])
 
-                self.U_bias[u] -= self.lr * (loss + self.weight_decay * self.U_bias[u])
-                self.I_bias[i] -= self.lr * (loss + self.weight_decay * self.I_bias[i])
-                # data_bias -= self.lr * loss
-
-            if (it + 1) % self.save_every == 0:
-                rmse_ = self._calc_rmse()
+            if (it + 1) % self.save_every == 0 and self.verbose:
+                rmse_ = rmse(self)
 
                 self.logger.log("iter", it + 1)
                 self.logger.log("rmse", rmse_)
@@ -105,8 +100,8 @@ class SVD(MatrixFactorization):
             self.U -= self.lr * (loss @ self.I + self.weight_decay * self.U)
             self.I -= self.lr * (loss.T @ self.U + self.weight_decay * self.I)
 
-            if (i + 1) % self.save_every == 0:
-                rmse_ = self._calc_rmse()
+            if (i + 1) % self.save_every == 0 and self.verbose:
+                rmse_ = rmse(self)
                 loss_ = np.linalg.norm(loss)
 
                 self.logger.log("iter", i + 1)
@@ -121,26 +116,26 @@ class SVD(MatrixFactorization):
 
 class ALS(MatrixFactorization):
     def __update_user(self):
-        E = self.lr * np.eye(self.factors)
         II = self.I.T @ self.I
         for i in range(self.U.shape[0]):
-            self.U[i] = (np.linalg.inv(II + E) @ self.I.T @ self.R[i].T).flatten()
+            self.U[i] = (np.linalg.inv(II + self.E) @ self.I.T @ self.R[i].T).flatten()
 
     def __update_item(self):
-        E = self.lr * np.eye(self.factors)
         UU = self.U.T @ self.U
         for j in range(self.I.shape[0]):
-            self.I[j] = (np.linalg.inv(UU + E) @ self.U.T @ self.R[:, j]).flatten()
+            self.I[j] = (np.linalg.inv(UU + self.E) @ self.U.T @ self.R[:, j]).flatten()
 
     def fit(self, R):
         self._init_matrices(R)
+
+        self.E = self.lr * np.eye(self.factors)
 
         for it in range(self.iterations):
             self.__update_user()
             self.__update_item()
 
-            if (it + 1) % self.save_every == 0:
-                rmse_ = self._calc_rmse()
+            if (it + 1) % self.save_every == 0 and self.verbose:
+                rmse_ = rmse(self)
 
                 self.logger.log("iter", it + 1)
                 self.logger.log("rmse", rmse_)
@@ -158,17 +153,18 @@ class BPR(MatrixFactorization):
         item_j = self.I[j]
 
         r_uij = np.sum(user_u * (item_i - item_j), axis=1)
+        sigmoid = expit(-r_uij, keepdims=True)
 
-        sigmoid = np.tile(expit(-r_uij), (self.factors, 1)).T
+        self.U[u] -= self.lr * (sigmoid * (item_j - item_i) + self.weight_decay * user_u)
+        self.I[i] -= self.lr * (-sigmoid * user_u + self.weight_decay * item_i)
+        self.I[j] -= self.lr * (sigmoid * user_u + self.weight_decay * item_j)
 
-        upd_u = sigmoid * (item_j - item_i) + self.weight_decay * user_u
-        upd_i = -sigmoid * user_u + self.weight_decay * item_i
-        upd_j = sigmoid * user_u + self.weight_decay * item_j
-        self.U[u] -= self.lr * upd_u
-        self.I[i] -= self.lr * upd_i
-        self.I[j] -= self.lr * upd_j
+    def __sample(self, batch_size):
+        n_users, n_items = self.R.shape
 
-    def __sample(self, n_users, n_items, batch_size, indices, indptr):
+        indptr = self.R.indptr
+        indices = self.R.indices
+
         sampled_pos_items = np.zeros(batch_size, dtype=int)
         sampled_neg_items = np.zeros(batch_size, dtype=int)
         sampled_users = np.random.choice(n_users, size=batch_size, replace=False)
@@ -192,15 +188,12 @@ class BPR(MatrixFactorization):
     def fit(self, R, batch_size=32):
         self._init_matrices(R)
 
-        indptr = R.indptr
-        indices = R.indices
-
         for it in range(self.iterations):
-            users, items_pos, items_neg = self.__sample(R.shape[0], R.shape[1], batch_size, indices, indptr)
+            users, items_pos, items_neg = self.__sample(batch_size)
             self.__step(users, items_pos, items_neg)
 
-            if (it + 1) % self.save_every == 0:
-                auc, auc2 = roc_auc(R, self)
+            if (it + 1) % self.save_every == 0 and self.verbose:
+                auc, auc2 = roc_auc(self)
 
                 self.logger.log("iter", it + 1)
                 self.logger.log("AUC", auc)
@@ -213,51 +206,49 @@ class BPR(MatrixFactorization):
 
 
 class WARP(MatrixFactorization):
+    def __L(self, k):
+        return np.sum(1 / np.arange(1, k + 1))
+
     def __sample(self):
         n_users, n_items = self.R.shape
 
         user = np.random.choice(n_users)
-        items_pos = self.R[user].nonzero()[1]
 
-        if items_pos.shape[0] == 0:
+        indptr = self.R.indptr
+        indices = self.R.indices
+
+        if indptr[user] == indptr[user + 1]:
             return
 
-        items_neg = np.arange(n_items)[
-            ~np.isin(np.arange(n_items), items_pos)
-        ]  # kinda trick to extract negative items?
-        np.random.shuffle(items_neg)
+        items_pos = indices[indptr[user] : indptr[user + 1]]
+        items_neg = np.setdiff1d(np.arange(n_items), items_pos)
 
         item_pos = np.random.choice(items_pos)
         score_pos = self.U[user] @ self.I[item_pos]
 
+        np.random.shuffle(items_neg)
         for trial, item_neg in enumerate(items_neg, start=1):
             score_neg = self.U[user] @ self.I[item_neg]
-            margin = 1 - score_pos + score_neg
-            if margin > 0:
-                self.__num_of_trials += trial
-                return user, item_pos, item_neg, trial, items_neg.shape[0]
 
-            self.__correct_cnt += score_pos > score_neg
+            if score_neg >= score_pos - 1:
+                return user, item_pos, item_neg, self.__L(items_neg.shape[0] // trial), trial
 
-        # in case we haven't found any violating negative item
-        # we still need to update number of trials made
-        self.__num_of_trials += trial
+    def fit(self, R):
+        self._init_matrices(R)
 
-    def __step(self):
-        self.__correct_cnt = self.__num_of_trials = 0
-        for _ in range(self.R.shape[0]):
+        for it in range(self.iterations):
             sample = self.__sample()
+
             if sample is None:
                 continue
 
-            user, item_pos, item_neg, num_of_trials, items_neg_total = sample
-            loss = np.log(np.floor(items_neg_total / num_of_trials))
+            user, item_pos, item_neg, rank, trial = sample
 
-            upd_user = self.lr * (loss * (self.I[item_neg] - self.I[item_pos]) + self.weight_decay * self.U[user])
-            upd_pos = self.lr * (-loss * self.U[user] + self.weight_decay * self.I[item_pos])
-            upd_neg = self.lr * (loss * self.U[user] + self.weight_decay * self.I[item_neg])
+            upd_user = self.lr * (rank * (self.I[item_neg] - self.I[item_pos]) + self.weight_decay * self.U[user])
+            upd_pos = self.lr * (-rank * self.U[user] + self.weight_decay * self.I[item_pos])
+            upd_neg = self.lr * (rank * self.U[user] + self.weight_decay * self.I[item_neg])
 
-            if num_of_trials == 1:
+            if trial == 1:
                 upd_user *= 10
                 upd_pos *= 10
                 upd_neg *= 10
@@ -266,23 +257,12 @@ class WARP(MatrixFactorization):
             self.I[item_pos] -= upd_pos
             self.I[item_neg] -= upd_neg
 
-        return self.__correct_cnt / self.__num_of_trials
-
-    def fit(self, R):
-        self._init_matrices(R)
-
-        for it in range(self.iterations):
-            acc = self.__step()
-
-            if (it + 1) % self.save_every == 0:
-                auc, auc2 = roc_auc(R, self)
+            if (it + 1) % self.save_every == 0 and self.verbose:
+                auc, auc2 = roc_auc(self)
 
                 self.logger.log("iter", it + 1)
                 self.logger.log("AUC", auc)
                 self.logger.log("AUC2", auc2)
-                self.logger.log("acc", acc)
 
                 if self.verbose:
-                    print(f"Iter: {it + 1: 6d} | AUC: {auc:0.5f} | AUC2: {auc2:0.5f} | ACC: {acc:0.5f}")
-
-        return self
+                    print(f"Iter: {it + 1: 6d} | AUC: {auc:0.5f} | AUC2: {auc2:0.5f}")
