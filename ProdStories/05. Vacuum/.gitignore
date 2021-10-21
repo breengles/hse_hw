@@ -1,0 +1,7 @@
+wandb/
+videos/
+tests/
+mapgen/
+experiments/
+.idea/
+__pycache__/
