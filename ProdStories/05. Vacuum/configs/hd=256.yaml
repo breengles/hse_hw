@@ -1,6 +1,6 @@
 train:
   transitions: 1000000
-  hidden_dim: 128
+  hidden_dim: 256
   buffer_size: 500000
   batch_size: 64
   actor_lr: 0.0001
@@ -23,6 +23,6 @@ wandb:
   project: "VacuumCleaner"
   entity: "breengles"
   group: "baseline"
-  name: "hd=128 | eps_min=0.3"
+  name: "hd=256 | eps_min=0.3"
   notes: ""
   local: False
