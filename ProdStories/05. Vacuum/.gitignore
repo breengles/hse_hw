@@ -5,3 +5,4 @@ mapgen/
 experiments/
 .idea/
 __pycache__/
+exp.sh
