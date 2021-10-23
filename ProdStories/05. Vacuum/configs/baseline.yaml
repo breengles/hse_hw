@@ -1,28 +1,30 @@
-train:
-  transitions: 1000000
-  hidden_dim: 64
-  buffer_size: 500000
-  batch_size: 64
-  actor_lr: 0.0001
+agent:
+  lr: 0.0001
   gamma: 0.999
   tau: 0.002
-  sigma_max: 1
-  sigma_min: 0.3
+  eps_max: 1
+  eps_min: 0.3
+  device: "cuda"
+  
+train:
+  transitions: 1000000
+  buffer_size: 500000
+  batch_size: 64
   seed: 42
   saverate: ~
-  device: "cpu"
 
-env_config:
+env:
   width: 30
   height: 30
   min_room_xy: 7
   max_room_xy: 14
   max_steps: 400
+  timepenalty: true
 
 wandb:
   project: "VacuumCleaner"
   entity: "breengles"
-  group: "baseline"
-  name: "eps_min=0.3"
+  group: "baseline_conv"
+  name: "eps_min=0.3 | timepenalty"
   notes: ""
   local: False

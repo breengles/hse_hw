@@ -9,10 +9,10 @@ class Buffer(object):
         self.max_size = max_size
         self.device = device
 
-        self.state = torch.zeros(max_size, state_dim, device=device, dtype=torch.float)
+        self.state = torch.zeros(size=(max_size, 3, 11, 11), device=device, dtype=torch.float)
         self.reward = torch.zeros(max_size, device=device, dtype=torch.float)
         self.action = torch.zeros(max_size, device=device, dtype=torch.int64)
-        self.next_state = torch.zeros(max_size, state_dim, device=device, dtype=torch.float)
+        self.next_state = torch.zeros(size=(max_size, 3, 11, 11), device=device, dtype=torch.float)
         self.done = torch.zeros(max_size, device=device, dtype=torch.bool)
 
         self.filled_i = 0

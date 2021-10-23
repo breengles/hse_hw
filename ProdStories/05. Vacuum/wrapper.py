@@ -6,10 +6,19 @@ class Wrapper(Dungeon):
         super().__init__(*args, **kwargs)
         self.timepenalty = timepenalty
 
+    def reset(self):
+        observation = super().reset()
+        return observation[:, :, :-1]
+
     def step(self, action: int):
-        observation, reward, done, info = super().step(action)
+        observation, metric, done, info = super().step(action)
+        observation = observation[:, :, :-1]
+
+        reward = 0
+        if info["is_new"]:
+            reward += 1
 
         if self.timepenalty:
-            reward -= self._step / self._max_steps
+            reward -= 1
 
-        return observation, reward, done, info
+        return observation, reward, done, metric, info
