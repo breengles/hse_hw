@@ -23,6 +23,36 @@ def soft_update(source, target, tau=0.002):
             tp.data.add_(tau * sp.data)
 
 
+class Actor(nn.Module):
+    def __init__(self, obs_channels, action_dim):
+        super().__init__()
+
+        self.features = nn.Sequential(
+            nn.Conv2d(obs_channels, 4, (3, 3)),
+            nn.ReLU(),
+            nn.Conv2d(4, 8, (3, 3)),
+            nn.ReLU(),
+            nn.Conv2d(8, 16, (3, 3)),
+            nn.ReLU(),
+            nn.Conv2d(16, 32, (3, 3)),
+            nn.ReLU(),
+            nn.Conv2d(32, 64, (3, 3)),
+            nn.ReLU(),
+            nn.Flatten(),
+        )
+
+        self.a = nn.Sequential(
+            nn.Linear(64, 32),
+            nn.ELU(),
+            nn.Linear(32, 16),
+            nn.ELU(),
+            nn.Linear(16, action_dim),
+        )
+
+    def forward(self, state):
+        return self.a(self.features(state))
+
+
 class DQN:
     def __init__(
         self,
@@ -42,24 +72,7 @@ class DQN:
         self.eps_max = eps_max
         self.eps_min = eps_min
 
-        self.actor = nn.Sequential(
-            nn.Conv2d(self.env.observation_space.shape[-1] - 1, 4, (3, 3)),
-            nn.ReLU(),
-            nn.Conv2d(4, 8, (3, 3)),
-            nn.ReLU(),
-            nn.Conv2d(8, 16, (3, 3)),
-            nn.ReLU(),
-            nn.Conv2d(16, 32, (3, 3)),
-            nn.ReLU(),
-            nn.Conv2d(32, 64, (3, 3)),
-            nn.ReLU(),
-            nn.Flatten(),
-            nn.Linear(64, 32),
-            nn.ELU(),
-            nn.Linear(32, 16),
-            nn.ELU(),
-            nn.Linear(16, self.env.action_space.n),
-        )
+        self.actor = Actor(self.env.observation_space.shape[-1] - 1, self.env.action_space.n)
         self.target = copy.deepcopy(self.actor)
 
         self.optimizer = Adam(self.actor.parameters(), lr=lr)
@@ -77,9 +90,9 @@ class DQN:
 
         q_target = rewards + self.gamma * q_target
 
-        qle = self.actor(states).gather(1, actions.unsqueeze(dim=1))
+        q_current = self.actor(states).gather(1, actions.unsqueeze(dim=1))
 
-        loss = F.mse_loss(qle, q_target.unsqueeze(dim=1))
+        loss = F.mse_loss(q_current, q_target.unsqueeze(dim=1))
 
         self.optimizer.zero_grad()
         loss.backward()
