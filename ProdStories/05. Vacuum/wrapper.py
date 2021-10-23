@@ -8,7 +8,7 @@ class Wrapper(Dungeon):
 
     def reset(self):
         observation = super().reset()
-        return observation[:, :, :-1]
+        return observation[:, :, :-1].transpose(2, 0, 1)  # as torch conv wotks on (C, H, W)
 
     def step(self, action: int):
         observation, metric, done, info = super().step(action)
@@ -21,4 +21,7 @@ class Wrapper(Dungeon):
         if self.timepenalty:
             reward -= 1
 
-        return observation, reward, done, metric, info
+        if info["collided"]:
+            reward -= 1
+
+        return observation.transope(2, 0, 1), reward, done, metric, info
