@@ -14,7 +14,26 @@ from utils.random_utils import set_seed
 from wrapper import Wrapper
 from datetime import datetime
 
-from actors import DQNActor, DuelingDQNActor
+from agent.actors import Actor, DuelingActor
+
+from enum import Enum, auto
+
+
+class Algo(Enum):
+    VANILLA = auto()
+    DOUBLE = auto()
+    DUELING = auto()
+    DD = auto()
+
+
+KINDS = {
+    "vanilla": Algo.VANILLA,
+    "double": Algo.DOUBLE,
+    "dueling": Algo.DUELING,
+    "duel": Algo.DUELING,
+    "doubledueling": Algo.DD,
+    "dd": Algo.DD,
+}
 
 
 def soft_update(source, target, tau=0.002):
@@ -34,10 +53,12 @@ class DQN:
         self.eps_max = eps_max
         self.eps_min = eps_min
 
-        if kind is None:
-            self.actor = DQNActor(self.env.observation_space.shape[-1] - 1, self.env.action_space.n)
-        elif kind.strip().lower() in ("dueling", "duel"):
-            self.actor = DuelingDQNActor(self.env.observation_space.shape[-1] - 1, self.env.action_space.n)
+        self.kind = KINDS.get(kind, Algo.VANILLA)
+
+        if self.kind == Algo.VANILLA:
+            self.actor = Actor(self.env.observation_space.shape[-1] - 1, self.env.action_space.n)
+        elif self.kind in (Algo.DUELING, Algo.DD):
+            self.actor = DuelingActor(self.env.observation_space.shape[-1] - 1, self.env.action_space.n)
 
         self.target = copy.deepcopy(self.actor)
 
@@ -51,13 +72,19 @@ class DQN:
         states, actions, next_states, rewards, dones = batch
 
         with torch.no_grad():
-            q_next = self.target(next_states).max(dim=1)[0].view(-1)
+            if self.kind in (Algo.DOUBLE, Algo.DD):
+                actions_next = torch.argmax(self.actor(next_states), dim=-1)
+                q_next = self.target(next_states).gather(1, actions_next.unsqueeze(1))
+            else:
+                q_next = self.target(next_states).max(dim=1)[0].view(-1)
 
-        q_target = rewards + self.gamma * q_next * (1 - dones)
+            q_next[dones] = 0
 
-        q_current = self.actor(states).gather(1, actions.unsqueeze(dim=1))
+        q_target = rewards + self.gamma * q_next.flatten()
 
-        loss = F.mse_loss(q_current, q_target.unsqueeze(dim=1))
+        q_current = self.actor(states).gather(1, actions.unsqueeze(1)).flatten()
+
+        loss = F.mse_loss(q_current, q_target)
 
         self.optimizer.zero_grad()
         loss.backward()
@@ -94,19 +121,18 @@ class DQN:
 
         buffer = Buffer(state_dim, max_size=buffer_size, device=self.device)
 
-        state, done = self.env.reset().transpose(2, 0, 1), False
+        state, done = self.env.reset(), False
 
         for step in trange(transitions):
             eps = self.eps_max - (self.eps_max - self.eps_min) * step / transitions
 
             if done:
-                state = self.env.reset().transpose(2, 0, 1)
+                state = self.env.reset()
                 done = False
 
             action = self.env.action_space.sample() if np.random.uniform() < eps else self.act(state)
 
             next_state, reward, done, *_ = self.env.step(action)
-            next_state = next_state.transpose(2, 0, 1)
 
             transition = (state, action, next_state, reward, done)
             buffer.push(*transition)
@@ -117,7 +143,7 @@ class DQN:
                 self.update(buffer.sample(batch_size))
 
                 if (step + 1) % saverate == 0:
-                    reward_mean, reward_std, metric_mean, metric_std = evaluate_policy(self.env_config, self, 50)
+                    reward_mean, reward_std, metric_mean, metric_std = evaluate_policy(self.env_config, self, 5)
 
                     torch.save(
                         {

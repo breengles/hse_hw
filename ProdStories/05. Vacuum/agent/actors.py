@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 
-class DQNActor(nn.Module):
+class Actor(nn.Module):
     def __init__(self, obs_channels, action_dim):
         super().__init__()
 
@@ -22,17 +22,15 @@ class DQNActor(nn.Module):
 
         self.a = nn.Sequential(
             nn.Linear(64, 32),
-            nn.ELU(),
-            nn.Linear(32, 16),
-            nn.ELU(),
-            nn.Linear(16, action_dim),
+            nn.ReLU(),
+            nn.Linear(32, action_dim),
         )
 
     def forward(self, state):
         return self.a(self.features(state))
 
 
-class DuelingDQNActor(nn.Module):
+class DuelingActor(nn.Module):
     def __init__(self, obs_channels, action_dim):
         super().__init__()
 
@@ -52,18 +50,14 @@ class DuelingDQNActor(nn.Module):
 
         self.v = nn.Sequential(
             nn.Linear(64, 32),
-            nn.ELU(),
-            nn.Linear(32, 16),
-            nn.ELU(),
-            nn.Linear(16, 1),
+            nn.ReLU(),
+            nn.Linear(32, 1),
         )
 
         self.a = nn.Sequential(
             nn.Linear(64, 32),
-            nn.ELU(),
-            nn.Linear(32, 16),
-            nn.ELU(),
-            nn.Linear(16, action_dim),
+            nn.ReLU(),
+            nn.Linear(32, action_dim),
         )
 
     def forward(self, state):
