@@ -19,9 +19,12 @@ class Wrapper(Dungeon):
             reward += 1
 
         if self.timepenalty:
-            reward -= 1
+            reward -= 0.1
 
         if info["collided"]:
-            reward -= 1
+            reward -= 0.5
 
-        return observation.transope(2, 0, 1), reward, done, metric, info
+        # if not info["moved"]:
+        #     reward -= 1
+
+        return observation.transpose(2, 0, 1), reward, done, metric, info

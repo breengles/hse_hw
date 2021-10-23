@@ -3,6 +3,7 @@
 from argparse import ArgumentParser
 
 import yaml
+
 from agent.DQN import DQN
 from utils.evaluation import generate_gif
 from utils.wandb_init import wandb_init

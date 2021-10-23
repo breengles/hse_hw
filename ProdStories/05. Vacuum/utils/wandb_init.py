@@ -1,6 +1,7 @@
 import os
-import wandb
 from datetime import datetime
+
+import wandb
 
 
 def wandb_init(global_config):

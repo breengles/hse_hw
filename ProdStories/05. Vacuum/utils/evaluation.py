@@ -1,38 +1,40 @@
 import numpy as np
 import torch
-
-from wrapper import Wrapper
-from utils.random_utils import set_seed
 import wandb
-from mapgen import Dungeon, VideoRecorder
 from tqdm.auto import trange
+from wrapper import Wrapper
+
+from utils.random_utils import set_seed
 
 
-def rollout(env, agent):
-    state, done = env.reset().transpose(2, 0, 1), False
+def rollout(env, agent, render=False):
+    state, done = env.reset(), False
+
+    frames = [env.render(mode="rgb_array", size=512).transpose(2, 0, 1)] if render else None
 
     total_reward = 0
     total_metric = 0
-
     with torch.no_grad():
         while not done:
             state, reward, done, metric, _ = env.step(agent.act(state))
-            state = state.transpose(2, 0, 1)
+
+            if render:
+                frames.append(env.render(mode="rgb_array", size=512).transpose(2, 0, 1))
+
             total_reward += reward
             total_metric += metric
 
-    return total_reward, total_metric
+    return total_reward, total_metric, frames
 
 
 def evaluate_policy(env_config, agent, episodes=5, seed=42):
     env = Wrapper(**env_config)
-
     set_seed(env=env, seed=seed)
+
     rewards = []
     metrics = []
-
     for _ in trange(episodes, desc="Evaluation", leave=False):
-        rew, met = rollout(env, agent)
+        rew, met, _ = rollout(env, agent)
         rewards.append(rew)
         metrics.append(met)
 
@@ -40,16 +42,9 @@ def evaluate_policy(env_config, agent, episodes=5, seed=42):
 
 
 def generate_gif(env_config, agent, seed=42, extension="mp4"):
-    env = VideoRecorder(
-        Wrapper(**env_config),
-        video_path="videos",
-        size=512,
-        fps=60,
-        extension=extension,
-    )
-
+    env = Wrapper(**env_config)
     set_seed(env, seed)
 
-    rollout(env, agent)
+    _, _, frames = rollout(env, agent, render=True)
 
-    wandb.log({"video": wandb.Video(env.filename, fps=15, format=extension)})
+    wandb.log({"video": wandb.Video(np.array(frames), fps=30, format=extension)})

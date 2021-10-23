@@ -5,7 +5,7 @@ agent:
   eps_max: 1
   eps_min: 0.3
   device: cuda
-  kind: dd
+  kind: double
   
 train:
   transitions: 1000000
@@ -25,7 +25,7 @@ env:
 wandb:
   project: VacuumCleaner
   entity: breengles
-  group: baseline
-  name: double dueling
+  group: baseline_conv
+  name: double
   notes: ""
   local: False

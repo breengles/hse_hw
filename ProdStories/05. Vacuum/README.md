@@ -21,3 +21,5 @@ for _ in range(1000):
  - Free cells
  - Occupied cells
  - Visited cells
+
+[WandB logs](https://wandb.ai/breengles/VacuumCleaner)

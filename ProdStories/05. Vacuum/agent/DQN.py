@@ -1,22 +1,20 @@
 import copy
 import os
-import numpy as np
+from datetime import datetime
+from enum import Enum, auto
 
+import numpy as np
 import torch
+import wandb
 from torch.nn import functional as F
 from torch.optim import Adam
 from tqdm.auto import trange
-import wandb
 from utils.buffer import Buffer
 from utils.evaluation import evaluate_policy, generate_gif
 from utils.random_utils import set_seed
-
 from wrapper import Wrapper
-from datetime import datetime
 
 from agent.actors import Actor, DuelingActor
-
-from enum import Enum, auto
 
 
 class Algo(Enum):

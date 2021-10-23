@@ -3,7 +3,6 @@
 
 from mapgen import Dungeon, VideoRecorder
 
-
 if __name__ == "__main__":
     env = VideoRecorder(
         Dungeon(30, 30, min_room_xy=7, max_room_xy=14, max_steps=200),
