@@ -5,6 +5,7 @@ from wrapper import Wrapper
 from utils.random_utils import set_seed
 import wandb
 from mapgen import Dungeon, VideoRecorder
+from tqdm.auto import trange
 
 
 def rollout(env, agent):
@@ -30,7 +31,7 @@ def evaluate_policy(env_config, agent, episodes=5, seed=42):
     rewards = []
     metrics = []
 
-    for _ in range(episodes):
+    for _ in trange(episodes, desc="Evaluation", leave=False):
         rew, met = rollout(env, agent)
         rewards.append(rew)
         metrics.append(met)
@@ -38,17 +39,17 @@ def evaluate_policy(env_config, agent, episodes=5, seed=42):
     return np.mean(rewards), np.std(rewards), np.mean(metrics), np.std(metrics)
 
 
-def generate_gif(env_config, agent, seed=42):
+def generate_gif(env_config, agent, seed=42, extension="mp4"):
     env = VideoRecorder(
         Wrapper(**env_config),
         video_path="videos",
         size=512,
         fps=60,
-        extension="gif",
+        extension=extension,
     )
 
     set_seed(env, seed)
 
     rollout(env, agent)
 
-    wandb.log({"video": wandb.Video(env.filename, fps=30, format="gif")})
+    wandb.log({"video": wandb.Video(env.filename, fps=15, format=extension)})
