@@ -3,7 +3,6 @@ import os
 import numpy as np
 
 import torch
-from torch import nn
 from torch.nn import functional as F
 from torch.optim import Adam
 from tqdm.auto import trange
@@ -15,6 +14,8 @@ from utils.random_utils import set_seed
 from wrapper import Wrapper
 from datetime import datetime
 
+from actors import DQNActor, DuelingDQNActor
+
 
 def soft_update(source, target, tau=0.002):
     with torch.no_grad():
@@ -23,47 +24,8 @@ def soft_update(source, target, tau=0.002):
             tp.data.add_(tau * sp.data)
 
 
-class Actor(nn.Module):
-    def __init__(self, obs_channels, action_dim):
-        super().__init__()
-
-        self.features = nn.Sequential(
-            nn.Conv2d(obs_channels, 4, (3, 3)),
-            nn.ReLU(),
-            nn.Conv2d(4, 8, (3, 3)),
-            nn.ReLU(),
-            nn.Conv2d(8, 16, (3, 3)),
-            nn.ReLU(),
-            nn.Conv2d(16, 32, (3, 3)),
-            nn.ReLU(),
-            nn.Conv2d(32, 64, (3, 3)),
-            nn.ReLU(),
-            nn.Flatten(),
-        )
-
-        self.a = nn.Sequential(
-            nn.Linear(64, 32),
-            nn.ELU(),
-            nn.Linear(32, 16),
-            nn.ELU(),
-            nn.Linear(16, action_dim),
-        )
-
-    def forward(self, state):
-        return self.a(self.features(state))
-
-
 class DQN:
-    def __init__(
-        self,
-        env_config,
-        lr=2e-4,
-        gamma=0.999,
-        tau=0.002,
-        eps_max=0,
-        eps_min=0,
-        device="cpu",
-    ):
+    def __init__(self, env_config, lr=2e-4, gamma=0.999, tau=0.002, eps_max=0, eps_min=0, device="cpu", kind=None):
         self.env = Wrapper(**env_config)
         self.env_config = env_config
 
@@ -72,7 +34,11 @@ class DQN:
         self.eps_max = eps_max
         self.eps_min = eps_min
 
-        self.actor = Actor(self.env.observation_space.shape[-1] - 1, self.env.action_space.n)
+        if kind is None:
+            self.actor = DQNActor(self.env.observation_space.shape[-1] - 1, self.env.action_space.n)
+        elif kind.strip().lower() in ("dueling", "duel"):
+            self.actor = DuelingDQNActor(self.env.observation_space.shape[-1] - 1, self.env.action_space.n)
+
         self.target = copy.deepcopy(self.actor)
 
         self.optimizer = Adam(self.actor.parameters(), lr=lr)
@@ -85,10 +51,9 @@ class DQN:
         states, actions, next_states, rewards, dones = batch
 
         with torch.no_grad():
-            q_target = self.target(next_states).max(dim=1)[0].view(-1)
-            q_target[dones] = 0
+            q_next = self.target(next_states).max(dim=1)[0].view(-1)
 
-        q_target = rewards + self.gamma * q_target
+        q_target = rewards + self.gamma * q_next * (1 - dones)
 
         q_current = self.actor(states).gather(1, actions.unsqueeze(dim=1))
 
