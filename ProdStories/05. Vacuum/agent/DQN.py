@@ -9,7 +9,7 @@ from torch.optim import Adam
 from tqdm.auto import trange
 import wandb
 from utils.buffer import Buffer
-from utils.evaluation import evaluate_policy
+from utils.evaluation import evaluate_policy, generate_gif
 from utils.random_utils import set_seed
 
 from wrapper import Wrapper
@@ -139,7 +139,7 @@ class DQN:
                 self.update(buffer.sample(batch_size))
 
                 if (step + 1) % saverate == 0:
-                    reward_mean, reward_std, metric_mean, metric_std = evaluate_policy(self.env_config, self)
+                    reward_mean, reward_std, metric_mean, metric_std = evaluate_policy(self.env_config, self, 50)
 
                     torch.save(
                         {
@@ -162,5 +162,7 @@ class DQN:
                             "metric/std": metric_std,
                         },
                     )
+
+                    generate_gif(self.env_config, self)
 
         return self

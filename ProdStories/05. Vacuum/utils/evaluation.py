@@ -38,7 +38,7 @@ def evaluate_policy(env_config, agent, episodes=5, seed=42):
     return np.mean(rewards), np.std(rewards), np.mean(metrics), np.std(metrics)
 
 
-def generate_gif(agent, env_config, seed=42):
+def generate_gif(env_config, agent, seed=42):
     env = VideoRecorder(
         Wrapper(**env_config),
         video_path="videos",
