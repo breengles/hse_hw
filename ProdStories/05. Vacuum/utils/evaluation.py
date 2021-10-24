@@ -11,12 +11,14 @@ def rollout(env, agent):
     state, done = env.reset(), False
 
     total_reward = 0
+    step = 0
     with torch.no_grad():
         while not done:
+            step += 1
             state, reward, done, _ = env.step(agent.act(state))
             total_reward += reward
 
-    return total_reward
+    return total_reward, step
 
 
 def evaluate_policy(env_config, agent, episodes=5, seed=42):
@@ -24,15 +26,17 @@ def evaluate_policy(env_config, agent, episodes=5, seed=42):
     set_seed(env=env, seed=seed)
 
     rewards = []
+    steps = []
     for _ in trange(episodes, desc="Evaluation", leave=False):
-        rew = rollout(env, agent)
+        rew, step = rollout(env, agent)
         rewards.append(rew)
+        steps.append(step)
 
-    return np.mean(rewards), np.std(rewards)
+    return rewards, np.mean(steps)
 
 
-def generate_gif(env_config, agent, seed=42, video_path="videos", extension="mp4"):
-    env = VideoRecorder(Wrapper(**env_config), video_path, extension=extension)
+def generate_gif(env_config, agent, seed=42, fps=60, video_path="videos", extension="mp4"):
+    env = VideoRecorder(Wrapper(**env_config), video_path, extension=extension, fps=fps)
     set_seed(env.env, seed)
 
     obs, done = env.reset(), False
@@ -40,4 +44,4 @@ def generate_gif(env_config, agent, seed=42, video_path="videos", extension="mp4
         action = agent.act(obs)
         obs, _, done, _ = env.step(action)
 
-    wandb.log({"video": wandb.Video(env.filename, fps=15, format=extension)})
+    wandb.log({"video": wandb.Video(env.filename, fps=fps, format=extension)})
