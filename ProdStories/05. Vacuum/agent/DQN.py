@@ -68,6 +68,11 @@ class DQN:
 
     def update(self, batch):
         states, actions, next_states, rewards, dones = batch
+        states = states.to(self.device)
+        actions = actions.to(self.device)
+        next_states = next_states.to(self.device)
+        rewards = rewards.to(self.device)
+        dones = dones.to(self.device)
 
         with torch.no_grad():
             if self.kind in (Algo.DOUBLE, Algo.DD):
@@ -103,6 +108,7 @@ class DQN:
         transitions=1_000_000,
         buffer_size=100_000,
         batch_size=512,
+        batch_device="cpu",
         seed=42,
         saverate=None,
     ):
@@ -117,7 +123,7 @@ class DQN:
 
         state_dim = np.prod(self.env.observation_space.shape)
 
-        buffer = Buffer(state_dim, max_size=buffer_size, device=self.device)
+        buffer = Buffer(state_dim, max_size=buffer_size, device=batch_device)
 
         state, done = self.env.reset(), False
 
