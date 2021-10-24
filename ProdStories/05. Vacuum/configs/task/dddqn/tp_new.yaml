@@ -1,0 +1,37 @@
+agent:
+  lr: 0.0001
+  gamma: 0.998
+  tau: 0.001
+  eps_max: 0.4
+  eps_min: 0.1
+  device: cuda
+  kind: dd
+  
+train:
+  transitions: 1000000
+  buffer_size: 500000
+  batch_size: 64
+  batch_device: cuda
+  seed: 42
+  saverate: ~
+
+env:
+  width: 20
+  height: 20
+  max_rooms: 3
+  min_room_xy: 5
+  max_room_xy: 10
+  observation_size: 11
+  vision_radius: 5
+  max_steps: 2000
+  transpose: true
+  timepenalty: 1
+  reward_for_new: 1
+
+wandb:
+  project: VacuumCleaner
+  entity: breengles
+  group: task
+  name: dddqn | tp +new
+  notes: ""
+  local: False

@@ -1,0 +1,21 @@
+train:
+  epochs: 100
+  seed: 42
+  saverate: 10
+
+env:
+  width: 10
+  height: 10
+  min_room_xy: 7
+  max_room_xy: 8
+  max_rooms: 1
+  max_steps: 400
+  reward_for_new: 1
+
+wandb:
+  project: VacuumCleaner
+  entity: breengles
+  group: simple
+  name: ppo | basic +new
+  notes: ""
+  local: False

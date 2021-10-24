@@ -1,0 +1,23 @@
+train:
+  epochs: 500
+  seed: 42
+  saverate: ~
+
+env:
+  width: 20
+  height: 20
+  max_rooms: 3
+  min_room_xy: 5
+  max_room_xy: 10
+  observation_size: 11
+  vision_radius: 5
+  max_steps: 400
+  timepenalty: 1
+
+wandb:
+  project: VacuumCleaner
+  entity: breengles
+  group: task2
+  name: ppo | tp
+  notes: ""
+  local: False

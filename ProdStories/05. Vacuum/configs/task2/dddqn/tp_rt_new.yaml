@@ -23,14 +23,16 @@ env:
   max_room_xy: 10
   observation_size: 11
   vision_radius: 5
-  max_steps: 2000
-  timepenalty: 1
+  max_steps: 400
   transpose: true
+  timepenalty: 1
+  reward_for_new: 1
+  remove_trajectory: true
 
 wandb:
   project: VacuumCleaner
   entity: breengles
-  group: task
-  name: dddqn
+  group: task2
+  name: dddqn | tp rt +new
   notes: ""
   local: False

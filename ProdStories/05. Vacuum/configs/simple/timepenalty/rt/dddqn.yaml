@@ -2,10 +2,10 @@ agent:
   lr: 0.0001
   gamma: 0.999
   tau: 0.002
-  eps_max: 0.3
-  eps_min: 0.05
+  eps_max: 0.4
+  eps_min: 0.1
   device: cuda
-  kind: dueling
+  kind: dd
   
 train:
   transitions: 100000
@@ -24,11 +24,12 @@ env:
   max_steps: 400
   timepenalty: 1
   transpose: true
-  
+  remove_trajectory: true
+
 wandb:
   project: VacuumCleaner
   entity: breengles
   group: simple
-  name: dueling dqn
+  name: dddqn | tp rt
   notes: ""
   local: False

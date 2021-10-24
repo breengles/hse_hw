@@ -16,6 +16,6 @@ wandb:
   project: VacuumCleaner
   entity: breengles
   group: simple
-  name: ppo
+  name: ppo | tp
   notes: ""
   local: False

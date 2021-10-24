@@ -11,13 +11,14 @@ env:
   max_room_xy: 10
   observation_size: 11
   vision_radius: 5
-  max_steps: 2000
+  max_steps: 400
   timepenalty: 1
+  reward_for_new: 1
 
 wandb:
   project: VacuumCleaner
   entity: breengles
-  group: task
-  name: ppo
+  group: task2
+  name: ppo | tp +new
   notes: ""
   local: False
