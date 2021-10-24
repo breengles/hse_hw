@@ -74,7 +74,7 @@ class PPO:
                 artifact.add_file(filename)
                 wandb.log_artifact(artifact)
 
-                env = Dungeon(**self.env_config)
+                env = Wrapper(**self.env_config)
 
                 set_seed(env, seed)
 

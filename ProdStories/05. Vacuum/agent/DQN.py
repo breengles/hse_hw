@@ -156,14 +156,13 @@ class DQN:
                 self.update(buffer.sample(batch_size))
 
                 if (step + 1) % saverate == 0:
-                    reward_mean, reward_std, metric_mean, metric_std = evaluate_policy(self.env_config, self, 5)
+                    reward_mean, reward_std = evaluate_policy(self.env_config, self, 5)
 
                     torch.save(
                         {
                             "epoch": step + 1,
                             "model_state_dict": self.actor.state_dict(),
                             "optimizer_state_dict": self.optimizer.state_dict(),
-                            "metric": metric_mean,
                         },
                         dir_name + "model.pth",
                     )
@@ -173,13 +172,11 @@ class DQN:
 
                     wandb.log(
                         {
-                            "reward/mean": reward_mean,
-                            "reward/std": reward_std,
-                            "metric/mean": metric_mean,
-                            "metric/std": metric_std,
+                            "reward_mean": reward_mean,
+                            "reward_std": reward_std,
                         },
                     )
 
-                    generate_gif(self.env_config, self)
+                    generate_gif(self.env_config, agent=self, seed=seed)
 
         return self
