@@ -4,8 +4,7 @@ from argparse import ArgumentParser
 
 import yaml
 
-from agent.DQN import DQN
-from utils.evaluation import generate_gif
+from agent.PPO import PPO
 from utils.wandb_init import wandb_init
 
 if __name__ == "__main__":
@@ -21,7 +20,5 @@ if __name__ == "__main__":
     cfg["wandb"]["local"] = args.local
     run, cfg = wandb_init(cfg)
 
-    agent = DQN(env_config=cfg["env"], **cfg["agent"])
+    agent = PPO(env_config=cfg["env"])
     agent = agent.train(**cfg["train"])
-
-    generate_gif(cfg["env"], agent)
