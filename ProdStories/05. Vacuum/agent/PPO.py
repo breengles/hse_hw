@@ -5,7 +5,6 @@ import ray
 import ray.rllib.agents.ppo as ppo
 from ray import tune
 from PIL import Image
-from mapgen.env import Dungeon
 from wrapper import Wrapper
 from tqdm.auto import trange
 import wandb
@@ -62,10 +61,10 @@ class PPO:
 
             wandb.log(
                 {
-                    "eposiode_reward_min": result["episode_reward_min"],
-                    "episode_rewards_mean": result["episode_reward_mean"],
-                    "episode_rewards_max": result["episode_reward_max"],
-                    "episode__len_mean": result["episode_len_mean"],
+                    "reward_min": result["episode_reward_min"],
+                    "reward_mean": result["episode_reward_mean"],
+                    "reward_max": result["episode_reward_max"],
+                    "episode_len_mean": result["episode_len_mean"],
                 }
             )
 
