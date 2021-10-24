@@ -6,25 +6,33 @@ import imageio
 
 
 class Wrapper(Dungeon):
-    def __init__(self, *args, timepenalty=None, transpose=False, **kwargs):
+    def __init__(
+        self, *args, timepenalty=None, transpose=False, remove_trajectory=False, reward_for_new=None, **kwargs
+    ):
         super().__init__(*args, **kwargs)
         self.timepenalty = timepenalty
         self.transpose = transpose
+        self.remove_trajectory = remove_trajectory
+        self.reward_for_new = reward_for_new
 
     def reset(self):
         observation = super().reset()
+
+        if self.remove_trajectory:
+            observation = observation[:, :, :-1]
+
         return observation.transpose(2, 0, 1) if self.transpose else observation
-        # return observation[:, :, :-1].transpose(2, 0, 1)  # as torch conv wotks on (C, H, W)
 
     def step(self, action: int):
         observation, reward, done, info = super().step(action)
 
+        if self.remove_trajectory:
+            observation = observation[:, :, :-1]
         if self.transpose:
             observation = observation.transpose(2, 0, 1)
-            # observation = observation[:, :, :-1].transpose(2, 0, 1)
 
-        if info["is_new"]:
-            reward += 1
+        if self.reward_for_new is not None and info["is_new"]:
+            reward += self.reward_for_new
 
         if self.timepenalty is not None:
             reward -= self.timepenalty
