@@ -42,9 +42,20 @@ def soft_update(source, target, tau=0.002):
 
 
 class DQN:
-    def __init__(self, env_config, lr=2e-4, gamma=0.999, tau=0.002, eps_max=0, eps_min=0, device="cpu", kind=None):
+    def __init__(
+        self,
+        env_config,
+        lr=2e-4,
+        gamma=0.999,
+        tau=0.002,
+        eps_max=0,
+        eps_min=0,
+        device="cpu",
+        kind=None,
+    ):
         self.env = Wrapper(**env_config)
         self.env_config = env_config
+        self.obs_channels = self.env.observation_space.shape[-1]
 
         self.gamma = gamma
         self.tau = tau
@@ -54,9 +65,9 @@ class DQN:
         self.kind = KINDS.get(kind, Algo.VANILLA)
 
         if self.kind == Algo.VANILLA:
-            self.actor = Actor(self.env.observation_space.shape[-1] - 1, self.env.action_space.n)
+            self.actor = Actor(self.obs_channels, self.env.action_space.n)
         elif self.kind in (Algo.DUELING, Algo.DD):
-            self.actor = DuelingActor(self.env.observation_space.shape[-1] - 1, self.env.action_space.n)
+            self.actor = DuelingActor(self.obs_channels, self.env.action_space.n)
 
         self.target = copy.deepcopy(self.actor)
 
@@ -121,9 +132,7 @@ class DQN:
         dir_name = "experiments/" + str(datetime.now().strftime("%d_%m_%Y/%H:%M:%S.%f")) + "/"
         os.makedirs(dir_name, exist_ok=True)
 
-        state_dim = np.prod(self.env.observation_space.shape)
-
-        buffer = Buffer(state_dim, max_size=buffer_size, device=batch_device)
+        buffer = Buffer(obs_channels=self.obs_channels, max_size=buffer_size, device=batch_device)
 
         state, done = self.env.reset(), False
 
