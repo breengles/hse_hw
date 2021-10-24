@@ -1,7 +1,5 @@
 import os
-import sys
 import shutil
-from gym import spaces
 
 import ray
 import ray.rllib.agents.ppo as ppo
@@ -20,7 +18,7 @@ class PPO:
 
         ray.shutdown()
         ray.init(ignore_reinit_error=True)
-        tune.register_env("Dungeon", lambda config: Dungeon(**config))
+        tune.register_env("Dungeon", lambda config: Wrapper(**config))
 
         self.checkpoint_root = "tmp/ppo/dungeon"
 
@@ -99,7 +97,7 @@ class PPO:
                     frames.append(frame)
 
                     # frame.save('tmp1.png')
-                    obs, reward, done, info = env.step(action)
+                    obs, _, done, _ = env.step(action)
                     if done:
                         break
 
