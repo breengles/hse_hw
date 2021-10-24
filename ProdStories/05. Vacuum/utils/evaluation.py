@@ -3,28 +3,20 @@ import torch
 import wandb
 from tqdm.auto import trange
 from wrapper import Wrapper
-
 from utils.random_utils import set_seed
+from wrapper import VideoRecorder
 
 
-def rollout(env, agent, render=False):
+def rollout(env, agent):
     state, done = env.reset(), False
 
-    frames = [env.render(mode="rgb_array", size=512).transpose(2, 0, 1)] if render else None
-
     total_reward = 0
-    total_metric = 0
     with torch.no_grad():
         while not done:
-            state, reward, done, metric, _ = env.step(agent.act(state))
-
-            if render:
-                frames.append(env.render(mode="rgb_array", size=512).transpose(2, 0, 1))
-
+            state, reward, done, _ = env.step(agent.act(state))
             total_reward += reward
-            total_metric += metric
 
-    return total_reward, total_metric, frames
+    return total_reward
 
 
 def evaluate_policy(env_config, agent, episodes=5, seed=42):
@@ -32,19 +24,20 @@ def evaluate_policy(env_config, agent, episodes=5, seed=42):
     set_seed(env=env, seed=seed)
 
     rewards = []
-    metrics = []
     for _ in trange(episodes, desc="Evaluation", leave=False):
-        rew, met, _ = rollout(env, agent)
+        rew = rollout(env, agent)
         rewards.append(rew)
-        metrics.append(met)
 
-    return np.mean(rewards), np.std(rewards), np.mean(metrics), np.std(metrics)
+    return np.mean(rewards), np.std(rewards)
 
 
-def generate_gif(env_config, agent, seed=42, extension="mp4"):
-    env = Wrapper(**env_config)
-    set_seed(env, seed)
+def generate_gif(env_config, agent, seed=42, video_path="videos", extension="mp4"):
+    env = VideoRecorder(Wrapper(**env_config), video_path, extension=extension)
+    set_seed(env.env, seed)
 
-    _, _, frames = rollout(env, agent, render=True)
+    obs, done = env.reset(), False
+    while not done:
+        action = agent.act(obs)
+        obs, _, done, _ = env.step(action)
 
-    wandb.log({"video": wandb.Video(np.array(frames), fps=30, format=extension)})
+    wandb.log({"video": wandb.Video(env.filename, fps=15, format=extension)})
