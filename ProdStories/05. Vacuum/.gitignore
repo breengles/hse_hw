@@ -5,8 +5,8 @@ mapgen/
 experiments/
 .idea/
 __pycache__/
-exp.sh
 tmp/
 out.gif
 tmp.png
 task.sh
+exp*.sh
