@@ -55,7 +55,11 @@ class DQN:
     ):
         self.env = Wrapper(**env_config)
         self.env_config = env_config
+
         self.obs_channels = self.env.observation_space.shape[-1]
+
+        if env_config.get("remove_trajectory", False):
+            self.obs_channels -= 1
 
         self.gamma = gamma
         self.tau = tau
@@ -64,7 +68,7 @@ class DQN:
 
         self.kind = KINDS.get(kind, Algo.VANILLA)
 
-        if self.kind == Algo.VANILLA:
+        if self.kind in (Algo.VANILLA, Algo.DOUBLE):
             self.actor = Actor(self.obs_channels, self.env.action_space.n)
         elif self.kind in (Algo.DUELING, Algo.DD):
             self.actor = DuelingActor(self.obs_channels, self.env.action_space.n)
@@ -156,7 +160,7 @@ class DQN:
                 self.update(buffer.sample(batch_size))
 
                 if (step + 1) % saverate == 0:
-                    reward_mean, reward_std = evaluate_policy(self.env_config, self, 5)
+                    rews, episode_len_mean = evaluate_policy(self.env_config, self, 5)
 
                     torch.save(
                         {
@@ -172,8 +176,11 @@ class DQN:
 
                     wandb.log(
                         {
-                            "reward_mean": reward_mean,
-                            "reward_std": reward_std,
+                            "reward_min": np.min(rews),
+                            "reward_mean": np.mean(rews),
+                            "reward_max": np.max(rews),
+                            "reward_std": np.std(rews),
+                            "episode_len_mean": episode_len_mean,
                         },
                     )
 
