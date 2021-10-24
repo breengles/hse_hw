@@ -1,9 +1,9 @@
 agent:
   lr: 0.0001
-  gamma: 0.999
-  tau: 0.002
-  eps_max: 0.5
-  eps_min: 0.005
+  gamma: 0.998
+  tau: 0.001
+  eps_max: 0.4
+  eps_min: 0.1
   device: cuda
   kind: dd
   
@@ -11,6 +11,7 @@ train:
   transitions: 1000000
   buffer_size: 500000
   batch_size: 64
+  batch_device: cuda
   seed: 42
   saverate: ~
 
@@ -22,8 +23,9 @@ env:
   max_room_xy: 10
   observation_size: 11
   vision_radius: 5
-  max_steps: 400
+  max_steps: 2000
   timepenalty: true
+  transpose: true
 
 wandb:
   project: VacuumCleaner

@@ -23,7 +23,8 @@ env:
   max_rooms: 1
   max_steps: 400
   timepenalty: true
-
+  transpose: true
+  
 wandb:
   project: VacuumCleaner
   entity: breengles

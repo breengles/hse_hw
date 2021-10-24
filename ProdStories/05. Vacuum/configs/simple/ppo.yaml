@@ -10,11 +10,12 @@ env:
   max_room_xy: 8
   max_rooms: 1
   max_steps: 400
+  timepenalty: true
 
 wandb:
   project: VacuumCleaner
   entity: breengles
-  group: ppo
-  name: simple
+  group: task
+  name: ppo
   notes: ""
   local: False
