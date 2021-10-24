@@ -25,7 +25,7 @@ env:
 wandb:
   project: VacuumCleaner
   entity: breengles
-  group: baseline_conv
+  group: baseline
   name: dueling
   notes: ""
   local: False
