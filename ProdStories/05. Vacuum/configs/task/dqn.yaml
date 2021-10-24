@@ -23,7 +23,7 @@ env:
   observation_size: 11
   vision_radius: 5
   max_steps: 400
-  timepenalty: true
+  timepenalty: 1
   transpose: true
 
 wandb:

@@ -1,7 +1,7 @@
 train:
-  epochs: 500
+  epochs: 100
   seed: 42
-  saverate: ~
+  saverate: 10
 
 env:
   width: 10
@@ -10,12 +10,12 @@ env:
   max_room_xy: 8
   max_rooms: 1
   max_steps: 400
-  timepenalty: true
+  timepenalty: 1
 
 wandb:
   project: VacuumCleaner
   entity: breengles
-  group: task
+  group: simple
   name: ppo
   notes: ""
   local: False

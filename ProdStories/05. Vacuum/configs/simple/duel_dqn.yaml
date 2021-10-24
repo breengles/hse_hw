@@ -5,15 +5,15 @@ agent:
   eps_max: 0.3
   eps_min: 0.05
   device: cuda
-  kind: dd
+  kind: dueling
   
 train:
-  transitions: 10000000
-  buffer_size: 5000000
-  batch_device: cpu
+  transitions: 100000
+  buffer_size: 50000
+  batch_device: cuda
   batch_size: 64
   seed: 42
-  saverate: ~
+  saverate: 10000
 
 env:
   width: 10
@@ -22,13 +22,13 @@ env:
   max_room_xy: 8
   max_rooms: 1
   max_steps: 400
-  timepenalty: true
+  timepenalty: 1
   transpose: true
-
+  
 wandb:
   project: VacuumCleaner
   entity: breengles
   group: simple
-  name: double dueling
+  name: dueling dqn
   notes: ""
   local: False
