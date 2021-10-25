@@ -1,5 +1,5 @@
 train:
-  epochs: 500
+  epochs: 2000
   seed: 42
   saverate: ~
 
@@ -12,7 +12,7 @@ env:
   observation_size: 11
   vision_radius: 5
   max_steps: 2000
-  timepenalty: 1
+  timepenalty: 2000
   reward_for_new: 1
 
 wandb:

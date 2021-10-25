@@ -18,6 +18,6 @@ wandb:
   project: VacuumCleaner
   entity: breengles
   group: task2
-  name: ppo | tp
+  name: ppo | tp norm
   notes: ""
   local: False

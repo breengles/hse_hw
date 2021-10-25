@@ -35,7 +35,7 @@ class Wrapper(Dungeon):
             reward += self.reward_for_new
 
         if self.timepenalty is not None:
-            reward -= self.timepenalty
+            reward -= self.timepenalty / self._max_steps
 
         # if info["collided"]:
         #     reward -= 0.5
