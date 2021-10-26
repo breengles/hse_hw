@@ -1,0 +1,81 @@
+%!TEX root = kotov.tex
+\section{Task 1}
+
+\begin{task}
+    $X = (x_1, \dots, x_n) \sim U[0, \theta]$ --- независимые. Найти $\theta_{ML}$, $p^{\dagger}(\theta)$, $\E \theta$, медиану и моду апостериорного $p(\theta | X)$.
+\end{task}
+
+\subsection{Max. likelihood}
+\begin{solution}
+    \begin{gather}
+        L(\theta) = p(X, \theta) = [\text{независимость}] = \prod_{i=1}^n p(x_i | \theta) \\
+        \theta_{ML} = \argmax_{\theta} L(\theta) = \dots = \argmax_{\theta} \sum_{i=1}^n \log p(x_i | \theta)
+    \end{gather}
+
+    Из условия мы знаем, что $p(x_i | \theta) = \frac{1}{\theta}$, тогда
+    \begin{equation}
+        \theta_{ML} = \argmax_{\theta}(-n \log \theta)
+    \end{equation}
+
+    Видно, что в аргументе стоит убывающая функция, следовательно, $\theta$ для максимизирования правдоподобия должна быть наименьшей из возможных.
+    Так как мы пронаблюдали какие-то значения $X$, то наименьшей из возможных будет $\max X = x_{(n)}$.
+\end{solution}
+
+\subsection{Сопряженное к равномерному}
+\begin{solution}
+    Рассмотрим $p(\theta | \alpha, \beta) = \frac{\alpha \beta^{\alpha}}{\theta^{\alpha + 1}} [\beta \le \theta]$ --- распределение Парето. Покажем, что апостериорное так же будет иметь такой же вид, но с другими $\tilde{\alpha}, \tilde{\beta}$.
+
+    Рассмотим $p(\theta | X) = \frac{p(X|\theta)p(\theta|\alpha, \beta)}{\int\limits_0^{+\infty} p(X | \theta)p(\theta | \alpha, \beta) d\theta}$.
+
+    Сначала разберемся с нормировочным интегралом:
+    \begin{equation}
+        \int\limits_0^{+\infty} p(X | \theta)p(\theta | \alpha, \beta) d\theta = (*)
+    \end{equation}
+    Здесь возникнет произведение двух индикаторных функций: $[\beta \le \theta][x_{(n)} \le \theta]$, что можно переписать, как $[m \le \theta]$, где $m = \max(\beta, x_{(n)})$, тогда
+    \begin{equation}
+        (*) = \alpha \beta^{\alpha} \int_m^{\infty} \theta^{-n - \alpha - 1}d\theta = (**)
+    \end{equation}
+    Если $-n - \alpha - 1 \ge -1$, то интеграл расходится, т.е. необходимо, чтобы $n + \alpha < 0$
+    \begin{gather}
+        (**) = \left.\frac{\alpha \beta^{\alpha}}{-n - \alpha} \theta^{-n -\alpha}\right|_{m}^{+\infty} = \frac{\alpha \beta^{\alpha}}{(n + \alpha)m^{n + \alpha}}
+    \end{gather}
+
+    Таким образом,
+    \begin{equation}
+        p(\theta | X) = (n + \alpha)m^{n + \alpha} \theta^{-n - \alpha - 1}[m \le \theta] = (***),
+    \end{equation}
+    где $m = \max(\beta, x_{(n)})$.
+
+    Если $\tilde{\alpha} = \alpha + n$, а $\tilde{\beta} = m$, то
+    \begin{equation}
+        (***) = \frac{\tilde{\alpha}\tilde{\beta}^{\tilde{\alpha}}}{\theta^{\tilde{\alpha} + 1}}[\tilde{\beta} \le \theta],
+    \end{equation}
+    что есть распределение Парето, т.е. оно действительно является сопряженным к равномерному.
+\end{solution}
+
+\subsection{Статистики}
+\subsubsection{Мат. ожидание}
+\begin{solution}
+    \begin{gather}
+        \mu = \E \theta = \int_0^{+\infty} \theta p(\theta | X) d\theta = (n + \alpha) m^{n + \alpha} \int_m^{+\infty}\theta^{-n - \alpha} d\theta \\
+        = [\tilde{\alpha} = n + \alpha] = \tilde{\alpha}m^{\tilde{\alpha}}\int_m^{+\infty}\theta^{-\tilde{\alpha}} d\theta = \tilde{\alpha} m^{\tilde{\alpha}} \frac{1}{\tilde{\alpha} - 1} m^{-\tilde{\alpha} + 1} = \frac{\tilde{\alpha}m}{\tilde{\alpha} - 1}
+    \end{gather}
+\end{solution}
+
+\subsubsection{Медиана}
+\begin{solution}
+    $c$ --- медиана, причем $c \ge m$
+    \begin{gather}
+        P(c \le \theta < +\infty) = (n + \alpha)m^{n + \alpha}\int_c^{+\infty} \theta^{-n - \alpha - 1} d\theta = \left(\frac{m}{c}\right)^{n + \alpha} = \frac12 \\
+        \Downarrow \\
+        (n + \alpha)(\ln m - \ln c) = -\ln 2 \Longrightarrow c = \exp(\ln m + \frac{\ln 2}{n + \alpha}) = m 2^{\frac{1}{n + \alpha}}
+    \end{gather}
+\end{solution}
+
+\subsubsection{Мода}
+\begin{solution}
+    \begin{gather}
+        \argmax_{\theta} p(\theta | X) = \argmax_{\theta} \theta^{-n - \alpha - 1}[m \le \theta]
+    \end{gather}
+    Тут также возникает убывающая функция от $\theta$, следовательно, берем наименьшее доступное, т.е. $\theta = m$, где $m = \max(\beta, x_{(n)})$
+\end{solution}
