@@ -5,26 +5,6 @@ class Actor(nn.Module):
     def __init__(self, obs_channels, action_dim):
         super().__init__()
 
-        # self.features = nn.Sequential(
-        #     nn.Conv2d(obs_channels, 4, (3, 3)),
-        #     nn.ReLU(),
-        #     nn.Conv2d(4, 8, (3, 3)),
-        #     nn.ReLU(),
-        #     nn.Conv2d(8, 16, (3, 3)),
-        #     nn.ReLU(),
-        #     nn.Conv2d(16, 32, (3, 3)),
-        #     nn.ReLU(),
-        #     nn.Conv2d(32, 64, (3, 3)),
-        #     nn.ReLU(),
-        #     nn.Flatten(),
-        # )
-
-        # self.a = nn.Sequential(
-        #     nn.Linear(64, 32),
-        #     nn.ReLU(),
-        #     nn.Linear(32, action_dim),
-        # )
-
         self.features = nn.Sequential(
             nn.Conv2d(obs_channels, 8, (3, 3), stride=2),
             nn.ReLU(),
@@ -48,32 +28,6 @@ class Actor(nn.Module):
 class DuelingActor(nn.Module):
     def __init__(self, obs_channels, action_dim):
         super().__init__()
-
-        # self.features = nn.Sequential(
-        #     nn.Conv2d(obs_channels, 4, (3, 3)),
-        #     nn.ReLU(),
-        #     nn.Conv2d(4, 8, (3, 3)),
-        #     nn.ReLU(),
-        #     nn.Conv2d(8, 16, (3, 3)),
-        #     nn.ReLU(),
-        #     nn.Conv2d(16, 32, (3, 3)),
-        #     nn.ReLU(),
-        #     nn.Conv2d(32, 64, (3, 3)),
-        #     nn.ReLU(),
-        #     nn.Flatten(),
-        # )
-
-        # self.v = nn.Sequential(
-        #     nn.Linear(64, 32),
-        #     nn.ReLU(),
-        #     nn.Linear(32, 1),
-        # )
-
-        # self.a = nn.Sequential(
-        #     nn.Linear(64, 32),
-        #     nn.ReLU(),
-        #     nn.Linear(32, action_dim),
-        # )
 
         self.features = nn.Sequential(
             nn.Conv2d(obs_channels, 8, (3, 3), stride=2),
