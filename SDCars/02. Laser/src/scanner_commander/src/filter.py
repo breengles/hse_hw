@@ -89,14 +89,14 @@ class Robot:
         self.pub_mrk.publish(self.marker)
 
     def grid_msg(self, xs, ys):
-        data = np.ones((self.grid_size, self.grid_size), dtype=int) * 100
+        data = np.zeros((self.grid_size, self.grid_size), dtype=int)
 
         for x, y in zip(xs, ys):
             if x ** 2 + y ** 2 < self.r ** 2:
                 i = int((x + self.r) / self.res)
                 j = int((y + self.r) / self.res)
 
-                data[j, i] = 0
+                data[j, i] = 100
 
         self.grid.data = data.ravel()
         self.pub_map.publish(self.grid)
