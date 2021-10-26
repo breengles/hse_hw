@@ -22,6 +22,8 @@ source devel/setup.bash
 # run package
 `rosrun <package_name> <name>.py`
 
+do not forget to run `roscore`
+
 
 
 
