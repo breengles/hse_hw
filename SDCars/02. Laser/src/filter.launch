@@ -1,0 +1,14 @@
+<launch>
+    <node 
+        pkg="rosbag" 
+        type="play" 
+        name="player" 
+        args="/home/breengles/Dropbox/hse/homeworks/SDCars/02.\ Laser/data/2011-01-25-06-29-26.bag"
+    />
+    
+    <node
+        pkg="scanner_commander"
+        type="filter.py"
+        name="filter"
+    />
+</launch>
