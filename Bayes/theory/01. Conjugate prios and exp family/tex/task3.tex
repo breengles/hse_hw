@@ -1,0 +1,24 @@
+%! TEX root = kotov.tex
+
+\section{Task 3: Pareto as exp.}
+
+\begin{task}
+    Записать распределение Парето с плотностью $p(x|\alpha, \beta) = \frac{\alpha \beta^{\alpha}}{x^{\alpha + 1}}[x \ge \beta]$ при фиксированном $\beta$ в форме экспоненциального класса распределений. Найти $\E \ln x$ путём дифференцирования нормировочной константы.
+\end{task}
+
+\begin{solution}
+
+    Приведем распределение Парето к экспоненциальному виду:
+    \begin{gather}
+        p(x|\alpha, \beta) = \frac{\alpha \beta^{\alpha}}{x^{\alpha + 1}}[x \ge \beta], \quad \beta \text{ --- fixed.} \\
+        p(x | \alpha) = \frac{f(x)}{g(\alpha)}\exp(\alpha u(x)) \\
+        p(x | \alpha, \beta) = \frac{\alpha \beta^{\alpha}}{x} \exp(-\alpha \ln x)[x \ge \beta] \\
+        \Downarrow \\
+        f(x) = \frac{[x \ge \beta]}{x}; \quad g(\alpha) = \frac{1}{\alpha \beta^{\alpha}}; \quad u(x) = -\ln x
+    \end{gather}
+
+    Теперь разберемся с матожиданием:
+    \begin{gather}
+        \E \ln x = \frac{\partial g(\alpha)}{\partial \alpha} = -\frac{1}{\alpha^2 \beta^{2 \alpha}}\left( \beta^{\alpha} + \alpha \beta^{\alpha} \ln \beta \right) = - \frac{1 + \alpha \ln \beta}{\alpha^2 \beta}
+    \end{gather}
+\end{solution}
