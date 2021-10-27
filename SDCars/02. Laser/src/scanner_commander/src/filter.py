@@ -113,5 +113,5 @@ class Robot:
 
 
 if __name__ == "__main__":
-    robot = Robot(threshold=1)
+    robot = Robot(threshold=0.1)
     rospy.spin()
