@@ -11,4 +11,12 @@
         type="filter.py"
         name="filter"
     />
+
+    <node
+        type="rviz"
+        pkg="rviz"
+        name="rviz"
+        args="-d /home/breengles/Dropbox/hse/homeworks/SDCars/02.\ Laser/src/config.rviz"
+    />
+
 </launch>
