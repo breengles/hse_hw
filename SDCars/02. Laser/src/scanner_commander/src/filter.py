@@ -14,7 +14,7 @@ from geometry_msgs.msg import Point
 
 
 class Robot:
-    def __init__(self, window=1, threshold=0.1, res=0.1, r=10) -> None:
+    def __init__(self, window=1, threshold=0.1, res=0.1, r=5) -> None:
         rospy.init_node("filter")
 
         self.window = window
@@ -22,7 +22,7 @@ class Robot:
 
         self.res = res
         self.r = r
-        self.grid_size = 2 * int(r / res) + 10
+        self.grid_size = 2 * int(r / res)
 
         self.marker = self.__init_mrk_msg()
         self.grid = self.__init_grid_msg()
