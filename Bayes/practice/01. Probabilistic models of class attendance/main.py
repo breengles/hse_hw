@@ -122,9 +122,13 @@ def pc_d(d, params, model):
     cmax = params["amax"] + params["bmax"]
     c_sup = np.arange(0, cmax + 1)
 
-    prob = pd_c(c_sup, params, model)[0][d] * pc(params, model)[0] / (pd(params, model)[0][d].reshape(-1, 1)[0] + 1e-15)
+    prob = pd_c(c_sup, params, model)[0][d] * pc(params, model)[0]
+    prob /= np.sum(prob, axis=1, keepdims=True)
 
-    return prob.transpose(1, 0), c_sup
+    if len(prob.shape) == 2:
+        prob = prob.transpose(1, 0)
+
+    return prob, c_sup
 
 
 def pc_ab(a, b, params, model):
@@ -133,15 +137,15 @@ def pc_ab(a, b, params, model):
 
     if model == 1:
         prob_a = binom.pmf(c_sup.reshape(1, -1), a.reshape(-1, 1), params["p1"])
-        prob_b = binom.pmf(c_sup[::-1].reshape(1, -1), b.reshape(-1, 1), params["p2"])
+        prob_b = binom.pmf(c_sup.reshape(-1, 1), b.reshape(1, -1), params["p2"])
     else:
         # poisson
         prob_a = poisson.pmf(c_sup.reshape(1, -1), a.reshape(-1, 1) * params["p1"])
-        prob_b = poisson.pmf(c_sup[::-1].reshape(1, -1), b.reshape(-1, 1) * params["p2"])
+        prob_b = poisson.pmf(c_sup.reshape(-1, 1), b.reshape(1, -1) * params["p2"])
 
-    prob = np.zeros((cmax + 1, a.size, b.size))
+    prob = np.zeros((c_sup.size, a.size, b.size))
     for k in c_sup:
-        prob[k] = prob_a[:, : k + 1] @ prob_b[:, : k + 1][::-1].T
+        prob[k] = np.dot(prob_a[:, : k + 1], prob_b[: k + 1, :][::-1])
 
     return prob, c_sup
 
@@ -162,61 +166,8 @@ def pc_abd(a, b, d, params, model):
 
 
 def expectation(dist, sup):
-    return np.dot(dist, sup)
+    return np.dot(dist.flatten(), sup)
 
 
 def variance(dist, sup):
-    return np.dot(dist, sup ** 2) - expectation(dist, sup) ** 2
-
-
-if __name__ == "__main__":
-    from time import time
-
-    params = {"amin": 75, "amax": 90, "bmin": 500, "bmax": 600, "p1": 0.1, "p2": 0.01, "p3": 0.3}
-    model = 1
-
-    cmin = dmin = 0
-    cmax = params["amax"] + params["bmax"]
-    dmax = 2 * (params["amax"] + params["bmax"])
-
-    print(f"a in [{params['amin']}:{params['amax']}]")
-    print(f"b in [{params['bmin']}:{params['bmax']}]")
-    print(f"c in [{cmin}:{cmax}]")
-    print(f"d in [{dmin}:{dmax}]")
-
-    a_sup = np.arange(params["amin"], params["amax"] + 1)
-    b_sup = np.arange(params["bmin"], params["bmax"] + 1)
-    c_sup = np.arange(cmin, cmax + 1)
-    d_sup = np.arange(dmin, dmax + 1)
-
-    start = time()
-    prob, sup = pc_ab(a_sup, b_sup, params, model)
-    print("p(c|ab):", prob.shape, sup.shape, f" | time spent: {time() - start}")
-
-    start = time()
-    prob, sup = pc_a(a_sup, params, model)
-    print("p(c|a):", prob.shape, sup.shape, f" | time spent: {time() - start}")
-
-    start = time()
-    prob, sup = pc_b(b_sup, params, model)
-    print("p(c|b):", prob.shape, sup.shape, f" | time spent: {time() - start}")
-
-    start = time()
-    prob, sup = pc(params, model)
-    print("p(c):", prob.shape, sup.shape, f" | time spent: {time() - start}")
-
-    start = time()
-    prob, sup = pd_c(c_sup, params, model)
-    print("p(d|c):", prob.shape, sup.shape, f" | time spent: {time() - start}")
-
-    start = time()
-    prob, sup = pd(params, model)
-    print("p(d):", prob.shape, sup.shape, f" | time spent: {time() - start}")
-
-    start = time()
-    prob, sup = pc_d(d_sup, params, model)
-    print("p(с|d):", prob.shape, sup.shape, f" | time spent: {time() - start}")
-
-    start = time()
-    prob, sup = pc_abd(a_sup, b_sup, d_sup, params, model)
-    print("p(с|abd):", prob.shape, sup.shape, f" | time spent: {time() - start}")
+    return np.dot(dist.flatten(), sup ** 2) - expectation(dist, sup) ** 2
