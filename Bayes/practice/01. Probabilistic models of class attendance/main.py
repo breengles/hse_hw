@@ -125,10 +125,7 @@ def pc_d(d, params, model):
     prob = pd_c(c_sup, params, model)[0][d] * pc(params, model)[0]
     prob /= np.sum(prob, axis=1, keepdims=True)
 
-    if len(prob.shape) == 2:
-        prob = prob.transpose(1, 0)
-
-    return prob, c_sup
+    return prob.transpose(1, 0), c_sup
 
 
 def pc_ab(a, b, params, model):
@@ -160,14 +157,14 @@ def pc_abd(a, b, d, params, model):
     num = pd_c_[:, :, np.newaxis, np.newaxis] * pc_ab_[np.newaxis, :, :, :]
     denom = np.tensordot(pd_c_, pc_ab_, axes=(1, 0))
 
-    proba = num / (denom[:, np.newaxis, :, :] + 1e-15)
+    proba = num / denom[:, np.newaxis, :, :]
 
     return proba.transpose(1, 2, 3, 0), c_sup
 
 
 def expectation(dist, sup):
-    return np.dot(dist.flatten(), sup)
+    return dist.T @ sup
 
 
 def variance(dist, sup):
-    return np.dot(dist.flatten(), sup ** 2) - expectation(dist, sup) ** 2
+    return dist.T @ (sup ** 2) - expectation(dist, sup) ** 2
