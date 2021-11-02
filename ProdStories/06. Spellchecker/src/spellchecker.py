@@ -104,7 +104,6 @@ class NGramVecSpeller(Speller):
         return self
 
     def _get_suggestions(self, word):
-        suggestions = []
         char_ngrams_list = self.vectorizer.transform([word]).tocoo().col
 
         counter = Counter()
@@ -113,9 +112,6 @@ class NGramVecSpeller(Speller):
             for word_id in self.index[token_id]:
                 counter[word_id] += 1
 
-        # среди топа по совпадениям по нграммам ищем "хорошее" исправление
-        for suggest in counter.most_common(n=20):
-            suggested_word = self.words_list[suggest[0]]  # suggest = (word_id, word_cnt)
-            suggestions.append(suggested_word)
+        suggestions = np.array([self.words_list[suggest[0]] for suggest in counter.most_common(n=20)])
 
-        return np.array(suggestions)
+        return suggestions
