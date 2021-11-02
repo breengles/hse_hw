@@ -21,4 +21,4 @@ Test data was taken from [here](http://aspell.net/test/cur/)
 ## Median position of the correct word in the suggestions
 1.00 in both models
 
-that is, almost every time we suggest correct word as the 2nd one.
+that is, almost every time we suggest correct word as the 1st one if it is in the suggested list.
