@@ -1,0 +1,27 @@
+%!TEX root = artem_kotov_v1.tex
+\section{Task 5}
+
+\begin{task}
+    Провести временные замеры по оценке всех необходимых распределений $p(c), p(c|a), p(c|b), p(c|d), p(c|ab), p(c|abd), p(d)$.
+\end{task}
+
+\begin{solution}
+    \begin{table}[H]
+        \centering
+        \caption{Временные замеры [мс] расчетов $p(c), p(c|a), p(c|b), p(c|d), p(c|ab), p(c|abd), p(d)$. Расчеты проведены векторно сразу для всех допустимых значений $a, b, c, d$.}
+        \pgfplotstableset{%
+            string type,
+            % precision = 2,
+            % zerofill,
+            columns/model/.style={column name={№ Модели}, string type, column type=l},
+            columns/pc/.style={column name={$p(c)$}, column type=X},
+            columns/pc_a/.style={column name={$p(c|a)$}, column type=X},
+            columns/pc_b/.style={column name={$p(c|b)$}, column type=X},
+            columns/pc_d/.style={column name={$p(c|d)$}, column type=X},
+            columns/pc_ab/.style={column name={$p(c|ab)$}, column type=X},
+            columns/pc_abd/.style={column name={$p(c|abd)$}, column type=X},
+            columns/pd/.style={column name={$p(d)$}, column type=X},
+        }
+        \pgfplotstabletypeset{./tables/time.csv}
+    \end{table}
+\end{solution}

@@ -1,0 +1,44 @@
+%!TEX root = artem_kotov_v1.tex
+\section{Task 1}
+
+\begin{task}
+    Вычисляем $p(a), p(b), p(c), p(d), p(c|a), p(c|b), p(c|d), p(c|ab), p(c|abd)$
+\end{task}
+
+\begin{solution}
+    \begin{remark}
+        $U[a,b] \sim \frac{1}{b - a + 1}[a \le x \le b]$
+        $Bin(n, p) \sim {n \choose x} p^x (1 - p)^{n - x}$
+    \end{remark}
+
+    \begin{gather}
+        p(a) = \frac{1}{16}[75 \le a \le 90] \\
+        p(b) = \frac{1}{101}[500 \le b \le 600]
+    \end{gather}
+    Для вычисления $p(c)$ нам потребуется $p(c|ab)$ (для второй модели в целом, аналогично, разве что свертка упростится):
+    \begin{equation}
+        p(c|ab) \sim \Bin(a, p_1) + \Bin(b, p_2) \sim \sum_i^c {a \choose i} p_1^i (1 - p_1)^{a - i} {b \choose c - i} p_2^{c - i} (1 - p_2)^{b - c + i},
+    \end{equation}
+    тогда
+    \begin{equation}
+        p(c) = \sum_{ab} p(c|ab)p(a)p(b) = \frac{1}{1616} \sum_{a = a_{\min}}^{a_{\max}} \sum_{b = b_{\min}}^{b_{\max}} \sum_{i = 0}^c {a \choose i} {b \choose c - i} p_1^i p_2^{c - i} (1 - p_1)^{a - i} (1 - p_2)^{b - c + i}.
+    \end{equation}
+    Но это не удобно программировать, лучше оставить в виде сверток двух биномиальных:
+    \begin{equation}
+        p(c|ab) = \sum_{x = 0}^c p(\Bin(a, p_1) = x) p(\Bin(b, p_2) = c - x)
+    \end{equation}
+
+    \begin{gather}
+        p(c|a) = \sum_b p(c|ab)p(b) = \frac{1}{101} \sum_{b = 500}^{600} p(c|ab) \\
+        p(c|b) = \sum_a p(c|ab)p(a) = \frac{1}{16} \sum_{a = 75}^{90} p(c|ab) \\
+        p(c) = \sum_{ab} p(c|ab) \underbrace{p(a)p(b)}_{p(ab)}
+    \end{gather}
+
+    Теперь с $d$:
+    \begin{gather}
+        p(d|c) = p(c + \Bin(c, p_3) = d) = p(\Bin(c, p_3) = d - c) \\
+        p(d) = \sum_c p(d|c)p(c) \\
+        p(c|d) = \frac{p(d|c) p(c)}{p(d)} \\
+        p(c|abd) = \frac{P(abcd)}{p(abd)} = \frac{p(d|c) p(c|ab) p(a) p(b)}{\sum_c p(d|c) p(c|ab) p(a) p(b)}
+    \end{gather}
+\end{solution}

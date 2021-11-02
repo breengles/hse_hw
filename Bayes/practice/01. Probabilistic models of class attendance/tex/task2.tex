@@ -1,0 +1,42 @@
+%!TEX root = artem_kotov_v1.tex
+\section{Task 2}
+
+\begin{task}
+    Найти математические ожидания и дисперсии априорных распределений $p(a), p(b), p(c), p(d)$.
+\end{task}
+
+
+\begin{solution}
+    Вообще все можем посчитать просто так:
+    \begin{gather}
+        \E x = \sum_x x p(x) \\
+        \D x = \sum_x x^2 p(x) - (\E x)^2
+    \end{gather}
+
+    Для $a, b$ можем посчитать ручками:
+    \begin{gather}
+        \E a = \frac{a_{\min} + a_{\max}}{2} \qquad \qquad \D a = \frac{(a_{\max} - a_{\min} + 1)^2 - 1}{12} \\
+        \E b = \frac{b_{\min} + b_{\max}}{2} \qquad \qquad \D b = \frac{(b_{\max} - b_{\min} + 1)^2 - 1}{12} \\
+    \end{gather}
+
+    \begin{table}[H]
+        \centering
+        \caption{Мат. ожидания и дисперсии $p(a), p(b), p(c)$ и $p(d)$, округленные до 2-ух знаков после запятой.}
+        \pgfplotstableset{%
+            numeric type,
+            precision = 2,
+            zerofill,
+            columns/model/.style={column name={№ Модели}, string type, column type=l},
+            columns/type/.style={column name={}, string type, column type=l},
+            columns/a/.style={column name={$p(a)$}, column type=X},
+            columns/b/.style={column name={$p(b)$}, column type=X},
+            columns/c/.style={column name={$p(c)$}, column type=X},
+            columns/d/.style={column name={$p(d)$}, column type=X},
+        }
+        \pgfplotstabletypeset{./tables/2.csv}
+    \end{table}
+
+    Из таблицы видно, что мат. ожидания почти не чувствуют разницу в моделях, а вот дисперсии для $c$ и $d$ несколько отличаются.
+\end{solution}
+
+\newpage
