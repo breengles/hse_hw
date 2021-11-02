@@ -1,38 +1,50 @@
-from collections import defaultdict
+from collections import Counter, defaultdict
 from csv import reader
-from typing import List, Union, DefaultDict
+from typing import DefaultDict, List, Union
 
 import numpy as np
 from pyphonetics import RefinedSoundex
+from sklearn.feature_extraction.text import CountVectorizer
 from spylls.hunspell import Dictionary
-from textdistance import damerau_levenshtein, jaro, needleman_wunsch, editex
+from textdistance import damerau_levenshtein, editex, jaro, needleman_wunsch
 
 
-class SpellChecker:
+class Speller:
     def __init__(self, vocab_path: str = "en_US", word_freq_path: str = "data/unigram_freq.csv") -> None:
         self.vocab = Dictionary.from_files(vocab_path)
-        self.word_freq: defaultdict = self.__read_word_freq_file(word_freq_path)
+        self.word_freq: defaultdict = self.read_word_freq_file(word_freq_path)
 
-        # see https://openbase.com/python/pyphonetics
-        # its method `distance` provides distance between two phonetic repr
+        # https://openbase.com/python/pyphonetics
+        # метод `distance` предоставляет расстояние Левенштейна между фонетическими представлениями
         self.rs = RefinedSoundex()
 
-    def suggest(self, word: str, n_gram: bool = True) -> List[Union[str, None]]:
-        if n_gram:
-            suggestions = self.vocab.suggester.ngram_suggestions(word, set())
-        else:
-            suggestions = self.vocab.suggest(word)
+    def _get_suggestions(self, word):
+        suggestions = self.vocab.suggester.ngram_suggestions(word, set())
+        return np.unique([x for x in suggestions])
 
-        suggestions = np.array([x for x in suggestions])
+    def suggest(self, word: str, n_candidates: int = 10) -> List[Union[str, None]]:
+        """
+        Предсказание спеллера
+        :param word: целевое слово, для которого нужно найти исправления
+        :param n_candidates: максимальное кол-во кандидатов для исправления
+        :return: List[str]: список кандидатов для исправления
+        """
+        suggestions = self._get_suggestions(word)
 
         if len(suggestions) == 0:
             return [None]
 
-        features = [self.__features(word, suggested_word) for suggested_word in suggestions]
+        features = [self._features(word, suggested_word) for suggested_word in suggestions]
 
-        return suggestions[self.__ranking(features)].tolist()
+        return suggestions[self._ranking(features)][:n_candidates].tolist()
 
-    def __features(self, word: str, suggested_word: str) -> List[float]:
+    def _features(self, word: str, suggested_word: str) -> List[float]:
+        """
+        Сбор признаков для двух слов по расстояниям: Дамера-Левенштейн, Нидлман-Вунш, Джаро и два фонетических
+        :param word: целевое слово, для которого нужно найти исправления
+        :param suggested_word: предложенное слово на отбор
+        :return: List[float]: список признаков
+        """
         damerau_levenshtein_distance = damerau_levenshtein(word, suggested_word)
         needleman_wunsch_distance = needleman_wunsch.normalized_distance(word, suggested_word)
         jaro_distance = jaro.normalized_distance(word, suggested_word)
@@ -51,23 +63,59 @@ class SpellChecker:
         ]
 
     @staticmethod
-    def __ranking(features: List[List[float]]) -> np.ndarray:
+    def _ranking(features: List[List[float]]) -> np.ndarray:
         return np.argsort(np.mean(features, axis=1))
 
     @staticmethod
-    def __read_word_freq_file(word_freq_path: str) -> DefaultDict[str, float]:
+    def read_word_freq_file(word_freq_path: str) -> DefaultDict[str, float]:
         word_freq = defaultdict(lambda: 0.0)
         total_counts = 0
 
         with open(word_freq_path, "r") as f:
             freqs = reader(f, delimiter=",")
-            next(freqs)  # skipping header
+            next(freqs)  # пропускаем header
             for word, freq in freqs:
                 ifreq = int(freq)
                 total_counts += ifreq
                 word_freq[word] = ifreq
 
         for word in word_freq.keys():
-            word_freq[word] /= total_counts  # relative frequency for the provided file
+            word_freq[word] /= total_counts  # относительные частоты в датасете
 
         return word_freq
+
+
+class NGramVecSpeller(Speller):
+    def fit(self, ngram_range=(2, 2)):
+        """
+        Подгонка спеллера
+        """
+        self.words_list = np.unique([word.stem.lower() for word in self.vocab.dic.words])
+
+        self.vectorizer = CountVectorizer(analyzer="char_wb", ngram_range=ngram_range, binary=True)
+        encoded_words = self.vectorizer.fit_transform(self.words_list).tocoo()
+
+        self.index = defaultdict(set)
+
+        # строим словарь, отображающий идентификатор нграммы в множество термов
+        for i in zip(encoded_words.row, encoded_words.col):
+            self.index[i[1]].add(i[0])
+
+        return self
+
+    def _get_suggestions(self, word):
+        suggestions = []
+        char_ngrams_list = self.vectorizer.transform([word]).tocoo().col
+
+        counter = Counter()
+
+        for token_id in char_ngrams_list:
+            for word_id in self.index[token_id]:
+                counter[word_id] += 1
+
+        # среди топа по совпадениям по нграммам ищем "хорошее" исправление
+        for suggest in counter.most_common(n=20):
+            suggested_word = self.words_list[suggest[0]]  # suggest = (word_id, word_cnt)
+            suggestions.append(suggested_word)
+
+        return np.array(suggestions)
