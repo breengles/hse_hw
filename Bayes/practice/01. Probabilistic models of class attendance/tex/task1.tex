@@ -16,9 +16,10 @@
         p(b) = \frac{1}{101}[500 \le b \le 600]
     \end{gather}
     Для вычисления $p(c)$ нам потребуется $p(c|ab)$ (для второй модели в целом, аналогично, разве что свертка упростится):
-    \begin{equation}
-        p(c|ab) \sim \Bin(a, p_1) + \Bin(b, p_2) \sim \sum_i^c {a \choose i} p_1^i (1 - p_1)^{a - i} {b \choose c - i} p_2^{c - i} (1 - p_2)^{b - c + i},
-    \end{equation}
+    \begin{gather}
+        p_{\text{model}1}(c|ab) \sim \Bin(a, p_1) + \Bin(b, p_2) \sim \sum_i^c {a \choose i} p_1^i (1 - p_1)^{a - i} {b \choose c - i} p_2^{c - i} (1 - p_2)^{b - c + i} \\
+        p_{\text{model}2}(c|ab) \sim \Poisson(ap_1 + bp_2)
+    \end{gather}
     тогда
     \begin{equation}
         p(c) = \sum_{ab} p(c|ab)p(a)p(b) = \frac{1}{1616} \sum_{a = a_{\min}}^{a_{\max}} \sum_{b = b_{\min}}^{b_{\max}} \sum_{i = 0}^c {a \choose i} {b \choose c - i} p_1^i p_2^{c - i} (1 - p_1)^{a - i} (1 - p_2)^{b - c + i}.
