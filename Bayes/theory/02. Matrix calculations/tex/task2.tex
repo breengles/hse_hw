@@ -12,9 +12,8 @@
 
     Нормировочная константа $Z$ не содержит $x$, поэтому не будет нас сейчас интересовать в смысле вида распределения на $x$. Разберемся с числителем:
     \begin{gather}
-        p(y|x)p(x) = \text{Const} \exp[-\frac12 ((x - \mu)^T \Sigma^{-1} (x - \mu) + (y - Ax)^T \Gamma^{-1} (y - Ax))]
+        p(y|x)p(x) = \text{Const} \cdot \exp[-\frac12 ((x - \mu)^T \Sigma^{-1} (x - \mu) + (y - Ax)^T \Gamma^{-1} (y - Ax))]
     \end{gather}
-
     Разберемся с показателем экспоненты (опускаю $-\frac12$):
     \begin{gather}
         (x - \mu)^T \Sigma^{-1} (x - \mu) + (y - Ax)^T \Gamma^{-1} (y - Ax) \\
