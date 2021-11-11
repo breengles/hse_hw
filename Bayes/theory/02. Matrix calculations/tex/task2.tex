@@ -1,0 +1,36 @@
+%!TEX root = kotov.tex
+\section{Task 2}
+
+\begin{task}
+    Given $p(x) = \N(x|\mu, \Sigma)$ and $p(y|x) = \N(y|Ax, \Gamma)$, $p(x|y) = ?$
+\end{task}
+
+\begin{solution}
+    \begin{gather}
+        p(x|y) = \frac{1}{Z} p(y|x)p(x)
+    \end{gather}
+
+    Нормировочная константа $Z$ не содержит $x$, поэтому не будет нас сейчас интересовать в смысле вида распределения на $x$. Разберемся с числителем:
+    \begin{gather}
+        p(y|x)p(x) = \text{Const} \exp[-\frac12 ((x - \mu)^T \Sigma^{-1} (x - \mu) + (y - Ax)^T \Gamma^{-1} (y - Ax))]
+    \end{gather}
+
+    Разберемся с показателем экспоненты (опускаю $-\frac12$):
+    \begin{gather}
+        (x - \mu)^T \Sigma^{-1} (x - \mu) + (y - Ax)^T \Gamma^{-1} (y - Ax) \\
+        = [\text{очередное раскрытие скобок}; \Sigma^T = \Sigma; \Gamma^T = \Gamma] = \\
+        = x^T (\Sigma^{-1} + A^T \Gamma^{-1} A) x - 2(\mu^T \Sigma^{-1} + y^T \Gamma^{-1} A) x + C,
+    \end{gather}
+    т.е. с учетом $-\frac12$ получим экспоненту, у которой в показателе стоит отрицательно направленная парабола, после выделения полного квадрата которой получим, что это гауссово распределение с параметрами:
+    \begin{gather}
+        \mu' = (\Sigma^{-1} + A^T \Gamma^{-1} A)^{-1}(\Sigma^{-1} \mu + A^T \Gamma^{-1} y) \\
+        \Sigma' = (\Sigma^{-1} + A^T \Gamma^{-1} A)^{-1},
+    \end{gather}
+    т.е.
+
+    \begin{equation}
+        p(x|y) = \N(x|(\Sigma^{-1} + A^T \Gamma^{-1} A)^{-1}(\Sigma^{-1} \mu + A^T \Gamma^{-1} y), (\Sigma^{-1} + A^T \Gamma^{-1} A)^{-1})
+    \end{equation}
+
+\end{solution}
+

@@ -1,0 +1,52 @@
+%! TEX root = kotov.tex
+
+\section{Task 4}
+\begin{task}
+    \begin{equation}
+        \frac{\partial Tr(AX^{-T}BXC)}{\partial X} = ?
+    \end{equation}
+\end{task}
+
+
+\begin{solution}
+    Сначала определимся с размерностями, чтобы ничего не сломать: пусть $X \in \mathbb{R}^{n x n}$, а $C \in \mathbb{R}^{n x m}$, тогда $B \in \mathbb{R}^{n x n}$, $A \in \mathbb{R}^{m x n}$.
+
+    Опять будем делать через дифференциал:
+    \begin{equation}
+        Tr(AX^{-T}BXC) = Tr(CAX^{-T}BX) = \braket{A^TC^T | X^{-T}BX}
+    \end{equation}
+    \begin{gather}
+        d(\braket{A^TC^T | X^{-T}BX}) = \braket{A^TC^T | d(X^{-T}BX)} = (*)
+    \end{gather}
+
+    \begin{enumerate}
+        \item $d(X^{-T}BX) = d(X^{-T}B)X + X^{-T}BdX$
+        \item $d(X^{-T} B) = (-X^{-1} dX X^{-1})^T B$
+    \end{enumerate}
+
+    \begin{gather}
+        (*) = (-X^{-1} dX X^{-1})^T B X + X^{-T} B dX \\
+        = -X^{-T} dX^T X^{-T} B X + X^{-T} B dX \\
+        = X^{-T} (-dX^T X^{-T} B X + (dX^T B^T)^T) \\
+        = -X^{-T}((X^T B^T X^{-1} dX)^T - B dX)
+    \end{gather}
+
+    Т.о. получаем:
+    \begin{gather}
+        \braket{A^T C^T | -X^{-T}((X^T B^T X^{-1} dX)^T - B dX)} \\
+        = \braket{A^T C^T | -X^{-T} (X^T B^T X^{-1} dX)^T} + \braket{A^T C^T | X^{-T} B dX} =
+    \end{gather}
+    перекидываем от $dX$ все, собираем скалярное произведение обратно в кучу (честно, не очень хочется это набирать в техе):
+    \begin{gather}
+        = \braket{B^T X^{-1} A^T C^T - X^{-T} B X C A X^{-T} | dX} \\
+        \Downarrow \\
+        \frac{\partial Tr(AX^{-T}BXC)}{\partial X} = \underbrace{B^T X^{-1} A^T C^T}_{\mathcircled{1}} - \underbrace{X^{-T} B X C A X^{-T}}_{\mathcircled{2}}
+    \end{gather}
+
+    Проверим, что размерности сошлись:
+    \begin{enumerate}
+        \item $(n, n)(n, n)(n, m)(m, n) \Longrightarrow (n, n)$
+        \item $(n, n)(n, n)(n, n)(n, m)(m, n)(n, n) \Longrightarrow (n, n)$
+    \end{enumerate}
+    В итоге, получим подходящую размерность, т.к. дифференцировали скаляр по матрице и ожидали получить матрицу размера $(n, n)$.
+\end{solution}

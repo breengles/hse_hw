@@ -1,0 +1,19 @@
+%! TEX root = kotov.tex
+
+\section{Task 4}
+\begin{task}
+    \begin{equation}
+        \frac{\partial \det(X^{-1} + A)}{\partial X} = ?
+    \end{equation}
+\end{task}
+
+\begin{solution}
+    Будем работать в терминах дифференциала, сведем к каноничной форме, из которой и получим необходимое:
+    \begin{gather}
+        d(\det(X^{-1} + A)) = \det(X^{-1} + A) \braket{(X^{-1} + A)^{-T} | d(X^{-1} + A)} \\
+        = \det(X^{-1} + A) \braket{(X^{-1} + A)^{-T} | -X^{-1} (dX) X^{-1}} \\
+        = \det(X^{-1} + A) \braket{-X^{-T}(X^{-1} + A)^{-T} X^{-T} | dX} \\
+        \Downarrow \\
+        \frac{\partial \det(X^{-1} + A)}{\partial X} = \det(X^{-1} + A)(-X^{-T} (X^{-1} + A)^{-T} X^{-T})
+    \end{gather}
+\end{solution}

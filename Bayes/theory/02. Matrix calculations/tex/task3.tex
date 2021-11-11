@@ -1,0 +1,29 @@
+%! TEX root = kotov.tex
+
+\section{Task 3}
+\begin{task}
+    Доказать, что $p(y) = \N(y|A\mu, \Gamma + A \Sigma A^{-1})$
+\end{task}
+
+\begin{solution}
+    Мы знаем, что $p(y)$ можно выразить, например, так:
+    \begin{equation}
+        p(y) = \int\limits_{\Omega_x} p(y|x)p(x)dx
+    \end{equation}
+    Еще в предыдущем номере мы могли заметить, что зависимость от $y$ в таком выражении -- некая экспонента с отрицательной параболой в показателе степени, т.е. мы действительно можем искать решение в виде некого гауссового распределения.
+
+    Предположим, что $y = Ax + z$, где $x \sim \N(\mu, \Sigma)$, а $z \sim \N(0, \Gamma)$ и покажем, что такой выбор удовлетворяет тому, что дано в условии, а именно $p(y|x) = \N(y|Ax, \Gamma)$ (к тому же сумма двух нормальных независимых величины есть величина нормальная):
+    \begin{gather}
+        \E y|x = \underbrace{\E Ax}_{Ax \text{ --- константа}} + \E z = Ax + 0 = Ax \\
+        \V y|x = \underbrace{\V Ax}_{Ax \text{ --- константа}} + \V z = 0 + \Gamma \\
+        \Downarrow \\
+        p(y|x) = \N(y|Ax, \Gamma)
+    \end{gather}
+
+    Чтобы задать гауссово распределение, нам достаточно занять матожидание и матрицу ковариации:
+    \begin{gather}
+        \E y = \E A x + \E z = A \mu + 0 = A \mu \\
+        \V y = \V A x + \V z = A \V x A^T + \Gamma = A \Sigma A^T + \Gamma
+    \end{gather}
+    Таким образом, $p(y) = \N(y|A \mu, A \Sigma A^T + \Gamma)$
+\end{solution}
