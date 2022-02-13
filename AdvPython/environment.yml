@@ -1,0 +1,9 @@
+name: advpython
+channels:
+  - defaults
+dependencies:
+  - python=3.9
+  - pydot
+  - astunparse
+  - networkx
+prefix: /home/breengles/miniconda3/envs/advpython
