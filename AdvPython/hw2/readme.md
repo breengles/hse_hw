@@ -1,5 +1,5 @@
 # Package
-Package of hw1 is located at `hw1_as_package`
+Package of hw1 is located at `hw1_as_package`: https://test.pypi.org/project/hse-hw-advpy-kotov/
 
 
 # Build and run
