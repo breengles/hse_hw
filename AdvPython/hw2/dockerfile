@@ -1,0 +1,33 @@
+FROM ubuntu:latest
+LABEL Maintainer="breengles"
+
+RUN apt-get update && apt-get install -y apt-utils apt-transport-https && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends tzdata && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update && apt-get install -y curl bzip2 python3 python3-pip graphviz && \
+    rm -rf /var/lib/apt/lists/*
+    
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends texlive-latex-recommended texlive-fonts-recommended && \
+    apt-get install -y --no-install-recommends texlive-latex-extra texlive-fonts-extra texlive-lang-all && \
+    rm -rf /var/lib/apt/lists/*
+
+
+# RUN pip3 --version
+# RUN python3 --version
+
+RUN pip3 install pydot astunparse networkx matplotlib graphviz
+RUN pip3 install -i https://test.pypi.org/simple/ hse-hw-advpy-kotov
+
+WORKDIR /advpy/hw2
+VOLUME /advpy/hw2
+ADD . /advpy/hw2
+
+RUN which python3
+RUN pip3 list
+
+CMD python3 main.py
+CMD cd artifacts && pdflatex main.tex
