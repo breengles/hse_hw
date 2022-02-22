@@ -51,6 +51,9 @@ class Matrix:
 
         return Matrix(result)
 
+    def _get_column(self, index):
+        return [row[index] for row in self]
+
     @staticmethod
     def _multiply_row_by_col(row, col):
         result = 0
@@ -62,13 +65,13 @@ class Matrix:
     def __matmul__(self, other):
         self.is_matrixwise_compatible(other)
 
-        rows_len, cols_len = self.shape
+        rows_len, cols_len = self.shape[0], other.shape[1]
 
         result = []
         for i in range(rows_len):
             tmp = []
             for j in range(cols_len):
-                tmp.append(self._multiply_row_by_col(self[i], [row[j] for row in other]))
+                tmp.append(self._multiply_row_by_col(self[i], other._get_column(j)))
             result.append(tmp)
 
         return Matrix(result)
@@ -81,7 +84,7 @@ def check_correctness(first, second):
     assert first.shape == second.shape
 
     for i in range(first.shape[0]):
-        for j in range(second.shape[0]):
+        for j in range(first.shape[1]):
             assert first[i][j] == second[i][j]
 
     return True
@@ -90,8 +93,8 @@ def check_correctness(first, second):
 if __name__ == "__main__":
     np.random.seed(0)
 
-    a = np.random.randint(0, 10, (3, 3))
-    b = np.random.randint(0, 10, (3, 3))
+    a = np.random.randint(0, 10, (10, 10))
+    b = np.random.randint(0, 10, (10, 10))
 
     A = Matrix(a.tolist())
     B = Matrix(b.tolist())
@@ -100,12 +103,12 @@ if __name__ == "__main__":
     mul_res = A * B
     matmul_res = A @ B
 
-    # if check_correctness(a + b, add_res):
-    #     print("+ passed!")
-    # if check_correctness(a * b, mul_res):
-    #     print("* passed!")
-    # if check_correctness(a @ b, matmul_res):
-    #     print("@ passed!")
+    if check_correctness(a + b, add_res):
+        print("+ passed!")
+    if check_correctness(a * b, mul_res):
+        print("* passed!")
+    if check_correctness(a @ b, matmul_res):
+        print("@ passed!")
 
     with open("artifacts/matrix+.txt", "w+") as art:
         art.write(str(add_res))
