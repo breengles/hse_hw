@@ -28,13 +28,13 @@ if __name__ == "__main__":
         not_eq_matmul = (a_hashed @ b_hashed) != (c_hashed @ d_hashed)
 
     with open("artifacts/hard/A.txt", "w+") as art:
-        art.write(str(a_numpy))
+        art.write(str(a_hashed))
     with open("artifacts/hard/B.txt", "w+") as art:
-        art.write(str(b_numpy))
+        art.write(str(b_hashed))
     with open("artifacts/hard/C.txt", "w+") as art:
-        art.write(str(c_numpy))
+        art.write(str(c_hashed))
     with open("artifacts/hard/D.txt", "w+") as art:
-        art.write(str(d_numpy))
+        art.write(str(d_hashed))
 
     print(eq_hashed and not_eq_mat and eq_mat and not_eq_matmul)
 
