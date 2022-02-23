@@ -1,6 +1,20 @@
+class HashMixin:
+    def __init__(self, data) -> None:
+        self.data = data
+
+    def __hash__(self):
+        return int(sum(map(sum, self.data)) % 11)
+
+
 class Matrix:
     def __init__(self, data) -> None:
         self.data = data
+
+    def __ne__(self, other):
+        return self.data != other.data
+
+    def __eq__(self, other):
+        return self.data == other.data
 
     @property
     def shape(self):
@@ -74,3 +88,22 @@ class Matrix:
 
     def __str__(self):
         return "\n".join(["\t".join([str(cell) for cell in row]) for row in self])
+
+
+class HashedMatrix(Matrix, HashMixin):
+    __hash__ = HashMixin.__hash__
+
+    def __init__(self, data) -> None:
+        super().__init__(data)
+        self.__cache = {}
+
+    def __matmul__(self, other):
+        self.is_matrixwise_compatible(other)
+
+        key = tuple(sorted((self.__hash__(), other.__hash__())))
+        if key in self.__cache:
+            return self.__cache[key]
+
+        res = HashedMatrix(super().__matmul__(other).data)
+        self.__cache[key] = res
+        return res
