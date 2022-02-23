@@ -24,11 +24,11 @@ class ValueMixin:
         self._value = np.asarray(value)
 
     @property
-    def data(self):
+    def value(self):
         return self._value
 
-    @data.setter
-    def data(self, value):
+    @value.setter
+    def value(self, value):
         self._value = value
 
     @property
@@ -49,9 +49,9 @@ class MatrixMixed(NDArrayOperatorsMixin, ValueMixin, PrettyPrintMixin, SaveMixin
             if not isinstance(x, self._HANDLED_TYPES + (MatrixMixed,)):
                 return NotImplemented
 
-        inputs = tuple(x.data if isinstance(x, MatrixMixed) else x for x in inputs)
+        inputs = tuple(x.value if isinstance(x, MatrixMixed) else x for x in inputs)
         if out:
-            kwargs["out"] = tuple(x.data if isinstance(x, MatrixMixed) else x for x in out)
+            kwargs["out"] = tuple(x.value if isinstance(x, MatrixMixed) else x for x in out)
 
         result = getattr(ufunc, method)(*inputs, **kwargs)
 
