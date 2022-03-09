@@ -1,0 +1,4 @@
+n = 100000
+sequential timeit with 10 runs: 1.7419415609997486 s.
+threading timeit with 10 runs: 3.8700496709998333 s.
+multiprocessing timeit with 10 runs: 0.311974274000022 s.
